@@ -1,90 +1,123 @@
-<body class="bg-zinc-950 text-zinc-100">
-  <div class="max-w-6xl mx-auto py-24 px-6">
-    <h1 class="text-4xl font-bold text-center mb-12">Simulador de Visagismo <span class="text-amber-500">Prumo</span></h1>
-
-    <div class="grid md:grid-cols-2 gap-12">
-      <div>
-        <div id="drop-zone" class="border-2 border-dashed border-zinc-700 rounded-3xl p-10 text-center hover:border-amber-500 transition cursor-pointer bg-zinc-900/50">
-          <input type="file" id="photo-upload" class="hidden" accept="image/*">
-          <div id="upload-placeholder">
-            <span class="text-5xl">👤</span>
-            <p class="mt-4 text-zinc-400">Clique ou arraste sua foto de frente</p>
-          </div>
-          <img id="preview-img" class="hidden w-full rounded-2xl shadow-lg">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador IA | Estúdio Prumo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 pt-24">
+    <nav class="fixed top-0 w-full z-50 bg-black border-b border-white/10 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-amber-500">ESTÚDIO PRUMO</a>
+            <a href="index.html" class="text-sm hover:text-amber-500">Voltar ao Início</a>
         </div>
-      </div>
+    </nav>
 
-      <div id="controls" class="space-y-8">
-        <div>
-          <h3 class="text-xl font-semibold mb-4">1. Estilos Clássicos</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <button onclick="applyStyle('Slick Back')" class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 hover:border-amber-500 text-left transition">
-              <p class="font-bold">Slick Back</p>
-              <p class="text-xs text-zinc-500">Penteado para trás</p>
-            </button>
-            <button onclick="applyStyle('Side Part')" class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 hover:border-amber-500 text-left transition">
-              <p class="font-bold">Side Part</p>
-              <p class="text-xs text-zinc-500">Divisão lateral</p>
-            </button>
-          </div>
+    <main class="max-w-6xl mx-auto p-6">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-2">Simulador de Visagismo</h1>
+            <p class="text-zinc-400">Envie sua foto e escolha um estilo para simular.</p>
+        </header>
+
+        <div class="grid md:grid-cols-2 gap-12">
+            <div class="space-y-4">
+                <div id="drop-area" class="border-2 border-dashed border-zinc-700 rounded-3xl p-10 text-center bg-zinc-900/50 hover:border-amber-500 transition cursor-pointer relative h-[400px] flex items-center justify-center overflow-hidden">
+                    <input type="file" id="file-input" class="hidden" accept="image/*">
+                    <div id="instruction-text">
+                        <span class="text-5xl">📸</span>
+                        <p class="mt-4 font-medium">Clique para subir sua foto</p>
+                        <p class="text-xs text-zinc-500 mt-2">Dica: Foto de frente com boa luz</p>
+                    </div>
+                    <img id="user-photo" class="absolute inset-0 w-full h-full object-cover hidden">
+                </div>
+                <button id="reset-btn" class="hidden w-full py-2 text-sm text-zinc-500 hover:text-white">Trocar foto</button>
+            </div>
+
+            <div class="space-y-8">
+                <section>
+                    <h3 class="text-amber-500 font-bold mb-4 uppercase text-sm tracking-widest">Estilos Clássicos</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="simular('Executive Contour')" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 hover:border-amber-500 transition text-left group">
+                            <p class="font-bold group-hover:text-amber-500">Executive</p>
+                            <p class="text-xs text-zinc-500 font-normal">Social refinado</p>
+                        </button>
+                        <button onclick="simular('Pompadour')" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 hover:border-amber-500 transition text-left group">
+                            <p class="font-bold group-hover:text-amber-500">Pompadour</p>
+                            <p class="text-xs text-zinc-500">Topete clássico</p>
+                        </button>
+                    </div>
+                </section>
+
+                <section>
+                    <h3 class="text-amber-500 font-bold mb-4 uppercase text-sm tracking-widest">Estilos Modernos</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="simular('Mid Fade')" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 hover:border-amber-500 transition text-left group">
+                            <p class="font-bold group-hover:text-amber-500">Mid Fade</p>
+                            <p class="text-xs text-zinc-500">Degradê médio</p>
+                        </button>
+                        <button onclick="simular('Mullet Moderno')" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 hover:border-amber-500 transition text-left group">
+                            <p class="font-bold group-hover:text-amber-500">Mullet</p>
+                            <p class="text-xs text-zinc-500">Ousado e atual</p>
+                        </button>
+                    </div>
+                </section>
+
+                <div id="status-ia" class="hidden p-6 bg-amber-600/10 border border-amber-600/30 rounded-2xl">
+                    <p class="text-amber-500 font-bold flex items-center gap-2">
+                        <svg class="animate-spin h-5 w-5 text-amber-500" viewBox="0 0 24 24"></svg>
+                        IA Processando <span id="corte-nome"></span>...
+                    </p>
+                </div>
+            </div>
         </div>
+    </main>
 
-        <div>
-          <h3 class="text-xl font-semibold mb-4 text-amber-500">2. Estilos Modernos</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <button onclick="applyStyle('Mid Fade')" class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 hover:border-amber-500 text-left transition">
-              <p class="font-bold">Mid Fade</p>
-              <p class="text-xs text-zinc-500">Degradê médio</p>
-            </button>
-            <button onclick="applyStyle('Buzz Cut')" class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 hover:border-amber-500 text-left transition">
-              <p class="font-bold">Buzz Cut</p>
-              <p class="text-xs text-zinc-500">Raspado moderno</p>
-            </button>
-          </div>
-        </div>
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const dropArea = document.getElementById('drop-area');
+        const userPhoto = document.getElementById('user-photo');
+        const instructionText = document.getElementById('instruction-text');
+        const resetBtn = document.getElementById('reset-btn');
 
-        <div id="result-box" class="hidden p-6 bg-amber-600/10 border border-amber-600/30 rounded-2xl animate-pulse">
-            <p class="text-amber-500 font-bold">IA Analisando...</p>
-            <p class="text-sm">Aplicando <span id="style-name"></span> ao seu rosto.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+        dropArea.addEventListener('click', () => fileInput.click());
 
-  <script>
-    const uploadInput = document.getElementById('photo-upload');
-    const dropZone = document.getElementById('drop-zone');
-    const previewImg = document.getElementById('preview-img');
-    const placeholder = document.getElementById('upload-placeholder');
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    userPhoto.src = event.target.result;
+                    userPhoto.classList.remove('hidden');
+                    instructionText.classList.add('hidden');
+                    resetBtn.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
 
-    dropZone.onclick = () => uploadInput.click();
-
-    uploadInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          previewImg.src = event.target.result;
-          previewImg.classList.remove('hidden');
-          placeholder.classList.add('hidden');
+        resetBtn.onclick = () => {
+            userPhoto.classList.add('hidden');
+            instructionText.classList.remove('hidden');
+            resetBtn.classList.add('hidden');
+            fileInput.value = "";
         };
-        reader.readAsDataURL(file);
-      }
-    };
 
-    function applyStyle(name) {
-        if(!previewImg.src) {
-            alert("Por favor, envie sua foto primeiro!");
-            return;
+        function simular(nome) {
+            if (!userPhoto.src || userPhoto.classList.contains('hidden')) {
+                alert("Primeiro, selecione uma foto!");
+                return;
+            }
+            const status = document.getElementById('status-ia');
+            const nomeSpan = document.getElementById('corte-nome');
+            status.classList.remove('hidden');
+            nomeSpan.innerText = nome;
+
+            setTimeout(() => {
+                alert("Simulação concluída! O " + nome + " combina com seu formato de rosto. Vamos agendar?");
+                window.location.href = "contato.html";
+            }, 2500);
         }
-        document.getElementById('result-box').classList.remove('hidden');
-        document.getElementById('style-name').innerText = name;
-        
-        // Simulação de IA - Em 2 segundos avisa que está pronto
-        setTimeout(() => {
-            alert("Simulação para " + name + " pronta! Agende seu horário para realizar esse corte.");
-            window.location.href = "contato.html";
-        }, 2000);
-    }
-  </script>
+    </script>
 </body>
+</html>
