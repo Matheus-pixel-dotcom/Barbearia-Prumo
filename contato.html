@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contato | Estúdio Prumo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100">
+    <nav class="fixed top-0 w-full z-50 bg-black/90 border-b border-white/10 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-amber-500 tracking-tighter">ESTÚDIO PRUMO</a>
+            <a href="servicos.html" class="text-sm border border-amber-600 px-4 py-1 rounded-full text-amber-500 hover:bg-amber-600 hover:text-white transition">Ver Preços</a>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto pt-32 pb-20 px-6">
+        <div class="grid md:grid-cols-2 gap-16">
+            
+            <div>
+                <h2 class="text-5xl font-bold mb-8 uppercase tracking-tighter">Agende sua <span class="text-amber-500">Visita</span></h2>
+                <p class="text-zinc-400 mb-10 text-lg">Escolha o melhor horário e venha dar um upgrade no seu estilo.</p>
+                
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <span class="text-amber-500 text-xl">📍</span>
+                        <div>
+                            <p class="font-bold">Endereço</p>
+                            <p class="text-zinc-500">Rua da Barbearia, 500 - Bairro Centro<br>Curitiba - PR</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <span class="text-amber-500 text-xl">⏰</span>
+                        <div>
+                            <p class="font-bold">Horários</p>
+                            <p class="text-zinc-500">Segunda a Sexta: 09h às 20h<br>Sábados: 08h às 18h</p>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="https://wa.me/5541999999999" target="_blank" class="mt-12 inline-flex items-center justify-center gap-3 w-full bg-green-600 hover:bg-green-500 text-white font-black py-5 rounded-3xl text-xl transition-transform hover:scale-[1.02]">
+                    <span>CHAMAR NO WHATSAPP</span>
+                </a>
+            </div>
+
+            <div class="bg-zinc-900/30 p-8 rounded-[40px] border border-zinc-800">
+                <h3 class="text-2xl font-bold mb-6">Deixe seu recado</h3>
+                <form action="#" class="space-y-4">
+                    <input type="text" placeholder="Nome Completo" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none">
+                    <input type="tel" placeholder="Seu Telefone" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none">
+                    <select class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none text-zinc-400">
+                        <option>Selecione o Barbeiro</option>
+                        <option>Barbeiro André</option>
+                        <option>Barbeiro Lucas</option>
+                    </select>
+                    <textarea placeholder="Alguma observação?" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
+                    <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-bold transition">ENVIAR SOLICITAÇÃO</button>
+                </form>
+            </div>
+
+        </div>
+    </main>
+</body>
+</html>

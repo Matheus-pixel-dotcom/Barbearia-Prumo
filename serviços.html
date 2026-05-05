@@ -2,41 +2,72 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Serviços | Estúdio Prumo</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-zinc-950 text-zinc-100 pt-32">
-    <main class="max-w-4xl mx-auto p-6">
-        <h1 class="text-5xl font-bold mb-12 text-center">Nossos <span class="text-amber-500">Serviços</span></h1>
-        
-        <div class="space-y-6">
-            <div class="bg-zinc-900 p-6 rounded-3xl flex justify-between items-center border border-zinc-800 hover:border-amber-500 transition">
-                <div>
-                    <h3 class="text-xl font-bold">Corte Prumo Signature</h3>
-                    <p class="text-zinc-500">Tesoura, máquina e consultoria de visagismo.</p>
-                </div>
-                <span class="text-amber-500 font-bold text-2xl">R$ 80</span>
-            </div>
-
-            <div class="bg-zinc-900 p-6 rounded-3xl flex justify-between items-center border border-zinc-800 hover:border-amber-500 transition">
-                <div>
-                    <h3 class="text-xl font-bold">Barba de Respeito</h3>
-                    <p class="text-zinc-500">Toalha quente, navalha e óleo hidratante.</p>
-                </div>
-                <span class="text-amber-500 font-bold text-2xl">R$ 60</span>
-            </div>
-
-            <div class="bg-amber-600 p-6 rounded-3xl flex justify-between items-center text-black">
-                <div>
-                    <h3 class="text-xl font-bold">Combo Master (Corte + Barba)</h3>
-                    <p class="text-amber-950">A experiência completa com desconto.</p>
-                </div>
-                <span class="font-black text-2xl">R$ 120</span>
+<body class="bg-zinc-950 text-zinc-100">
+    <nav class="fixed top-0 w-full z-50 bg-black/90 border-b border-white/10 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-amber-500 tracking-tighter">ESTÚDIO PRUMO</a>
+            <div class="hidden md:flex gap-6">
+                <a href="index.html" class="hover:text-amber-500">Início</a>
+                <a href="ia-tryon.html" class="hover:text-amber-500">IA Try-On</a>
+                <a href="contato.html" class="hover:text-amber-500">Agendar</a>
             </div>
         </div>
-        
-        <div class="mt-12 text-center">
-            <a href="contato.html" class="inline-block bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-amber-500 transition">Agendar Horário</a>
+    </nav>
+
+    <main class="max-w-4xl mx-auto pt-32 pb-20 px-6">
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-bold mb-4 uppercase tracking-tighter">Nossos <span class="text-amber-500">Serviços</span></h1>
+            <p class="text-zinc-400 italic">Excelência técnica e tecnologia para o seu estilo.</p>
+        </div>
+
+        <div class="grid gap-4">
+            <div class="group bg-zinc-900/50 p-6 rounded-3xl border border-zinc-800 hover:border-amber-500 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold group-hover:text-amber-500 transition">Corte Prumo Signature</h3>
+                    <p class="text-zinc-500 text-sm">Consultoria de visagismo, corte na tesoura ou máquina e finalização com pomada.</p>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="text-amber-500 font-black text-2xl">R$ 80</span>
+                    <a href="contato.html" class="bg-zinc-800 hover:bg-amber-600 px-4 py-2 rounded-xl text-xs font-bold transition">RESERVAR</a>
+                </div>
+            </div>
+
+            <div class="group bg-zinc-900/50 p-6 rounded-3xl border border-zinc-800 hover:border-amber-500 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold group-hover:text-amber-500 transition">Barba com Toalha Quente</h3>
+                    <p class="text-zinc-500 text-sm">Design de barba, relaxamento com toalha quente e pós-barba premium.</p>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="text-amber-500 font-black text-2xl">R$ 60</span>
+                    <a href="contato.html" class="bg-zinc-800 hover:bg-amber-600 px-4 py-2 rounded-xl text-xs font-bold transition">RESERVAR</a>
+                </div>
+            </div>
+
+            <div class="bg-amber-600 p-6 rounded-3xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-[0_0_30px_rgba(217,119,6,0.2)]">
+                <div>
+                    <h3 class="text-xl font-bold text-black uppercase">Combo Tech (Corte + Barba + IA)</h3>
+                    <p class="text-amber-950 text-sm font-medium">Análise digital facial + experiência completa de barbearia.</p>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="text-black font-black text-3xl italic">R$ 130</span>
+                    <a href="contato.html" class="bg-black text-white px-6 py-2 rounded-xl text-xs font-bold hover:scale-105 transition">AGENDAR AGORA</a>
+                </div>
+            </div>
+
+            <div class="group bg-zinc-900/50 p-6 rounded-3xl border border-zinc-800 hover:border-amber-500 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold group-hover:text-amber-500 transition">Pezinho & Acabamento</h3>
+                    <p class="text-zinc-500 text-sm">Manutenção rápida dos contornos para manter o corte em dia.</p>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="text-amber-500 font-black text-2xl">R$ 30</span>
+                    <a href="contato.html" class="bg-zinc-800 hover:bg-amber-600 px-4 py-2 rounded-xl text-xs font-bold transition">RESERVAR</a>
+                </div>
+            </div>
         </div>
     </main>
 </body>
