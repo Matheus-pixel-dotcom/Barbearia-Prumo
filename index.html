@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serviços | Estúdio Prumo</title>
+    <title>Sobre Nós | Estúdio Prumo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background-color: #09090b; /* bg-zinc-950 */
+            background-color: #09090b;
             margin: 0;
             padding: 0;
+        }
+        .gradient-border {
+            background: linear-gradient(to right, transparent, #f59e0b, transparent);
+            height: 1px;
+            width: 100%;
+            border: none;
         }
     </style>
 </head>
@@ -23,66 +29,66 @@
             
             <div class="hidden md:flex gap-8 items-center">
                 <a href="index.html" class="text-sm font-medium hover:text-amber-500 transition">Início</a>
-                <a href="servicos.html" class="text-sm font-bold text-amber-500 transition border-b-2 border-amber-500">Serviços</a>
+                <a href="servicos.html" class="text-sm font-medium hover:text-amber-500 transition">Serviços</a>
                 <a href="ia-tryon.html" class="text-sm font-medium hover:text-amber-400 transition">Experimente com IA</a>
-                <a href="sobre.html" class="text-sm font-medium hover:text-amber-500 transition">Sobre</a>
+                <a href="sobre.html" class="text-sm font-bold text-amber-500 transition border-b-2 border-amber-500">Sobre</a>
                 <a href="contato.html" class="text-sm font-medium hover:text-amber-500 transition">Contato</a>
                 <a href="contato.html" class="bg-amber-600 hover:bg-amber-500 px-6 py-2 rounded-full text-xs font-black text-black transition uppercase">Agendar</a>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto pt-32 pb-20 px-6">
-        <header class="text-center mb-16">
-            <h1 class="text-5xl md:text-7xl font-black mb-4 uppercase tracking-tighter">Nossos <span class="text-amber-500">Serviços</span></h1>
-            <p class="text-zinc-400 max-w-xl mx-auto italic">Selecione a experiência ideal para o seu visual.</p>
+    <main class="max-w-4xl mx-auto pt-32 pb-20 px-6">
+        <header class="mb-16">
+            <h1 class="text-5xl md:text-7xl font-black mb-6 uppercase tracking-tighter">Nossa <span class="text-amber-500">Essência</span></h1>
+            <hr class="gradient-border mb-8">
         </header>
 
-        <div class="grid gap-6">
-            <div class="group bg-zinc-900/40 p-8 rounded-[2rem] border border-white/5 hover:border-amber-500/50 transition-all flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="text-center md:text-left">
-                    <h3 class="text-2xl font-bold group-hover:text-amber-500 transition">Corte Prumo Signature</h3>
-                    <p class="text-zinc-500 mt-2">Consultoria de visagismo, corte com tesoura/máquina e lavagem especial.</p>
+        <section class="space-y-12 text-zinc-300 leading-relaxed text-lg">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-4 uppercase tracking-widest">O Trabalho</h2>
+                    <p>
+                        No **Estúdio Prumo**, acreditamos que um corte de cabelo não é apenas estética, é confiança. Nosso trabalho funde a **tradicional barbearia clássica** — com toalhas quentes e navalhas afiadas — à precisão do **visagismo moderno**. 
+                    </p>
+                    <p class="mt-4">
+                        Cada cliente é único. Por isso, analisamos as linhas do rosto, a textura dos fios e o estilo de vida para entregar um resultado que esteja em total "prumo" com sua identidade.
+                    </p>
                 </div>
-                <div class="flex items-center gap-8">
-                    <span class="text-3xl font-black text-amber-500">R$ 80</span>
-                    <a href="contato.html" class="bg-white text-black px-6 py-3 rounded-xl font-bold text-xs uppercase hover:bg-amber-500 transition">Agendar</a>
-                </div>
-            </div>
-
-            <div class="group bg-zinc-900/40 p-8 rounded-[2rem] border border-white/5 hover:border-amber-500/50 transition-all flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="text-center md:text-left">
-                    <h3 class="text-2xl font-bold group-hover:text-amber-500 transition">Barba com Toalha Quente</h3>
-                    <p class="text-zinc-500 mt-2">Alinhamento, barboterapia com óleos e hidratação pós-navalha.</p>
-                </div>
-                <div class="flex items-center gap-8">
-                    <span class="text-3xl font-black text-amber-500">R$ 60</span>
-                    <a href="contato.html" class="bg-white text-black px-6 py-3 rounded-xl font-bold text-xs uppercase hover:bg-amber-500 transition">Agendar</a>
-                </div>
-            </div>
-
-            <div class="group bg-amber-600 p-8 rounded-[2rem] flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl shadow-amber-600/10">
-                <div class="text-center md:text-left">
-                    <h3 class="text-2xl font-black text-black uppercase italic">Combo Tech (Corte + Barba + IA)</h3>
-                    <p class="text-amber-950 font-bold">A experiência completa com análise digital de simetria.</p>
-                </div>
-                <div class="flex items-center gap-8">
-                    <span class="text-4xl font-black text-black italic">R$ 130</span>
-                    <a href="contato.html" class="bg-black text-white px-8 py-4 rounded-xl font-black text-xs uppercase hover:scale-105 transition">Reservar Agora</a>
+                <div class="bg-zinc-900/50 p-8 rounded-[2rem] border border-white/5">
+                    <h2 class="text-2xl font-bold text-amber-500 mb-4 uppercase tracking-widest">A Inovação</h2>
+                    <p class="text-sm italic">
+                        "E se você pudesse ver o futuro?"
+                    </p>
+                    <p class="mt-4">
+                        Somos pioneiros na implementação de **IA (Inteligência Artificial)** no processo de escolha do corte. Através do nosso simulador, você visualiza diferentes estilos antes mesmo de tocarmos na tesoura, eliminando a dúvida e garantindo satisfação total.
+                    </p>
                 </div>
             </div>
 
-            <div class="group bg-zinc-900/40 p-8 rounded-[2rem] border border-white/5 hover:border-amber-500/50 transition-all flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="text-center md:text-left">
-                    <h3 class="text-2xl font-bold group-hover:text-amber-500 transition">Pezinho & Acabamento</h3>
-                    <p class="text-zinc-500 mt-2">Manutenção rápida para manter o visual sempre em dia.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12">
+                <div class="text-center">
+                    <span class="text-4xl block mb-4">🎯</span>
+                    <h3 class="text-white font-bold uppercase mb-2">Precisão</h3>
+                    <p class="text-sm text-zinc-500">Técnicas milimétricas para um acabamento impecável.</p>
                 </div>
-                <div class="flex items-center gap-8">
-                    <span class="text-3xl font-black text-amber-500">R$ 30</span>
-                    <a href="contato.html" class="bg-white text-black px-6 py-3 rounded-xl font-bold text-xs uppercase hover:bg-amber-500 transition">Agendar</a>
+                <div class="text-center">
+                    <span class="text-4xl block mb-4">🤖</span>
+                    <h3 class="text-white font-bold uppercase mb-2">Tecnologia</h3>
+                    <p class="text-sm text-zinc-500">O uso da IA para personalizar sua experiência.</p>
+                </div>
+                <div class="text-center">
+                    <span class="text-4xl block mb-4">🥃</span>
+                    <h3 class="text-white font-bold uppercase mb-2">Conforto</h3>
+                    <p class="text-sm text-zinc-500">Um ambiente premium feito para você relaxar.</p>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <footer class="mt-24 text-center">
+            <p class="text-zinc-500 text-sm mb-6 uppercase tracking-widest">Pronto para encontrar seu novo estilo?</p>
+            <a href="ia-tryon.html" class="inline-block bg-white text-black px-10 py-4 rounded-full font-black text-sm uppercase transition hover:bg-amber-500">Começar Simulação IA</a>
+        </footer>
     </main>
 
 </body>
