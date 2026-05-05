@@ -4,41 +4,113 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estúdio Prumo | Barbearia Premium</title>
+  
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    
+    .title-font {
+      font-family: 'Playfair Display', sans-serif;
+    }
+
+    .hero-bg {
+      background-image: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.75)), 
+                        url('assets/images/hero.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .nav-link {
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    
+    .nav-link:after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -4px;
+      left: 0;
+      background-color: #d97706;
+      transition: width 0.3s ease;
+    }
+    
+    .nav-link:hover:after {
+      width: 100%;
+    }
+  </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100">
+
   <!-- Navbar -->
-  <nav class="bg-black fixed w-full z-50">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+  <nav class="bg-black/95 backdrop-blur-md fixed w-full z-50 border-b border-zinc-800">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <img src="assets/images/logo.png" alt="Logo" class="h-10">
-        <span class="text-2xl font-bold tracking-wider">ESTÚDIO PRUMO</span>
+        <img src="assets/images/logo.png" alt="Estúdio Prumo" class="h-11 w-auto">
+        <span class="text-2xl font-bold tracking-widest title-font">ESTÚDIO PRUMO</span>
       </div>
-      <div class="hidden md:flex gap-8">
-        <a href="index.html" class="hover:text-amber-500">Início</a>
-        <a href="servicos.html" class="hover:text-amber-500">Serviços</a>
-        <a href="ia-tryon.html" class="hover:text-amber-500 font-semibold text-amber-500">Experimente com IA</a>
-        <a href="sobre.html" class="hover:text-amber-500">Sobre</a>
-        <a href="contato.html" class="hover:text-amber-500">Contato</a>
+
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+        <a href="index.html" class="nav-link hover:text-amber-500">Início</a>
+        <a href="servicos.html" class="nav-link hover:text-amber-500">Serviços</a>
+        <a href="ia-tryon.html" class="nav-link text-amber-500 font-semibold">Experimente com IA</a>
+        <a href="sobre.html" class="nav-link hover:text-amber-500">Sobre</a>
+        <a href="contato.html" class="nav-link hover:text-amber-500">Contato</a>
       </div>
-      <a href="ia-tryon.html" class="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-full font-medium">
-        Testar Corte com IA
+
+      <a href="ia-tryon.html" 
+         class="bg-amber-600 hover:bg-amber-500 transition-all duration-300 px-8 py-3.5 rounded-full font-semibold text-sm tracking-wider">
+        TESTAR CORTE COM IA →
       </a>
     </div>
   </nav>
 
   <!-- Hero -->
-  <section class="h-screen bg-[url('assets/images/hero.jpg')] bg-cover bg-center flex items-center">
+  <section class="hero-bg h-screen flex items-center relative">
     <div class="max-w-7xl mx-auto px-6 text-center">
-      <h1 class="text-6xl md:text-7xl font-bold mb-6">Encontre seu <span class="text-amber-500">prumo</span>.</h1>
-      <p class="text-xl mb-10 max-w-2xl mx-auto">Barbearia moderna com tecnologia de IA para você visualizar o corte antes de sentar na cadeira.</p>
-      <a href="ia-tryon.html" class="inline-block bg-amber-600 hover:bg-amber-500 text-xl px-10 py-5 rounded-full font-semibold">
-        Experimentar agora →
-      </a>
+      <h1 class="text-6xl md:text-7xl font-bold mb-6 leading-tight title-font">
+        Encontre seu <span class="text-amber-500">prumo</span>.
+      </h1>
+      <p class="text-xl md:text-2xl mb-12 max-w-2xl mx-auto text-zinc-300">
+        Barbearia premium com <span class="text-amber-400 font-medium">inteligência artificial</span> para visualizar seu corte antes de sentar na cadeira.
+      </p>
+      
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="ia-tryon.html" 
+           class="inline-block bg-amber-600 hover:bg-amber-500 transition-all duration-300 text-xl px-12 py-6 rounded-full font-semibold">
+          Experimentar agora
+        </a>
+        <a href="#servicos" 
+           class="inline-block border-2 border-zinc-400 hover:border-white transition-all duration-300 text-xl px-10 py-6 rounded-full font-medium">
+          Ver serviços
+        </a>
+      </div>
+
+      <div class="mt-16 flex justify-center gap-8 text-sm text-zinc-400">
+        <div>✓ Agendamento Online</div>
+        <div>✓ Produtos Premium</div>
+        <div>✓ Ambiente Exclusivo</div>
+      </div>
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center text-xs tracking-widest">
+      <span class="mb-3 opacity-75">ROLE PARA BAIXO</span>
+      <div class="w-px h-12 bg-gradient-to-b from-transparent via-amber-500 to-transparent"></div>
     </div>
   </section>
 
-  <!-- Mais seções: Serviços em destaque, Barbeiros, Depoimentos, etc. -->
 </body>
 </html>
