@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobre Nós | Estúdio Prumo</title>
+    <title>Serviços | Estúdio Prumo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -17,6 +17,15 @@
             width: 100%;
             border: none;
         }
+        .service-card {
+            background: rgba(24, 24, 27, 0.4);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .service-card:hover {
+            border-color: rgba(245, 158, 11, 0.5);
+            transform: translateY(-5px);
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 antialiased">
@@ -29,65 +38,112 @@
             
             <div class="hidden md:flex gap-8 items-center">
                 <a href="index.html" class="text-sm font-medium hover:text-amber-500 transition">Início</a>
-                <a href="servicos.html" class="text-sm font-medium hover:text-amber-500 transition">Serviços</a>
+                <a href="servicos.html" class="text-sm font-bold text-amber-500 transition border-b-2 border-amber-500">Serviços</a>
                 <a href="ia-tryon.html" class="text-sm font-medium hover:text-amber-400 transition">Experimente com IA</a>
-                <a href="sobre.html" class="text-sm font-bold text-amber-500 transition border-b-2 border-amber-500">Sobre</a>
+                <a href="sobre.html" class="text-sm font-medium hover:text-amber-500 transition">Sobre</a>
                 <a href="contato.html" class="text-sm font-medium hover:text-amber-500 transition">Contato</a>
                 <a href="contato.html" class="bg-amber-600 hover:bg-amber-500 px-6 py-2 rounded-full text-xs font-black text-black transition uppercase">Agendar</a>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-4xl mx-auto pt-32 pb-20 px-6">
-        <header class="mb-16">
-            <h1 class="text-5xl md:text-7xl font-black mb-6 uppercase tracking-tighter">Nossa <span class="text-amber-500">Essência</span></h1>
-            <hr class="gradient-border mb-8">
+    <main class="max-w-5xl mx-auto pt-32 pb-20 px-6">
+        <header class="text-center mb-16">
+            <span class="text-amber-500 font-bold tracking-[0.3em] uppercase text-xs">Tabela de Preços</span>
+            <h1 class="text-5xl md:text-7xl font-black mb-6 uppercase tracking-tighter">Serviços & <span class="text-amber-500">Cortes</span></h1>
+            <hr class="gradient-border">
         </header>
 
-        <section class="space-y-12 text-zinc-300 leading-relaxed text-lg">
-            <div class="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-white mb-4 uppercase tracking-widest">O Trabalho</h2>
-                    <p>
-                        No **Estúdio Prumo**, acreditamos que um corte de cabelo não é apenas estética, é confiança. Nosso trabalho funde a **tradicional barbearia clássica** — com toalhas quentes e navalhas afiadas — à precisão do **visagismo moderno**. 
-                    </p>
-                    <p class="mt-4">
-                        Cada cliente é único. Por isso, analisamos as linhas do rosto, a textura dos fios e o estilo de vida para entregar um resultado que esteja em total "prumo" com sua identidade.
-                    </p>
+        <div class="mb-16">
+            <div class="flex items-center gap-4 mb-8">
+                <h2 class="text-2xl font-bold uppercase tracking-widest text-white">Cortes de Cabelo</h2>
+                <div class="h-[1px] bg-zinc-800 flex-1"></div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="service-card border border-white/5 p-6 rounded-3xl flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-amber-500 uppercase">Corte Prumo</h3>
+                        <p class="text-zinc-500 text-sm">Degradê, Social ou Scissor Cut. Inclui lavagem.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-black text-white italic">R$ 80</span>
+                    </div>
                 </div>
-                <div class="bg-zinc-900/50 p-8 rounded-[2rem] border border-white/5">
-                    <h2 class="text-2xl font-bold text-amber-500 mb-4 uppercase tracking-widest">A Inovação</h2>
-                    <p class="text-sm italic">
-                        "E se você pudesse ver o futuro?"
-                    </p>
-                    <p class="mt-4">
-                        Somos pioneiros na implementação de **IA (Inteligência Artificial)** no processo de escolha do corte. Através do nosso simulador, você visualiza diferentes estilos antes mesmo de tocarmos na tesoura, eliminando a dúvida e garantindo satisfação total.
-                    </p>
+
+                <div class="service-card border border-white/5 p-6 rounded-3xl flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-amber-500 uppercase">Máquina Full</h3>
+                        <p class="text-zinc-500 text-sm">Corte prático feito inteiramente na máquina.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-black text-white italic">R$ 55</span>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12">
-                <div class="text-center">
-                    <span class="text-4xl block mb-4">🎯</span>
-                    <h3 class="text-white font-bold uppercase mb-2">Precisão</h3>
-                    <p class="text-sm text-zinc-500">Técnicas milimétricas para um acabamento impecável.</p>
+        <div class="mb-16">
+            <div class="flex items-center gap-4 mb-8">
+                <h2 class="text-2xl font-bold uppercase tracking-widest text-white">Barboterapia</h2>
+                <div class="h-[1px] bg-zinc-800 flex-1"></div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="service-card border border-white/5 p-6 rounded-3xl flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-amber-500 uppercase">Barba Tradicional</h3>
+                        <p class="text-zinc-500 text-sm">Alinhamento com navalha e toalha quente.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-black text-white italic">R$ 60</span>
+                    </div>
                 </div>
-                <div class="text-center">
-                    <span class="text-4xl block mb-4">🤖</span>
-                    <h3 class="text-white font-bold uppercase mb-2">Tecnologia</h3>
-                    <p class="text-sm text-zinc-500">O uso da IA para personalizar sua experiência.</p>
+
+                <div class="service-card border border-white/5 p-6 rounded-3xl flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-amber-500 uppercase">Pezinho / Acabamento</h3>
+                        <p class="text-zinc-500 text-sm">Manutenção rápida dos contornos.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-black text-white italic">R$ 30</span>
+                    </div>
                 </div>
-                <div class="text-center">
-                    <span class="text-4xl block mb-4">🥃</span>
-                    <h3 class="text-white font-bold uppercase mb-2">Conforto</h3>
-                    <p class="text-sm text-zinc-500">Um ambiente premium feito para você relaxar.</p>
+            </div>
+        </div>
+
+        <div class="relative overflow-hidden bg-amber-600 rounded-[2.5rem] p-8 md:p-12 mb-16">
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="text-center md:text-left">
+                    <span class="bg-black text-amber-500 text-[10px] font-black px-3 py-1 rounded-full uppercase">Mais Procurado</span>
+                    <h2 class="text-4xl md:text-5xl font-black text-black uppercase mt-4 leading-none italic">Combo Experience</h2>
+                    <p class="text-amber-950 font-medium mt-2">Corte + Barba + Consultoria de Visagismo com IA</p>
                 </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-5xl font-black text-black italic">R$ 130</span>
+                    <a href="contato.html" class="mt-4 bg-black text-white px-8 py-3 rounded-full font-black text-xs uppercase hover:scale-105 transition-transform">Agendar Combo</a>
+                </div>
+            </div>
+            <div class="absolute right-0 top-0 opacity-10 text-8xl font-black italic -mr-10 -mt-5 text-black">PRUMO</div>
+        </div>
+
+        <section class="grid md:grid-cols-3 gap-8 py-10 border-t border-white/5">
+            <div class="text-center">
+                <h4 class="text-amber-500 font-bold uppercase mb-2">Visagismo Digital</h4>
+                <p class="text-zinc-500 text-sm">Usamos IA para sugerir o corte ideal para seu formato de rosto.</p>
+            </div>
+            <div class="text-center">
+                <h4 class="text-amber-500 font-bold uppercase mb-2">Produtos Premium</h4>
+                <p class="text-zinc-500 text-sm">Linha exclusiva de óleos, pomadas e pós-barba.</p>
+            </div>
+            <div class="text-center">
+                <h4 class="text-amber-500 font-bold uppercase mb-2">Wi-Fi & Bar</h4>
+                <p class="text-zinc-500 text-sm">Ambiente climatizado com café cortesia e bebidas geladas.</p>
             </div>
         </section>
 
-        <footer class="mt-24 text-center">
-            <p class="text-zinc-500 text-sm mb-6 uppercase tracking-widest">Pronto para encontrar seu novo estilo?</p>
-            <a href="ia-tryon.html" class="inline-block bg-white text-black px-10 py-4 rounded-full font-black text-sm uppercase transition hover:bg-amber-500">Começar Simulação IA</a>
+        <footer class="mt-20 text-center">
+            <p class="text-zinc-600 text-xs uppercase tracking-widest">&copy; 2026 Estúdio Prumo - Todos os direitos reservados.</p>
         </footer>
     </main>
 
