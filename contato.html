@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contato | Estúdio Prumo</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Suaviza o scroll e melhora a renderização de fontes */
+        html { scroll-behavior: smooth; }
+        body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100">
-    <nav class="fixed top-0 w-full z-50 bg-black/90 border-b border-white/10 px-6 py-4">
+<body class="bg-zinc-950 text-zinc-100 antialiased">
+    
+    <nav class="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-sm border-b border-white/10 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-amber-500 tracking-tighter">ESTÚDIO PRUMO</a>
+            <a href="index.html" class="text-2xl font-bold text-amber-500 tracking-tighter hover:text-amber-400 transition">ESTÚDIO PRUMO</a>
             <a href="servicos.html" class="text-sm border border-amber-600 px-4 py-1 rounded-full text-amber-500 hover:bg-amber-600 hover:text-white transition">Ver Preços</a>
         </div>
     </nav>
@@ -23,14 +29,14 @@
                 
                 <div class="space-y-6">
                     <div class="flex items-start gap-4">
-                        <span class="text-amber-500 text-xl">📍</span>
+                        <span class="text-amber-500 text-xl" aria-hidden="true">📍</span>
                         <div>
                             <p class="font-bold">Endereço</p>
-                            <p class="text-zinc-500">Rua da Barbearia, 500 - Bairro Centro<br>Curitiba - PR</p>
+                            <address class="text-zinc-500 not-italic">Rua da Barbearia, 500 - Bairro Centro<br>Curitiba - PR</address>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
-                        <span class="text-amber-500 text-xl">⏰</span>
+                        <span class="text-amber-500 text-xl" aria-hidden="true">⏰</span>
                         <div>
                             <p class="font-bold">Horários</p>
                             <p class="text-zinc-500">Segunda a Sexta: 09h às 20h<br>Sábados: 08h às 18h</p>
@@ -38,23 +44,38 @@
                     </div>
                 </div>
 
-                <a href="https://wa.me/5541996484980" target="_blank" class="mt-12 inline-flex items-center justify-center gap-3 w-full bg-green-600 hover:bg-green-500 text-white font-black py-5 rounded-3xl text-xl transition-transform hover:scale-[1.02]">
+                <a href="https://wa.me/5541996484980?text=Olá! Gostaria de agendar um horário no Estúdio Prumo." 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="mt-12 inline-flex items-center justify-center gap-3 w-full bg-green-600 hover:bg-green-500 text-white font-black py-5 rounded-3xl text-xl transition-transform active:scale-95">
                     <span>CHAMAR NO WHATSAPP</span>
                 </a>
             </div>
 
             <div class="bg-zinc-900/30 p-8 rounded-[40px] border border-zinc-800">
                 <h3 class="text-2xl font-bold mb-6">Deixe seu recado</h3>
-                <form action="#" class="space-y-4">
-                    <input type="text" placeholder="Nome Completo" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none">
-                    <input type="tel" placeholder="Seu Telefone" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none">
-                    <select class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none text-zinc-400">
-                        <option>Selecione o Barbeiro</option>
-                        <option>Barbeiro Wevergton</option>
-                        <option>Barbeiro Michel</option>
+                
+                <form action="#" method="POST" class="space-y-4">
+                    <input type="text" name="nome" placeholder="Nome Completo" required 
+                           class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none transition-all">
+                    
+                    <input type="tel" name="telefone" placeholder="Seu Telefone" required
+                           class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none transition-all">
+                    
+                    <select name="barbeiro" required
+                            class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none text-zinc-400 appearance-none">
+                        <option value="" disabled selected>Selecione o Barbeiro</option>
+                        <option value="wevergton">Barbeiro Wevergton</option>
+                        <option value="michel">Barbeiro Michel</option>
                     </select>
-                    <textarea placeholder="Alguma observação?" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
-                    <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-bold transition">ENVIAR SOLICITAÇÃO</button>
+                    
+                    <textarea name="mensagem" placeholder="Alguma observação?" rows="4" 
+                              class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none transition-all"></textarea>
+                    
+                    <button type="submit" 
+                            class="w-full bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-bold transition-all active:scale-[0.98]">
+                        ENVIAR SOLICITAÇÃO
+                    </button>
                 </form>
             </div>
 
