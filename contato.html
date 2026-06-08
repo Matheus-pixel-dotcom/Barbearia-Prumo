@@ -1,85 +1,75 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contato | Estúdio Prumo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Suaviza o scroll e melhora a renderização de fontes */
-        html { scroll-behavior: smooth; }
-        body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Agende seu horário no Estúdio Prumo pelo WhatsApp ou envie uma solicitação de atendimento.">
+  <title>Contato e Agendamento | Estúdio Prumo</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-zinc-950 text-zinc-100 antialiased">
-    
-    <nav class="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-sm border-b border-white/10 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-amber-500 tracking-tighter hover:text-amber-400 transition">ESTÚDIO PRUMO</a>
-            <a href="servicos.html" class="text-sm border border-amber-600 px-4 py-1 rounded-full text-amber-500 hover:bg-amber-600 hover:text-white transition">Ver Preços</a>
-        </div>
+<body>
+  <header class="site-header">
+    <nav class="navbar container" aria-label="Navegação principal">
+      <a class="brand" href="index.html"><span class="brand-mark">P</span>Estúdio Prumo</a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menu">Menu</button>
+      <div class="nav-links" data-nav-links>
+        <a href="index.html">Início</a>
+        <a href="servicos.html">Serviços</a>
+        <a href="ia-tryon.html">Experimente com IA</a>
+        <a href="sobre.html">Sobre</a>
+        <a class="active" href="contato.html">Contato</a>
+        <a class="btn btn-primary" href="contato.html">Agendar</a>
+      </div>
     </nav>
+  </header>
 
-    <main class="max-w-6xl mx-auto pt-32 pb-20 px-6">
-        <div class="grid md:grid-cols-2 gap-16">
-            
-            <div>
-                <h2 class="text-5xl font-bold mb-8 uppercase tracking-tighter">Agende sua <span class="text-amber-500">Visita</span></h2>
-                <p class="text-zinc-400 mb-10 text-lg">Escolha o melhor horário e venha dar um upgrade no seu estilo.</p>
-                
-                <div class="space-y-6">
-                    <div class="flex items-start gap-4">
-                        <span class="text-amber-500 text-xl" aria-hidden="true">📍</span>
-                        <div>
-                            <p class="font-bold">Endereço</p>
-                            <address class="text-zinc-500 not-italic">Rua da Barbearia, 500 - Bairro Centro<br>Curitiba - PR</address>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-4">
-                        <span class="text-amber-500 text-xl" aria-hidden="true">⏰</span>
-                        <div>
-                            <p class="font-bold">Horários</p>
-                            <p class="text-zinc-500">Segunda a Sexta: 09h às 20h<br>Sábados: 08h às 18h</p>
-                        </div>
-                    </div>
-                </div>
-
-                <a href="https://wa.me/5541996484980?text=Olá! Gostaria de agendar um horário no Estúdio Prumo." 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   class="mt-12 inline-flex items-center justify-center gap-3 w-full bg-green-600 hover:bg-green-500 text-white font-black py-5 rounded-3xl text-xl transition-transform active:scale-95">
-                    <span>CHAMAR NO WHATSAPP</span>
-                </a>
-            </div>
-
-            <div class="bg-zinc-900/30 p-8 rounded-[40px] border border-zinc-800">
-                <h3 class="text-2xl font-bold mb-6">Deixe seu recado</h3>
-                
-                <form action="#" method="POST" class="space-y-4">
-                    <input type="text" name="nome" placeholder="Nome Completo" required 
-                           class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none transition-all">
-                    
-                    <input type="tel" name="telefone" placeholder="Seu Telefone" required
-                           class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none transition-all">
-                    
-                    <select name="barbeiro" required
-                            class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none text-zinc-400 appearance-none">
-                        <option value="" disabled selected>Selecione o Barbeiro</option>
-                        <option value="wevergton">Barbeiro Wevergton</option>
-                        <option value="michel">Barbeiro Michel</option>
-                    </select>
-                    
-                    <textarea name="mensagem" placeholder="Alguma observação?" rows="4" 
-                              class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 focus:ring-2 focus:ring-amber-500 outline-none transition-all"></textarea>
-                    
-                    <button type="submit" 
-                            class="w-full bg-amber-600 hover:bg-amber-500 py-4 rounded-2xl font-bold transition-all active:scale-[0.98]">
-                        ENVIAR SOLICITAÇÃO
-                    </button>
-                </form>
-            </div>
-
+  <main>
+    <section class="hero">
+      <div class="container grid-2">
+        <div>
+          <span class="eyebrow">Agendamento</span>
+          <h1 class="display-title">Marque sua <span class="text-gold">visita.</span></h1>
+          <p class="lead">Preencha os dados para montar uma mensagem automática no WhatsApp ou chame diretamente a equipe.</p>
+          <ul class="feature-list">
+            <li><strong>Endereço:</strong> Rua da Barbearia, 500 — Centro, Curitiba - PR.</li>
+            <li><strong>Horários:</strong> segunda a sexta, 09h às 20h; sábado, 08h às 18h.</li>
+            <li><strong>Resposta:</strong> confirmação pelo WhatsApp conforme disponibilidade da agenda.</li>
+          </ul>
+          <div class="actions">
+            <a class="btn btn-whatsapp" href="https://wa.me/5541996484980?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20hor%C3%A1rio%20no%20Est%C3%BAdio%20Prumo." target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
+            <a class="btn btn-outline" href="servicos.html">Ver preços</a>
+          </div>
         </div>
-    </main>
+
+        <section class="panel" aria-labelledby="form-title">
+          <h2 id="form-title" class="section-title" style="font-size:clamp(2rem,4vw,3.2rem)">Solicitação rápida.</h2>
+          <p>Ao enviar, abriremos o WhatsApp com sua mensagem já preenchida.</p>
+          <form class="form-grid" data-contact-form>
+            <input class="field" type="text" name="nome" placeholder="Nome completo" autocomplete="name" required>
+            <input class="field" type="tel" name="telefone" placeholder="Seu telefone" autocomplete="tel" required>
+            <select class="field" name="servico" required>
+              <option value="" disabled selected>Serviço desejado</option>
+              <option value="Corte Prumo">Corte Prumo</option>
+              <option value="Máquina Full">Máquina Full</option>
+              <option value="Barba Tradicional">Barba Tradicional</option>
+              <option value="Combo Experience">Combo Experience</option>
+              <option value="Visagismo Digital">Visagismo Digital</option>
+            </select>
+            <select class="field" name="barbeiro" required>
+              <option value="" disabled selected>Barbeiro de preferência</option>
+              <option value="Wevergton">Barbeiro Wevergton</option>
+              <option value="Michel">Barbeiro Michel</option>
+              <option value="Sem preferência">Sem preferência</option>
+            </select>
+            <textarea class="field" name="mensagem" rows="4" placeholder="Melhor dia, horário ou observação"></textarea>
+            <button class="btn btn-primary" type="submit">Enviar solicitação</button>
+          </form>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container">© 2026 Estúdio Prumo — Atendimento com confirmação pelo WhatsApp.</div></footer>
+  <script src="script.js" defer></script>
 </body>
 </html>

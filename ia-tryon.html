@@ -1,154 +1,93 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador IA | Estúdio Prumo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .glass-panel {
-            background: rgba(24, 24, 27, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Simulador de visagismo do Estúdio Prumo para testar estilos antes de agendar.">
+  <title>Simulador IA | Estúdio Prumo</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-zinc-950 text-zinc-100 pt-24 min-h-screen">
-    <nav class="fixed top-0 w-full z-50 bg-black border-b border-white/10 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-amber-500">ESTÚDIO PRUMO</a>
-            <div class="flex gap-4">
-                <a href="index.html" class="text-sm hover:text-amber-500 transition">Início</a>
-                <a href="servicos.html" class="text-sm hover:text-amber-500 transition">Serviços</a>
-            </div>
-        </div>
+<body>
+  <header class="site-header">
+    <nav class="navbar container" aria-label="Navegação principal">
+      <a class="brand" href="index.html"><span class="brand-mark">P</span>Estúdio Prumo</a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menu">Menu</button>
+      <div class="nav-links" data-nav-links>
+        <a href="index.html">Início</a>
+        <a href="servicos.html">Serviços</a>
+        <a class="active" href="ia-tryon.html">Experimente com IA</a>
+        <a href="sobre.html">Sobre</a>
+        <a href="contato.html">Contato</a>
+        <a class="btn btn-primary" href="contato.html">Agendar</a>
+      </div>
     </nav>
+  </header>
 
-    <main class="max-w-6xl mx-auto p-6">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl font-bold mb-2 uppercase tracking-tighter">Simulador de <span class="text-amber-500">Visagismo</span></h1>
-            <p class="text-zinc-400">Visualize seu novo estilo em segundos.</p>
-        </header>
+  <main>
+    <section class="hero" style="padding-bottom:40px">
+      <div class="container">
+        <span class="eyebrow">Visagismo digital</span>
+        <h1 class="display-title">Experimente antes de <span class="text-gold">cortar.</span></h1>
+        <p class="lead">Suba uma foto, escolha um estilo e receba uma recomendação visual simulada para chegar ao atendimento com mais segurança.</p>
+      </div>
+    </section>
 
-        <div class="grid md:grid-cols-2 gap-12">
-            <div class="space-y-4">
-                <div id="drop-area" class="border-2 border-dashed border-zinc-700 rounded-3xl p-10 text-center bg-zinc-900/50 hover:border-amber-500 transition cursor-pointer relative h-[450px] flex items-center justify-center overflow-hidden">
-                    <input type="file" id="file-input" class="hidden" accept="image/*">
-                    
-                    <div id="instruction-text" class="z-10">
-                        <span class="text-5xl">📸</span>
-                        <p class="mt-4 font-medium">Suba sua foto aqui</p>
-                    </div>
-
-                    <div id="ia-overlay" class="absolute inset-0 bg-black/60 z-20 hidden flex flex-col items-center justify-center">
-                        <div class="animate-spin h-12 w-12 border-4 border-amber-500 border-t-transparent rounded-full mb-4"></div>
-                        <p class="text-amber-500 font-bold tracking-widest text-sm">IA ANALISANDO SIMETRIA...</p>
-                    </div>
-
-                    <img id="user-photo" class="absolute inset-0 w-full h-full object-cover hidden">
-                </div>
-                <button id="reset-btn" class="hidden w-full py-3 bg-zinc-900 rounded-xl text-sm text-zinc-400 hover:text-white transition">Trocar foto</button>
+    <section class="section" style="padding-top:25px">
+      <div class="container grid-2">
+        <div class="panel">
+          <div id="drop-area" class="tryon-zone" tabindex="0" role="button" aria-label="Enviar foto para simulação">
+            <input type="file" id="file-input" class="hidden" accept="image/*">
+            <div id="instruction-text">
+              <p style="font-size:3rem;margin-bottom:8px">📸</p>
+              <h2 style="margin-bottom:8px">Suba sua foto aqui</h2>
+              <p>Toque ou arraste uma imagem para iniciar a simulação.</p>
             </div>
-
-            <div class="space-y-8">
-                <div id="style-selection">
-                    <h3 class="text-amber-500 font-bold mb-6 uppercase text-sm tracking-widest">Escolha um estilo para aplicar:</h3>
-                    
-                    <div class="grid grid-cols-1 gap-4">
-                        <button onclick="simular('Executive Contour', 'Clássico')" class="bg-zinc-900 p-5 rounded-2xl border border-zinc-800 hover:border-amber-500 transition text-left flex justify-between items-center group">
-                            <div>
-                                <p class="font-bold group-hover:text-amber-500">Executive Contour</p>
-                                <p class="text-xs text-zinc-500">Acabamento polido e social</p>
-                            </div>
-                            <span class="text-zinc-700 group-hover:text-amber-500 text-xl">→</span>
-                        </button>
-
-                        <button onclick="simular('Mid Fade Moderno', 'Moderno')" class="bg-zinc-900 p-5 rounded-2xl border border-zinc-800 hover:border-amber-500 transition text-left flex justify-between items-center group">
-                            <div>
-                                <p class="font-bold group-hover:text-amber-500">Mid Fade</p>
-                                <p class="text-xs text-zinc-500">Degradê médio com textura</p>
-                            </div>
-                            <span class="text-zinc-700 group-hover:text-amber-500 text-xl">→</span>
-                        </button>
-
-                        <button onclick="simular('Buzz Cut c/ Degradê', 'Moderno')" class="bg-zinc-900 p-5 rounded-2xl border border-zinc-800 hover:border-amber-500 transition text-left flex justify-between items-center group">
-                            <div>
-                                <p class="font-bold group-hover:text-amber-500">Buzz Cut</p>
-                                <p class="text-xs text-zinc-500">Raspado moderno e prático</p>
-                            </div>
-                            <span class="text-zinc-700 group-hover:text-amber-500 text-xl">→</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div id="final-card" class="hidden glass-panel p-8 rounded-3xl animate-in fade-in duration-500 border border-amber-500/30">
-                    <h3 class="text-2xl font-bold text-amber-500 mb-2 text-center">Combinação Perfeita!</h3>
-                    <p class="text-zinc-300 text-center mb-6">A IA identificou que o estilo <strong id="res-nome" class="text-white"></strong> valoriza seu formato de rosto.</p>
-                    <div class="space-y-3">
-                        <a href="https://wa.me/SEUNUMERO" class="block w-full bg-amber-600 hover:bg-amber-500 text-black font-black text-center py-4 rounded-xl transition shadow-lg shadow-amber-600/20">AGENDAR ESSE CORTE</a>
-                        <button onclick="location.reload()" class="block w-full text-zinc-500 text-xs hover:text-zinc-300 transition">Reiniciar Simulador</button>
-                    </div>
-                </div>
+            <img id="user-photo" class="hidden" alt="Foto enviada pelo usuário">
+            <div id="ia-overlay" class="overlay hidden">
+              <div style="display:grid;gap:14px;place-items:center">
+                <div class="loader" aria-hidden="true"></div>
+                <strong class="text-gold">Analisando proporção e simetria...</strong>
+              </div>
             </div>
+          </div>
+          <button id="reset-btn" type="button" class="btn btn-outline hidden" style="width:100%;margin-top:14px">Trocar foto</button>
         </div>
-    </main>
 
-    <script>
-        const fileInput = document.getElementById('file-input');
-        const dropArea = document.getElementById('drop-area');
-        const userPhoto = document.getElementById('user-photo');
-        const instructionText = document.getElementById('instruction-text');
-        const resetBtn = document.getElementById('reset-btn');
-        const iaOverlay = document.getElementById('ia-overlay');
+        <div>
+          <section id="style-selection" class="panel">
+            <span class="eyebrow">Escolha o shape</span>
+            <h2 class="section-title" style="font-size:clamp(2rem,4vw,3.4rem)">Estilos sugeridos.</h2>
+            <div class="form-grid">
+              <button class="style-option" type="button" data-style-name="Executive Contour" data-style-type="Clássico social">
+                <span><strong>Executive Contour</strong><br><small>Acabamento polido, social e elegante.</small></span>
+                <span>→</span>
+              </button>
+              <button class="style-option" type="button" data-style-name="Mid Fade Moderno" data-style-type="Moderno texturizado">
+                <span><strong>Mid Fade</strong><br><small>Degradê médio com textura e manutenção prática.</small></span>
+                <span>→</span>
+              </button>
+              <button class="style-option" type="button" data-style-name="Buzz Cut com Degradê" data-style-type="Minimalista e forte">
+                <span><strong>Buzz Cut</strong><br><small>Raspado moderno com contorno limpo.</small></span>
+                <span>→</span>
+              </button>
+            </div>
+          </section>
 
-        dropArea.addEventListener('click', () => fileInput.click());
+          <section id="final-card" class="panel hidden" style="border-color:rgba(245,158,11,0.45)">
+            <span class="eyebrow">Resultado</span>
+            <h2 class="section-title" style="font-size:clamp(2rem,4vw,3.4rem)">Combinação encontrada.</h2>
+            <p>A simulação indica que <strong id="res-nome" class="text-gold"></strong> combina com um perfil <strong id="res-tipo"></strong>. Leve essa referência para o barbeiro ajustar proporções, textura e acabamento.</p>
+            <div class="actions">
+              <a id="result-cta" class="btn btn-primary" href="https://wa.me/5541996484980" target="_blank" rel="noopener noreferrer">Agendar esse corte</a>
+              <button class="btn btn-outline" type="button" onclick="location.reload()">Reiniciar</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
 
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    userPhoto.src = event.target.result;
-                    userPhoto.classList.remove('hidden');
-                    instructionText.classList.add('hidden');
-                    resetBtn.classList.remove('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        resetBtn.onclick = () => {
-            userPhoto.classList.add('hidden');
-            instructionText.classList.remove('hidden');
-            resetBtn.classList.add('hidden');
-            document.getElementById('final-card').classList.add('hidden');
-            document.getElementById('style-selection').classList.remove('hidden');
-            fileInput.value = "";
-        };
-
-        function simular(nome, tipo) {
-            if (!userPhoto.src || userPhoto.classList.contains('hidden')) {
-                alert("Por favor, suba sua foto primeiro para simular!");
-                return;
-            }
-
-            // Inicia simulação visual
-            iaOverlay.classList.remove('hidden');
-            
-            // Simula o tempo de "processamento" da IA
-            setTimeout(() => {
-                iaOverlay.classList.add('hidden');
-                
-                // Exibe o card final sem mudar de página
-                document.getElementById('style-selection').classList.add('hidden');
-                const finalCard = document.getElementById('final-card');
-                finalCard.classList.remove('hidden');
-                document.getElementById('res-nome').innerText = nome;
-
-                // Scroll suave para o resultado
-                finalCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 3000);
-        }
-    </script>
+  <footer class="footer"><div class="container">© 2026 Estúdio Prumo — Simulação demonstrativa para orientar o atendimento.</div></footer>
+  <script src="script.js" defer></script>
 </body>
 </html>

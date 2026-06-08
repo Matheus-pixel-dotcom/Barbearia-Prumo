@@ -1,126 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estilos e Preços | Estúdio Prumo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-mask {
-            mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="0; url=servicos.html">
+  <title>Redirecionando | Estúdio Prumo</title>
+  <link rel="canonical" href="servicos.html">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-zinc-950 text-zinc-100 antialiased">
-    <nav class="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/10 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-amber-500 tracking-tighter hover:scale-105 transition">ESTÚDIO PRUMO</a>
-            <div class="hidden md:flex gap-8 items-center text-sm font-medium uppercase tracking-widest">
-                <a href="index.html" class="hover:text-amber-500 transition">Início</a>
-                <a href="servicos.html" class="text-amber-500">Serviços</a>
-                <a href="contato.html" class="bg-amber-600 px-4 py-2 rounded-full text-black font-bold hover:bg-amber-500 transition">Agendar</a>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-6xl mx-auto pt-32 pb-20 px-6">
-        <div class="text-center mb-16">
-            <span class="text-amber-500 font-bold tracking-[0.3em] uppercase text-xs">Lookbook 2026</span>
-            <h1 class="text-5xl md:text-7xl font-black mb-4 uppercase tracking-tighter">Escolha seu <span class="text-amber-500">Shape</span></h1>
-            <p class="text-zinc-400 max-w-xl mx-auto">Dos clássicos aos modernos com auxílio de IA, aqui o seu estilo é levado a sério.</p>
-        </div>
-
-        <section class="mb-20">
-            <div class="flex items-center gap-4 mb-10">
-                <h2 class="text-3xl font-black uppercase">Cortes de Cabelo</h2>
-                <div class="h-[2px] bg-amber-500/30 flex-1"></div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden group hover:border-amber-500/50 transition">
-                    <div class="h-64 bg-zinc-800 relative overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=800&auto=format&fit=crop" alt="Skin Fade" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">
-                        <div class="absolute top-4 right-4 bg-black/80 backdrop-blur px-3 py-1 rounded-full text-amber-500 font-bold text-sm">R$ 80</div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2 uppercase">Skin Fade / Degradê</h3>
-                        <p class="text-zinc-500 text-sm leading-relaxed">Laterais raspadas começando do zero com transição suave. Perfeito para um look limpo e moderno.</p>
-                    </div>
-                </div>
-
-                <div class="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden group hover:border-amber-500/50 transition">
-                    <div class="h-64 bg-zinc-800 relative overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1599351431247-f10b21817021?q=80&w=800&auto=format&fit=crop" alt="Corte Tesoura" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">
-                        <div class="absolute top-4 right-4 bg-black/80 backdrop-blur px-3 py-1 rounded-full text-amber-500 font-bold text-sm">R$ 90</div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2 uppercase">Scissor Cut (Tesoura)</h3>
-                        <p class="text-zinc-500 text-sm leading-relaxed">Corte clássico totalmente na tesoura, respeitando o caimento natural dos fios e o visagismo facial.</p>
-                    </div>
-                </div>
-
-                <div class="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden group hover:border-amber-500/50 transition">
-                    <div class="h-64 bg-zinc-800 relative overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1605497788044-5a32c7078486?q=80&w=800&auto=format&fit=crop" alt="Buzz Cut" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">
-                        <div class="absolute top-4 right-4 bg-black/80 backdrop-blur px-3 py-1 rounded-full text-amber-500 font-bold text-sm">R$ 50</div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2 uppercase">Buzz Cut (Militar)</h3>
-                        <p class="text-zinc-500 text-sm leading-relaxed">O minimalismo absoluto. Comprimento uniforme ou com leve degradê, prático para o dia a dia.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <div class="flex items-center gap-4 mb-10">
-                <h2 class="text-3xl font-black uppercase text-amber-500">Barboterapia</h2>
-                <div class="h-[2px] bg-zinc-800 flex-1"></div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="flex bg-zinc-900 border border-zinc-800 rounded-[32px] overflow-hidden group hover:border-amber-500/50 transition">
-                    <div class="w-1/3 h-full">
-                        <img src="https://images.unsplash.com/photo-1532710093739-9470acff878f?q=80&w=600&auto=format&fit=crop" alt="Barba Alinhada" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">
-                    </div>
-                    <div class="w-2/3 p-8 flex flex-col justify-center">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-xl font-bold uppercase leading-none">Barba Design</h3>
-                            <span class="text-amber-500 font-black">R$ 60</span>
-                        </div>
-                        <p class="text-zinc-500 text-sm">Alinhamento preciso com navalha, toalha quente e hidratação com óleos essenciais.</p>
-                    </div>
-                </div>
-
-                <div class="flex bg-zinc-900 border border-zinc-800 rounded-[32px] overflow-hidden group hover:border-amber-500/50 transition">
-                    <div class="w-1/3 h-full">
-                        <img src="https://images.unsplash.com/photo-1621607512214-68297480165e?q=80&w=600&auto=format&fit=crop" alt="Barba Lenhador" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">
-                    </div>
-                    <div class="w-2/3 p-8 flex flex-col justify-center">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-xl font-bold uppercase leading-none">Beard Sculpt</h3>
-                            <span class="text-amber-500 font-black">R$ 75</span>
-                        </div>
-                        <p class="text-zinc-500 text-sm">Escultura de barbas longas, retirada de volume estratégico e finalização com balm premium.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <div class="mt-20 bg-zinc-900 rounded-[40px] p-12 text-center border border-zinc-800">
-            <h2 class="text-3xl font-black mb-4">DÚVIDA NO ESTILO?</h2>
-            <p class="text-zinc-400 mb-8 max-w-lg mx-auto">Use nossa tecnologia de IA Try-On para simular como cada corte ficaria no seu rosto antes de passar a tesoura.</p>
-            <div class="flex flex-col md:flex-row gap-4 justify-center">
-                <a href="ia-tryon.html" class="border border-amber-500 text-amber-500 px-8 py-4 rounded-2xl font-bold hover:bg-amber-500 hover:text-black transition">TESTAR COM IA</a>
-                <a href="contato.html" class="bg-amber-600 text-black px-8 py-4 rounded-2xl font-bold hover:bg-amber-500 transition">AGENDAR AGORA</a>
-            </div>
-        </div>
-
-        <footer class="mt-20 text-center text-zinc-600 text-sm">
-            <p>&copy; 2026 Estúdio Prumo. Técnica, Ordem e Progresso.</p>
-        </footer>
-    </main>
+<body>
+  <main class="hero">
+    <div class="container panel">
+      <h1 class="section-title">Redirecionando para serviços.</h1>
+      <p>Se a página não abrir automaticamente, acesse <a class="text-gold" href="servicos.html">servicos.html</a>.</p>
+    </div>
+  </main>
 </body>
 </html>
