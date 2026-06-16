@@ -1,6 +1,10 @@
 const WHATSAPP_NUMBER = '5541996484980';
 const WHATSAPP_BASE = `https://wa.me/${WHATSAPP_NUMBER}`;
 
+// Supabase integration
+const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
+
 function buildWhatsappUrl(message) {
   return `${WHATSAPP_BASE}?text=${encodeURIComponent(message)}`;
 }
@@ -132,6 +136,14 @@ function initTryOn() {
           resultCta.href = buildWhatsappUrl(`Olá! Usei o simulador de visagismo do Estúdio Prumo e quero agendar o corte ${styleName}.`);
         }
         finalCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Salvar simulação no Supabase
+        if (typeof supabaseClient !== 'undefined') {
+          supabaseClient.saveFaceSimulation(styleName, styleType, {
+            source: 'photo-upload',
+            timestamp: new Date().toISOString()
+          }).catch(err => console.error('Erro ao salvar simulação:', err));
+        }
       }, 1400);
     });
   });
@@ -141,4 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileMenu();
   initContactForm();
   initTryOn();
+  
+  // Carregar cliente Supabase se disponível
+  const script = document.createElement('script');
+  script.src = 'supabase-client.js';
+  document.head.appendChild(script);
 });

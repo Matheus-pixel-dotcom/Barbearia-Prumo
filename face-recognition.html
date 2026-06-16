@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Reconhecimento facial em tempo real para simulação de visagismo do Estúdio Prumo.">
+  <title>Câmera IA | Estúdio Prumo</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .camera-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .camera-container {
+      position: relative;
+      background: var(--surface-strong);
+      border: 2px solid var(--line);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      aspect-ratio: 3/4;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .camera-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .face-detection-box {
+      border: 3px solid var(--gold);
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    }
+
+    .camera-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-camera {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background: var(--gold);
+      color: var(--bg);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-camera:hover {
+      background: var(--gold-2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-camera:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-camera.secondary {
+      background: transparent;
+      border: 2px solid var(--gold);
+      color: var(--gold);
+    }
+
+    .btn-camera.secondary:hover {
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .analysis-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .analysis-card {
+      background: var(--surface-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .analysis-title {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gold);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .face-metrics {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: rgba(245, 158, 11, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid var(--gold);
+    }
+
+    .metric-label {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .metric-value {
+      font-weight: 600;
+      color: var(--gold);
+    }
+
+    .style-recommendations {
+      display: grid;
+      gap: 12px;
+    }
+
+    .recommendation-item {
+      padding: 12px;
+      background: rgba(34, 197, 94, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid var(--green);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .recommendation-item:hover {
+      background: rgba(34, 197, 94, 0.1);
+      transform: translateX(4px);
+    }
+
+    .recommendation-title {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .recommendation-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(34, 197, 94, 0.1);
+      border-radius: 6px;
+      color: var(--green);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(245, 158, 11, 0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .camera-section {
+        grid-template-columns: 1fr;
+      }
+
+      .camera-container {
+        aspect-ratio: 1;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar container" aria-label="Navegação principal">
+      <a class="brand" href="index.html"><span class="brand-mark">P</span>Estúdio Prumo</a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menu">Menu</button>
+      <div class="nav-links" data-nav-links>
+        <a href="index.html">Início</a>
+        <a href="servicos.html">Serviços</a>
+        <a class="active" href="face-recognition.html">Câmera IA</a>
+        <a href="ia-tryon.html">Foto IA</a>
+        <a href="sobre.html">Sobre</a>
+        <a href="contato.html">Contato</a>
+        <a class="btn btn-primary" href="contato.html">Agendar</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:40px">
+      <div class="container">
+        <span class="eyebrow">Visagismo digital em tempo real</span>
+        <h1 class="display-title">Análise facial <span class="text-gold">instantânea.</span></h1>
+        <p class="lead">Ative sua câmera e receba recomendações de corte personalizadas em tempo real. Sem upload, sem espera.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:25px">
+      <div class="container">
+        <div class="camera-section">
+          <div>
+            <div class="camera-container">
+              <video id="video" autoplay playsinline></video>
+              <canvas id="canvas" class="hidden"></canvas>
+              <div class="camera-overlay">
+                <div id="face-box" class="face-detection-box hidden" style="width: 200px; height: 280px;"></div>
+              </div>
+            </div>
+            <div class="camera-controls">
+              <button id="start-btn" class="btn-camera" type="button">Iniciar câmera</button>
+              <button id="stop-btn" class="btn-camera secondary hidden" type="button">Parar câmera</button>
+              <button id="capture-btn" class="btn-camera hidden" type="button">Capturar</button>
+            </div>
+            <div style="margin-top: 16px; text-align: center;">
+              <div id="status" class="status-indicator hidden">
+                <span class="status-dot"></span>
+                <span>Câmera ativa</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-panel">
+            <div class="analysis-card">
+              <div class="analysis-title">Status da análise</div>
+              <div id="analysis-status" style="color: var(--muted); font-size: 0.875rem;">
+                Ative a câmera para iniciar a análise facial.
+              </div>
+            </div>
+
+            <div class="analysis-card hidden" id="metrics-card">
+              <div class="analysis-title">Proporções faciais detectadas</div>
+              <div class="face-metrics">
+                <div class="metric">
+                  <span class="metric-label">Formato do rosto</span>
+                  <span class="metric-value" id="face-shape">-</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Simetria</span>
+                  <span class="metric-value" id="symmetry">-</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Proporção fronte</span>
+                  <span class="metric-value" id="forehead-ratio">-</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Confiança</span>
+                  <span class="metric-value" id="confidence">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="analysis-card hidden" id="recommendations-card">
+              <div class="analysis-title">Estilos recomendados</div>
+              <div class="style-recommendations" id="recommendations-list"></div>
+            </div>
+
+            <div class="analysis-card hidden" id="action-card">
+              <a id="schedule-btn" class="btn-camera" href="https://wa.me/5541996484980" target="_blank" rel="noopener noreferrer">
+                Agendar com essa análise
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container">© 2026 Estúdio Prumo — Análise facial em tempo real para melhor visagismo.</div></footer>
+
+  <!-- Carregar Face-api.js para detecção facial -->
+  <script async defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
+  <script src="script.js" defer></script>
+  <script src="face-recognition.js" defer></script>
+</body>
+</html>
