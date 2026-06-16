@@ -6,6 +6,135 @@
   <meta name="description" content="Simulador de visagismo do Estúdio Prumo para testar estilos antes de agendar.">
   <title>Simulador IA | Estúdio Prumo</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .camera-input-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    .camera-controls-inline {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+      background: rgba(7, 7, 8, 0.9);
+      padding: 12px 16px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-camera-small {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      background: var(--gold);
+      color: var(--bg);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-camera-small:hover {
+      background: var(--gold-2);
+      transform: scale(1.05);
+    }
+
+    .btn-camera-small.secondary {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+
+    .btn-camera-small.secondary:hover {
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .btn-camera-small:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .camera-status {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 6px;
+      color: var(--green);
+      font-size: 0.75rem;
+      font-weight: 600;
+      z-index: 10;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .face-detection-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .face-box {
+      position: absolute;
+      border: 3px solid var(--gold);
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(245, 158, 11, 0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -28,7 +157,7 @@
       <div class="container">
         <span class="eyebrow">Visagismo digital</span>
         <h1 class="display-title">Experimente antes de <span class="text-gold">cortar.</span></h1>
-        <p class="lead">Suba uma foto, escolha um estilo e receba uma recomendação visual simulada para chegar ao atendimento com mais segurança.</p>
+        <p class="lead">Suba uma foto ou use a câmera para análise em tempo real. Receba uma recomendação visual simulada para chegar ao atendimento com mais segurança.</p>
       </div>
     </section>
 
@@ -37,12 +166,33 @@
         <div class="panel">
           <div id="drop-area" class="tryon-zone" tabindex="0" role="button" aria-label="Enviar foto para simulação">
             <input type="file" id="file-input" class="hidden" accept="image/*">
-            <div id="instruction-text">
+            <canvas id="canvas" class="hidden"></canvas>
+            
+            <!-- Modo Upload de Foto -->
+            <div id="instruction-text" class="hidden">
               <p style="font-size:3rem;margin-bottom:8px">📸</p>
               <h2 style="margin-bottom:8px">Suba sua foto aqui</h2>
               <p>Toque ou arraste uma imagem para iniciar a simulação.</p>
             </div>
+
+            <!-- Modo Câmera -->
+            <div id="camera-mode" class="camera-input-wrapper hidden">
+              <video id="video" autoplay playsinline></video>
+              <div class="face-detection-overlay" id="face-overlay"></div>
+              <div class="camera-status" id="camera-status" style="display: none;">
+                <span class="status-dot"></span>
+                <span>Câmera ativa</span>
+              </div>
+              <div class="camera-controls-inline">
+                <button id="capture-btn" type="button" class="btn-camera-small" title="Capturar análise">Capturar</button>
+                <button id="close-camera-btn" type="button" class="btn-camera-small secondary" title="Fechar câmera">Fechar</button>
+              </div>
+            </div>
+
+            <!-- Foto Capturada -->
             <img id="user-photo" class="hidden" alt="Foto enviada pelo usuário">
+            
+            <!-- Loading -->
             <div id="ia-overlay" class="overlay hidden">
               <div style="display:grid;gap:14px;place-items:center">
                 <div class="loader" aria-hidden="true"></div>
@@ -50,7 +200,11 @@
               </div>
             </div>
           </div>
-          <button id="reset-btn" type="button" class="btn btn-outline hidden" style="width:100%;margin-top:14px">Trocar foto</button>
+
+          <div style="display: flex; gap: 12px; margin-top: 14px;">
+            <button id="reset-btn" type="button" class="btn btn-outline hidden" style="flex: 1">Trocar foto</button>
+            <button id="camera-btn" type="button" class="btn btn-primary" style="flex: 1">📷 Usar câmera</button>
+          </div>
         </div>
 
         <div>
@@ -77,6 +231,11 @@
             <span class="eyebrow">Resultado</span>
             <h2 class="section-title" style="font-size:clamp(2rem,4vw,3.4rem)">Combinação encontrada.</h2>
             <p>A simulação indica que <strong id="res-nome" class="text-gold"></strong> combina com um perfil <strong id="res-tipo"></strong>. Leve essa referência para o barbeiro ajustar proporções, textura e acabamento.</p>
+            <div id="analysis-details" style="margin-top: 16px; padding: 12px; background: rgba(245, 158, 11, 0.05); border-radius: 8px; display: none;">
+              <p style="font-size: 0.875rem; color: var(--muted); margin: 0;">
+                <strong>Análise facial:</strong> <span id="analysis-text"></span>
+              </p>
+            </div>
             <div class="actions">
               <a id="result-cta" class="btn btn-primary" href="https://wa.me/5541996484980" target="_blank" rel="noopener noreferrer">Agendar esse corte</a>
               <button class="btn btn-outline" type="button" onclick="location.reload()">Reiniciar</button>
@@ -88,6 +247,11 @@
   </main>
 
   <footer class="footer"><div class="container">© 2026 Estúdio Prumo — Simulação demonstrativa para orientar o atendimento.</div></footer>
+  
+  <!-- Carregar Face-api.js para detecção facial -->
+  <script async defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
   <script src="script.js" defer></script>
+  <script src="supabase-client.js" defer></script>
+  <script src="ia-camera.js" defer></script>
 </body>
 </html>

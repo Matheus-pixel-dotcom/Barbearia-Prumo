@@ -59,27 +59,33 @@ function initTryOn() {
   const userPhoto = document.getElementById('user-photo');
   const instructionText = document.getElementById('instruction-text');
   const resetBtn = document.getElementById('reset-btn');
-  const overlay = document.getElementById('ia-overlay');
-  const styleSelection = document.getElementById('style-selection');
-  const finalCard = document.getElementById('final-card');
-  const resultName = document.getElementById('res-nome');
-  const resultType = document.getElementById('res-tipo');
-  const resultCta = document.getElementById('result-cta');
-
+  const cameraBtn = document.getElementById('camera-btn');
+  
   if (!dropArea || !fileInput || !userPhoto) return;
+
+  // Mostrar área de instrução inicialmente
+  instructionText?.classList.remove('hidden');
 
   const showPhoto = (src) => {
     userPhoto.src = src;
     userPhoto.classList.remove('hidden');
     instructionText?.classList.add('hidden');
     resetBtn?.classList.remove('hidden');
+    cameraBtn?.style.setProperty('display', 'none');
+    
+    // Garantir que o modo câmera esteja fechado
+    if (typeof stopCamera === 'function') stopCamera();
   };
 
-  dropArea.addEventListener('click', () => fileInput.click());
+  dropArea.addEventListener('click', (e) => {
+    // Não disparar se clicar nos controles da câmera
+    if (e.target.closest('.camera-controls-inline') || e.target.closest('#video')) return;
+    fileInput.click();
+  });
 
   dropArea.addEventListener('dragover', (event) => {
     event.preventDefault();
-    dropArea.style.borderColor = 'rgba(245, 158, 11, 0.8)';
+    dropArea.style.borderColor = 'var(--gold)';
   });
 
   dropArea.addEventListener('dragleave', () => {
@@ -104,58 +110,10 @@ function initTryOn() {
     reader.onload = (readerEvent) => showPhoto(readerEvent.target.result);
     reader.readAsDataURL(file);
   });
-
-  resetBtn?.addEventListener('click', () => {
-    userPhoto.classList.add('hidden');
-    userPhoto.removeAttribute('src');
-    instructionText?.classList.remove('hidden');
-    resetBtn.classList.add('hidden');
-    finalCard?.classList.add('hidden');
-    styleSelection?.classList.remove('hidden');
-    fileInput.value = '';
-  });
-
-  document.querySelectorAll('[data-style-name]').forEach((button) => {
-    button.addEventListener('click', () => {
-      if (!userPhoto.src || userPhoto.classList.contains('hidden')) {
-        alert('Por favor, suba sua foto primeiro para simular.');
-        return;
-      }
-
-      const styleName = button.getAttribute('data-style-name') || 'Corte personalizado';
-      const styleType = button.getAttribute('data-style-type') || 'Visagismo Prumo';
-
-      overlay?.classList.remove('hidden');
-      setTimeout(() => {
-        overlay?.classList.add('hidden');
-        styleSelection?.classList.add('hidden');
-        finalCard?.classList.remove('hidden');
-        if (resultName) resultName.textContent = styleName;
-        if (resultType) resultType.textContent = styleType;
-        if (resultCta) {
-          resultCta.href = buildWhatsappUrl(`Olá! Usei o simulador de visagismo do Estúdio Prumo e quero agendar o corte ${styleName}.`);
-        }
-        finalCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Salvar simulação no Supabase
-        if (typeof supabaseClient !== 'undefined') {
-          supabaseClient.saveFaceSimulation(styleName, styleType, {
-            source: 'photo-upload',
-            timestamp: new Date().toISOString()
-          }).catch(err => console.error('Erro ao salvar simulação:', err));
-        }
-      }, 1400);
-    });
-  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   initMobileMenu();
   initContactForm();
   initTryOn();
-  
-  // Carregar cliente Supabase se disponível
-  const script = document.createElement('script');
-  script.src = 'supabase-client.js';
-  document.head.appendChild(script);
 });
