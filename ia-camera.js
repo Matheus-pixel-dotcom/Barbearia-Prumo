@@ -5,6 +5,7 @@ let stream = null;
 let isAnalyzing = false;
 let currentDetection = null;
 let modelsLoaded = false;
+let detectionAnimationId = null;
 
 // Recomendações baseadas em formato de rosto
 const faceShapeRecommendations = {
@@ -35,18 +36,38 @@ function initCameraElements() {
   video = document.getElementById('video');
   canvas = document.getElementById('canvas');
   
-  if (!video || !canvas) {
-    console.error('Elementos de vídeo ou canvas não encontrados');
+  if (!video) {
+    console.error('Elemento de vídeo não encontrado');
     return false;
   }
+  if (!canvas) {
+    console.error('Elemento de canvas não encontrado');
+    return false;
+  }
+  
+  // Configurar atributos do vídeo
+  video.setAttribute('playsinline', 'true');
+  video.setAttribute('autoplay', 'true');
+  video.setAttribute('muted', 'true');
+  
   return true;
 }
 
-// Carregar modelos de IA
-async function loadFaceModels() {
+// Carregar modelos de IA com retry
+async function loadFaceModels(retryCount = 0) {
   if (modelsLoaded) return true;
   
   try {
+    // Verificar se Face-API está disponível
+    if (typeof faceapi === 'undefined') {
+      console.warn('Face-API não carregado ainda, tentando novamente...');
+      if (retryCount < 3) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return loadFaceModels(retryCount + 1);
+      }
+      throw new Error('Face-API não conseguiu carregar após 3 tentativas');
+    }
+
     const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
     
     console.log('Carregando modelos de IA...');
@@ -63,18 +84,29 @@ async function loadFaceModels() {
     return true;
   } catch (error) {
     console.error('Erro ao carregar modelos:', error);
-    alert('Erro ao carregar modelos de IA. Tente recarregar a página.');
     return false;
   }
 }
 
-// Iniciar câmera
+// Iniciar câmera com melhor tratamento de erros
 async function startCamera() {
   try {
+    console.log('Iniciando câmera...');
+
     // Carregar modelos antes de iniciar câmera
     if (!modelsLoaded) {
+      console.log('Carregando modelos de IA...');
       const loaded = await loadFaceModels();
-      if (!loaded) return;
+      if (!loaded) {
+        showCameraError('Não foi possível carregar os modelos de IA. Verifique sua conexão com a internet e tente novamente.');
+        return;
+      }
+    }
+
+    // Verificar suporte a getUserMedia
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showCameraError('Seu navegador não suporta acesso à câmera. Use Chrome, Firefox, Safari ou Edge.');
+      return;
     }
 
     const constraints = {
@@ -86,44 +118,102 @@ async function startCamera() {
       audio: false
     };
 
+    console.log('Solicitando acesso à câmera...');
     stream = await navigator.mediaDevices.getUserMedia(constraints);
+    
+    console.log('✓ Câmera acessada com sucesso');
     video.srcObject = stream;
 
-    video.onloadedmetadata = () => {
-      video.play();
-      isAnalyzing = true;
-      
-      // Mostrar interface de câmera
-      document.getElementById('instruction-text').classList.add('hidden');
-      document.getElementById('camera-mode').classList.remove('hidden');
-      document.getElementById('camera-status').style.display = 'flex';
-      document.getElementById('camera-btn').style.display = 'none';
-      document.getElementById('reset-btn').classList.add('hidden');
-      
-      // Iniciar detecção contínua
-      detectFaceRealtime();
-    };
+    // Aguardar vídeo estar pronto
+    return new Promise((resolve) => {
+      video.onloadedmetadata = () => {
+        console.log('✓ Vídeo carregado');
+        
+        // Garantir que o vídeo está tocando
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error('Erro ao reproduzir vídeo:', error);
+            showCameraError('Erro ao reproduzir vídeo. Tente novamente.');
+            resolve(false);
+          });
+        }
+
+        isAnalyzing = true;
+        
+        // Mostrar interface de câmera
+        document.getElementById('instruction-text').classList.add('hidden');
+        document.getElementById('camera-mode').classList.remove('hidden');
+        document.getElementById('camera-status').style.display = 'flex';
+        document.getElementById('camera-btn').style.display = 'none';
+        document.getElementById('reset-btn').classList.add('hidden');
+        
+        // Iniciar detecção contínua
+        detectFaceRealtime();
+        resolve(true);
+      };
+
+      video.onerror = (error) => {
+        console.error('Erro no vídeo:', error);
+        showCameraError('Erro ao carregar o vídeo da câmera.');
+        resolve(false);
+      };
+
+      // Timeout de 10 segundos
+      setTimeout(() => {
+        if (video.readyState < 2) {
+          console.error('Timeout ao carregar vídeo');
+          showCameraError('Timeout ao carregar a câmera. Tente novamente.');
+          stopCamera();
+          resolve(false);
+        }
+      }, 10000);
+    });
 
   } catch (error) {
     console.error('Erro ao acessar câmera:', error);
     
     let errorMsg = 'Erro ao acessar a câmera.';
-    if (error.name === 'NotAllowedError') {
-      errorMsg = 'Permissão de câmera negada. Verifique as configurações do navegador.';
-    } else if (error.name === 'NotFoundError') {
+    
+    if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+      errorMsg = 'Permissão de câmera negada. Verifique as configurações do navegador e tente novamente.';
+    } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
       errorMsg = 'Nenhuma câmera encontrada neste dispositivo.';
+    } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+      errorMsg = 'A câmera está sendo usada por outro aplicativo. Feche outros apps e tente novamente.';
+    } else if (error.name === 'SecurityError') {
+      errorMsg = 'Erro de segurança. Certifique-se de estar usando HTTPS.';
+    } else if (error.message) {
+      errorMsg = `Erro: ${error.message}`;
     }
     
-    alert(errorMsg);
+    showCameraError(errorMsg);
   }
+}
+
+// Mostrar erro de câmera
+function showCameraError(message) {
+  console.error('Erro de câmera:', message);
+  alert(message);
+  stopCamera();
 }
 
 // Parar câmera
 function stopCamera() {
+  console.log('Parando câmera...');
   isAnalyzing = false;
   
+  // Cancelar animation frame
+  if (detectionAnimationId) {
+    cancelAnimationFrame(detectionAnimationId);
+    detectionAnimationId = null;
+  }
+  
   if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach(track => {
+      track.stop();
+      console.log('Track parado:', track.kind);
+    });
     stream = null;
   }
   
@@ -138,29 +228,49 @@ function stopCamera() {
   // Limpar canvas
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  console.log('✓ Câmera parada');
 }
 
 // Detectar rosto em tempo real
 async function detectFaceRealtime() {
-  if (!isAnalyzing || !video.srcObject) return;
+  if (!isAnalyzing || !video.srcObject) {
+    return;
+  }
 
   try {
+    // Verificar se vídeo está pronto
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+      detectionAnimationId = requestAnimationFrame(detectFaceRealtime);
+      return;
+    }
+
     // Redimensionar canvas
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Detectar faces
-    const detections = await faceapi
+    // Detectar faces com timeout
+    const detectionPromise = faceapi
       .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
       .withFaceExpressions()
       .withAgeAndGender();
 
+    // Timeout de 5 segundos
+    const detectionWithTimeout = Promise.race([
+      detectionPromise,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout na detecção')), 5000)
+      )
+    ]);
+
+    const detections = await detectionWithTimeout;
+
     // Limpar overlay anterior
     const overlay = document.getElementById('face-overlay');
     overlay.innerHTML = '';
 
-    if (detections.length > 0) {
+    if (detections && detections.length > 0) {
       const detection = detections[0];
       currentDetection = detection;
 
@@ -178,11 +288,11 @@ async function detectFaceRealtime() {
     }
 
   } catch (error) {
-    console.error('Erro na detecção:', error);
+    console.warn('Erro na detecção (não crítico):', error.message);
   }
 
   // Continuar análise
-  requestAnimationFrame(detectFaceRealtime);
+  detectionAnimationId = requestAnimationFrame(detectFaceRealtime);
 }
 
 // Capturar e analisar rosto
@@ -193,6 +303,8 @@ async function captureAndAnalyze() {
   }
 
   try {
+    console.log('Capturando e analisando...');
+    
     // Parar câmera
     stopCamera();
 
@@ -214,6 +326,8 @@ async function captureAndAnalyze() {
 
     // Analisar características
     analyzeDetection(currentDetection);
+    
+    console.log('✓ Captura e análise concluídas');
 
   } catch (error) {
     console.error('Erro ao capturar:', error);
@@ -285,7 +399,6 @@ function calculateSymmetry(landmarks) {
 // Calcular proporção da fronte
 function calculateForeheadRatio(landmarks, box) {
   const top = landmarks[27];
-  const chin = landmarks[8];
   
   const foreheadHeight = top.y - box.y;
   const totalHeight = box.height;
@@ -296,25 +409,42 @@ function calculateForeheadRatio(landmarks, box) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('Inicializando ia-camera.js...');
+  
   const cameraBtn = document.getElementById('camera-btn');
   const closeCameraBtn = document.getElementById('close-camera-btn');
   const captureBtn = document.getElementById('capture-btn');
   const resetBtn = document.getElementById('reset-btn');
 
+  if (!initCameraElements()) {
+    console.error('Falha ao inicializar elementos de câmera');
+    return;
+  }
+
   if (cameraBtn) {
-    cameraBtn.addEventListener('click', startCamera);
+    cameraBtn.addEventListener('click', () => {
+      console.log('Botão de câmera clicado');
+      startCamera();
+    });
   }
 
   if (closeCameraBtn) {
-    closeCameraBtn.addEventListener('click', stopCamera);
+    closeCameraBtn.addEventListener('click', () => {
+      console.log('Botão de fechar câmera clicado');
+      stopCamera();
+    });
   }
 
   if (captureBtn) {
-    captureBtn.addEventListener('click', captureAndAnalyze);
+    captureBtn.addEventListener('click', () => {
+      console.log('Botão de capturar clicado');
+      captureAndAnalyze();
+    });
   }
 
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
+      console.log('Botão de reset clicado');
       document.getElementById('user-photo').classList.add('hidden');
       document.getElementById('user-photo').removeAttribute('src');
       document.getElementById('camera-btn').style.display = 'block';
@@ -378,11 +508,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 1400);
     });
   });
+
+  console.log('✓ ia-camera.js inicializado com sucesso');
 });
 
 // Limpar recursos ao sair
 window.addEventListener('beforeunload', () => {
+  console.log('Limpando recursos...');
   if (stream) {
     stream.getTracks().forEach(track => track.stop());
+  }
+  if (detectionAnimationId) {
+    cancelAnimationFrame(detectionAnimationId);
   }
 });

@@ -86,6 +86,18 @@
       font-size: 0.75rem;
       font-weight: 600;
       z-index: 10;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .status-dot {
@@ -119,6 +131,22 @@
 
     .hidden {
       display: none !important;
+    }
+
+    .error-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.875rem;
+      z-index: 20;
+      max-width: 80%;
+      backdrop-filter: blur(10px);
     }
 
     .loading-spinner {
