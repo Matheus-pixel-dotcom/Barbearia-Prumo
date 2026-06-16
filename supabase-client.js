@@ -1,6 +1,6 @@
 // Cliente Supabase para integração com banco de dados
-const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
+const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co/rest/v1/';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoZndndWNvYXlrYmdveXFpYmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDA2MTMsImV4cCI6MjA5NzE3NjYxM30.h8JmAb6Ifyw94rtmHRiegrvJLAC08knYK6Ez4bRyYCg';
 
 class SupabaseClient {
   constructor(url, key) {
