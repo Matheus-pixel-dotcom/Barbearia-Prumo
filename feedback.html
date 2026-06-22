@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Feedback - Estúdio Prumo: Avalie seu barbeiro e a qualidade do atendimento.">
+  <title>Feedback | Estúdio Prumo</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .feedback-container {
+      min-height: calc(100vh - 78px);
+      padding: 60px 20px;
+    }
+
+    .feedback-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .feedback-header h1 {
+      font-size: 32px;
+      margin: 0 0 12px 0;
+      color: var(--text);
+    }
+
+    .feedback-header p {
+      color: var(--muted);
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .feedback-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .feedback-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .feedback-form-card {
+      background: var(--surface-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+    }
+
+    .feedback-form-card h2 {
+      font-size: 20px;
+      margin: 0 0 24px 0;
+      color: var(--gold-2);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: inherit;
+    }
+
+    .rating-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .rating-star {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--line);
+      background: var(--surface);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.2s;
+    }
+
+    .rating-star:hover {
+      border-color: var(--gold);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .rating-star.active {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #000;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover {
+      background: var(--gold-2);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .success-message {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #86efac;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .feedbacks-list {
+      background: var(--surface-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+    }
+
+    .feedbacks-list h2 {
+      font-size: 20px;
+      margin: 0 0 24px 0;
+      color: var(--gold-2);
+    }
+
+    .feedback-item {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .feedback-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .feedback-header-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .feedback-barber {
+      font-weight: 600;
+      color: var(--gold-2);
+    }
+
+    .feedback-date {
+      font-size: 12px;
+      color: var(--muted-2);
+    }
+
+    .feedback-ratings {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .rating-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rating-label {
+      color: var(--muted);
+    }
+
+    .rating-value {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .feedback-comment {
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .login-prompt {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--text);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .login-prompt a {
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .login-prompt a:hover {
+      color: var(--gold-2);
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar container" aria-label="Navegação principal">
+      <a class="brand" href="index.html" aria-label="Estúdio Prumo - início"><span class="brand-mark">P</span>Estúdio Prumo</a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menu">Menu</button>
+      <div class="nav-links" data-nav-links>
+        <a href="index.html">Início</a>
+        <a href="servicos.html">Serviços</a>
+        <a href="ia-tryon.html">Experimente com IA</a>
+        <a href="sobre.html">Sobre</a>
+        <a href="contato.html">Contato</a>
+        <a class="btn btn-primary" href="login.html" id="authLink">Login</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container feedback-container">
+      <div class="feedback-header">
+        <h1>Deixe seu Feedback</h1>
+        <p>Avalie seu barbeiro e a qualidade do atendimento no Estúdio Prumo</p>
+      </div>
+
+      <div id="loginPrompt" class="login-prompt" style="display: none;">
+        Você precisa estar <a href="login.html">autenticado</a> para deixar um feedback.
+      </div>
+
+      <div class="feedback-grid">
+        <div class="feedback-form-card" id="feedbackFormCard" style="display: none;">
+          <h2>Enviar Feedback</h2>
+          
+          <div class="error-message" id="errorMessage"></div>
+          <div class="success-message" id="successMessage"></div>
+
+          <form id="feedbackForm">
+            <div class="form-group">
+              <label for="barberName">Barbeiro</label>
+              <select id="barberName" name="barberName" required>
+                <option value="">Selecione um barbeiro</option>
+                <option value="João Silva">João Silva</option>
+                <option value="Carlos Santos">Carlos Santos</option>
+                <option value="Pedro Oliveira">Pedro Oliveira</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="ratingBarber">Avaliação do Barbeiro (1-5)</label>
+              <div class="rating-group" id="ratingBarberGroup">
+                <button type="button" class="rating-star" data-rating="1">★</button>
+                <button type="button" class="rating-star" data-rating="2">★</button>
+                <button type="button" class="rating-star" data-rating="3">★</button>
+                <button type="button" class="rating-star" data-rating="4">★</button>
+                <button type="button" class="rating-star" data-rating="5">★</button>
+              </div>
+              <input type="hidden" id="ratingBarber" name="ratingBarber" value="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="ratingService">Avaliação do Atendimento (1-5)</label>
+              <div class="rating-group" id="ratingServiceGroup">
+                <button type="button" class="rating-star" data-rating="1">★</button>
+                <button type="button" class="rating-star" data-rating="2">★</button>
+                <button type="button" class="rating-star" data-rating="3">★</button>
+                <button type="button" class="rating-star" data-rating="4">★</button>
+                <button type="button" class="rating-star" data-rating="5">★</button>
+              </div>
+              <input type="hidden" id="ratingService" name="ratingService" value="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="comment">Comentário (opcional)</label>
+              <textarea 
+                id="comment" 
+                name="comment" 
+                placeholder="Compartilhe sua experiência..."
+              ></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">Enviar Feedback</button>
+          </form>
+        </div>
+
+        <div class="feedbacks-list">
+          <h2>Feedbacks Recentes</h2>
+          <div id="feedbacksList">
+            <div class="empty-state">
+              <div class="empty-state-icon">📋</div>
+              <p>Nenhum feedback ainda. Seja o primeiro a compartilhar sua experiência!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">© 2026 Estúdio Prumo — Técnica, ordem e estilo.</div>
+  </footer>
+
+  <script src="supabase-client.js" defer></script>
+  <script src="script.js" defer></script>
+  <script src="auth.js" defer></script>
+  <script src="feedback.js" defer></script>
+</body>
+</html>

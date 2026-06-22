@@ -98,6 +98,15 @@ textarea {
   font-size: clamp(1.1rem, 3vw, 1.5rem);
 }
 
+.brand img {
+  filter: drop-shadow(0 4px 12px rgba(245, 158, 11, 0.2));
+  transition: filter 0.3s ease;
+}
+
+.brand:hover img {
+  filter: drop-shadow(0 6px 16px rgba(245, 158, 11, 0.35));
+}
+
 .brand-mark {
   display: grid;
   place-items: center;
