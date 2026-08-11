@@ -5,12 +5,12 @@ Valores ajustados para o padrão de barbearias de alto nível em Araucária (Cal
 
 | Serviço | Preço Sugerido | Descrição |
 | :--- | :--- | :--- |
-| **Corte Prumo** | R$ 45,00 | Degradê, social ou tesoura. Inclui lavagem premium e finalização. |
-| **Barboterapia** | R$ 75,00 | Navalha, toalha quente, produtos premium e massagem facial. |
-| **Combo Prumo** | R$ 90,00 | Cabelo + Barba + Consultoria de Visagismo rápida. |
-| **Máquina Full** | R$ 25,00 | Praticidade com acabamento limpo. |
-| **Sobrancelha** | R$ 15,00 | Design com navalha ou pinça. |
-| **Camuflagem de Grisalhos** | R$ 25,00 | Cobertura natural e discreta. |
+| **Corte Prumo** | R$ 45 | Degradê, social ou tesoura. Inclui lavagem premium e finalização. |
+| **Barboterapia** | R$ 75 | Navalha, toalha quente, produtos premium e massagem facial. |
+| **Combo Prumo** | R$ 90 | Cabelo + Barba + Consultoria de Visagismo rápida. |
+| **Máquina Full** | R$ 25 | Praticidade com acabamento limpo. |
+| **Sobrancelha** | R$ 15 | Design com navalha ou pinça. |
+| **Camuflagem de Grisalhos** | R$ 25 | Cobertura natural e discreta. |
 
 ## 2. Planos de Assinatura (Clube Prumo)
 Foco em recorrência e visual sempre impecável.
