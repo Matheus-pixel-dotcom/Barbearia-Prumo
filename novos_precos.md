@@ -1,18 +1,18 @@
-# Proposta de Preços e Planos — Estúdio Prumo
+# Proposta de Preços e Planos — Style Relo Barber
 
 ## 1. Serviços Avulsos (Premium)
 Valores ajustados para o padrão de barbearias de alto nível em Araucária (Califórnia).
 
 | Serviço | Preço Sugerido | Descrição |
 | :--- | :--- | :--- |
-| **Corte Prumo** | R$ 45 | Degradê, social ou tesoura. Inclui lavagem premium e finalização. |
+| **Corte Style Relo** | R$ 45 | Degradê, social ou tesoura. Inclui lavagem premium e finalização. |
 | **Barboterapia** | R$ 75 | Navalha, toalha quente, produtos premium e massagem facial. |
-| **Combo Prumo** | R$ 90 | Cabelo + Barba + Consultoria de Visagismo rápida. |
+| **Combo Style Relo** | R$ 90 | Cabelo + Barba + Consultoria de Visagismo rápida. |
 | **Máquina Full** | R$ 25 | Praticidade com acabamento limpo. |
 | **Sobrancelha** | R$ 15 | Design com navalha ou pinça. |
 | **Camuflagem de Grisalhos** | R$ 25 | Cobertura natural e discreta. |
 
-## 2. Planos de Assinatura (Clube Prumo)
+## 2. Planos de Assinatura (Clube Style Relo)
 Foco em recorrência e visual sempre impecável.
 
 ### Plano ESSENCIAL
@@ -31,7 +31,7 @@ Foco em recorrência e visual sempre impecável.
 *   **Valor:** R$ 199,90 /mês
 *   **Incluso:** Cabelo + Barba ILIMITADOS.
 *   **Vantagem:** Atendimento VIP + Cerveja/Café cortesia + 20% de desconto em produtos.
-*   **Perfil:** O cliente que vive a experiência completa do Estúdio Prumo.
+*   **Perfil:** O cliente que vive a experiência completa do Style Relo Barber.
 
 ## Estratégia Visual
 *   Usar selos de "Mais Vendido" ou "Melhor Custo-Benefício".

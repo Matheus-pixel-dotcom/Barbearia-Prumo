@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const styleName = this.getAttribute('data-style-name') || 'Corte personalizado';
-      const styleType = this.getAttribute('data-style-type') || 'Visagismo Prumo';
+      const styleType = this.getAttribute('data-style-type') || 'Visagismo Style Relo';
 
       // Mostrar overlay de carregamento
       const overlay = document.getElementById('ia-overlay');
@@ -501,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Atualizar link do WhatsApp
         const resultCta = document.getElementById('result-cta');
-        const whatsappMessage = `Olá! Usei o simulador de visagismo do Estúdio Prumo e quero agendar o corte ${styleName}.`;
+        const whatsappMessage = `Olá! Usei o simulador de visagismo do Style Relo Barber e quero agendar o corte ${styleName}.`;
         resultCta.href = `https://wa.me/5541996484980?text=${encodeURIComponent(whatsappMessage)}`;
 
         document.getElementById('final-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });

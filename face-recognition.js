@@ -332,7 +332,7 @@ function generateRecommendations(faceShape) {
 // Selecionar recomendação e preparar agendamento
 function selectRecommendation(recommendation) {
   const whatsappUrl = buildWhatsappUrl(
-    `Olá! Usei a câmera IA do Estúdio Prumo e gostaria de agendar o corte ${recommendation.name}.`
+    `Olá! Usei a câmera IA do Style Relo Barber e gostaria de agendar o corte ${recommendation.name}.`
   );
   
   const scheduleBtn = document.getElementById('schedule-btn');

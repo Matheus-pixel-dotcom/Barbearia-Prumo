@@ -1,4 +1,4 @@
-# Implementação de IA e Banco de Dados - Estúdio Prumo
+# Implementação de IA e Banco de Dados - Style Relo Barber
 
 ## 📋 Resumo das Mudanças
 

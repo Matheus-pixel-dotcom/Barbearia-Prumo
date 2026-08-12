@@ -1,4 +1,4 @@
-# Atualizações do Projeto - Estúdio Prumo
+# Atualizações do Projeto - Style Relo Barber
 
 ## 📋 Resumo das Mudanças
 
@@ -62,7 +62,7 @@ Este documento descreve todas as atualizações realizadas no projeto da Barbear
 - Logo adicionada à navbar de todos os arquivos HTML principais
 - Efeito de sombra dinâmica ao passar o mouse
 - Dimensões otimizadas (40px de altura)
-- Alinhamento perfeito com o texto "Estúdio Prumo"
+- Alinhamento perfeito com o texto "Style Relo Barber"
 
 #### Arquivos Atualizados:
 - `index.html`

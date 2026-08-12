@@ -41,7 +41,7 @@ function initContactForm() {
     const mensagem = data.get('mensagem')?.toString().trim();
 
     const texto = [
-      'Olá! Gostaria de agendar um horário no Estúdio Prumo.',
+      'Olá! Gostaria de agendar um horário no Style Relo Barber.',
       nome ? `Nome: ${nome}` : '',
       telefone ? `Telefone: ${telefone}` : '',
       servico ? `Serviço: ${servico}` : '',

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Simulador de visagismo do Estúdio Prumo para testar estilos antes de agendar.">
-  <title>Simulador IA | Estúdio Prumo</title>
+  <meta name="description" content="Simulador de visagismo do Style Relo Barber para testar estilos antes de agendar.">
+  <title>Simulador IA | Style Relo Barber</title>
   <link rel="stylesheet" href="style.css">
   <style>
     .camera-input-wrapper {
@@ -162,12 +162,122 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    .volume-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .volume-btn {
+      flex: 1 1 auto;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .volume-btn:hover { border-color: var(--gold); }
+
+    .volume-btn.is-active {
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      color: #1a1205;
+      border-color: transparent;
+    }
+
+    .volume-label {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .chat-body {
+      margin-top: 12px;
+      max-height: 320px;
+      overflow-y: auto;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .chat-msg {
+      padding: 10px 13px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      max-width: 88%;
+    }
+
+    .chat-msg a { color: var(--gold-2); }
+
+    .from-ia {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      justify-self: start;
+    }
+
+    .from-user {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--line);
+      justify-self: end;
+    }
+
+    .chat-typing { opacity: 0.6; font-style: italic; }
+
+    .chat-quick {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chat-chip {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .chat-chip:hover { color: var(--gold-2); border-color: var(--gold); }
+
+    .chat-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .chat-form input {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .chat-form input:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
   </style>
 </head>
 <body>
   <header class="site-header">
     <nav class="navbar container" aria-label="Navegação principal">
-      <a class="brand" href="index.html"><img src="assets/logo-gentleman.png" alt="Logo Gentleman's Cut" style="height: 40px; width: auto; margin-right: 8px;">Estúdio Prumo</a>
+      <a class="brand" href="index.html"><img src="assets/logo-gentleman.png" alt="Logo Gentleman's Cut" style="height: 40px; width: auto; margin-right: 8px;">Style Relo Barber</a>
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menu">Menu</button>
       <div class="nav-links" data-nav-links>
         <a href="index.html">Início</a>
@@ -256,6 +366,34 @@
             </div>
           </section>
 
+          <section id="volume-panel" class="panel">
+            <span class="eyebrow">Volume do corte</span>
+            <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2.4rem)">Quanto volume no topo?</h2>
+            <div class="volume-options">
+              <button type="button" class="volume-btn" data-volume="1">Baixo</button>
+              <button type="button" class="volume-btn" data-volume="2">Médio</button>
+              <button type="button" class="volume-btn" data-volume="3">Alto</button>
+              <button type="button" class="volume-btn" data-volume="4">Muito alto</button>
+            </div>
+            <p id="volume-label" class="volume-label"></p>
+          </section>
+
+          <section id="chat-panel" class="panel">
+            <span class="eyebrow">Consultor</span>
+            <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2.4rem)">Converse com a <span class="text-gold">Relo IA</span>.</h2>
+            <div id="chat-body" class="chat-body" aria-live="polite"></div>
+            <div class="chat-quick">
+              <button type="button" class="chat-chip" data-chat-quick="Qual corte combina com meu rosto?">Combina com meu rosto?</button>
+              <button type="button" class="chat-chip" data-chat-quick="Quero volume alto">Quero volume alto</button>
+              <button type="button" class="chat-chip" data-chat-quick="Tenho cabelo cacheado">Cabelo cacheado</button>
+              <button type="button" class="chat-chip" data-chat-quick="Quanto custa?">Preços</button>
+            </div>
+            <form id="chat-form" class="chat-form" autocomplete="off">
+              <input id="chat-input" type="text" placeholder="Pergunte sobre o seu corte..." aria-label="Mensagem para a Relo IA">
+              <button class="btn btn-primary" type="submit">Enviar</button>
+            </form>
+          </section>
+
           <section id="final-card" class="panel hidden" style="border-color:rgba(245,158,11,0.45)">
             <span class="eyebrow">Resultado</span>
             <h2 class="section-title" style="font-size:clamp(2rem,4vw,3.4rem)">Combinação encontrada.</h2>
@@ -275,12 +413,13 @@
     </section>
   </main>
 
-  <footer class="footer"><div class="container">© 2026 Estúdio Prumo — Simulação demonstrativa para orientar o atendimento.</div></footer>
+  <footer class="footer"><div class="container">© 2026 Style Relo Barber — Simulação demonstrativa para orientar o atendimento.</div></footer>
   
   <!-- Carregar Face-api.js para detecção facial -->
   <script async defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
   <script src="script.js" defer></script>
   <script src="supabase-client.js" defer></script>
   <script src="ia-camera.js" defer></script>
+  <script src="chat-ia.js" defer></script>
 </body>
 </html>

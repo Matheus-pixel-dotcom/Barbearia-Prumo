@@ -1,4 +1,4 @@
-# Relatório final — Estúdio Prumo / Barbearia Prumo
+# Relatório final — Style Relo Barber / Barbearia Prumo
 
 ## Visão geral
 
