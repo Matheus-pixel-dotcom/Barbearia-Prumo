@@ -3,14 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Conheça o Style Relo Barber, barbearia premium focada em técnica, precisão e visagismo digital.">
-  <title>Sobre | Style Relo Barber</title>
+  <meta name="description" content="Conheça a equipe e a história do Style Relo Barber, barbearia premium focada em técnica, precisão e visagismo digital.">
+  <title>Sobre e Equipe | Style Relo Barber</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+      margin-top: 40px;
+    }
+    .team-card {
+      background: var(--surface-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      text-align: center;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .team-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--gold);
+    }
+    .team-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      color: #000;
+      font-weight: 900;
+      box-shadow: 0 10px 30px rgba(245, 158, 11, 0.25);
+    }
+    .team-role {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--gold-2);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      letter-spacing: 0.05em;
+    }
+    .team-name {
+      font-size: 1.4rem;
+      font-weight: 900;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .team-desc {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
     <nav class="navbar container" aria-label="Navegação principal">
-      <a class="brand" href="index.html"><img src="assets/logo-gentleman.png" alt="Logo Gentleman's Cut" style="height: 40px; width: auto; margin-right: 8px;">Style Relo Barber</a>
+      <a class="brand" href="index.html"><img src="assets/logo-gentleman.png" alt="Logo Style Relo Barber" style="height: 40px; width: auto; margin-right: 8px;">Style Relo Barber</a>
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menu">Menu</button>
       <div class="nav-links" data-nav-links>
         <a href="index.html">Início</a>
@@ -31,19 +88,75 @@
           <span class="eyebrow">Nossa identidade</span>
           <h1 class="display-title">Técnica que respeita o seu <span class="text-gold">formato.</span></h1>
           <p class="lead">O Style Relo Barber nasceu para simplificar a escolha do corte: ouvimos o cliente, avaliamos proporção, rotina e referência visual, e executamos com acabamento limpo.</p>
-          <ul class="feature-list">
-            <li>Atendimento consultivo antes da tesoura ou máquina.</li>
-            <li>Finalização com produtos premium e orientação de manutenção.</li>
-            <li>Experiência digital para experimentar estilos antes de agendar.</li>
+          <ul class="feature-list" style="list-style: none; padding: 0; margin-top: 20px;">
+            <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><span style="color: var(--gold);">✓</span> Atendimento consultivo antes da tesoura ou máquina.</li>
+            <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><span style="color: var(--gold);">✓</span> Finalização com produtos premium e orientação de manutenção.</li>
+            <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><span style="color: var(--gold);">✓</span> Experiência digital com IA para simular estilos antes de agendar.</li>
           </ul>
         </div>
         <aside class="hero-card">
-          <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1200&auto=format&fit=crop" alt="Ambiente moderno de barbearia">
-          <div class="hero-card-caption">
+          <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1200&auto=format&fit=crop" alt="Ambiente moderno de barbearia" style="border-radius: var(--radius-lg);">
+          <div class="hero-card-caption" style="margin-top: 14px;">
             <strong>Style Relo é direção.</strong>
             <p>Visual organizado, atendimento objetivo e corte feito para durar.</p>
           </div>
         </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Especialistas</span>
+            <h2 class="section-title">Nossa Equipe.</h2>
+          </div>
+          <p>Profissionais dedicados a entregar excelência em cada detalhe, desde a recepção até o acabamento final.</p>
+        </div>
+
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="team-avatar">M</div>
+            <span class="team-role">Barbeiro</span>
+            <h3 class="team-name">Michel</h3>
+            <p class="team-desc">Especialista em cortes clássicos, degradês precisos e barboterapia tradicional com toalha quente.</p>
+          </div>
+
+          <div class="team-card">
+            <div class="team-avatar">W</div>
+            <span class="team-role">Barbeiro</span>
+            <h3 class="team-name">Weverton</h3>
+            <p class="team-desc">Mestre em acabamentos refinados, texturização e atendimento personalizado para todos os estilos.</p>
+          </div>
+
+          <div class="team-card">
+            <div class="team-avatar">V</div>
+            <span class="team-role">Visagista</span>
+            <h3 class="team-name">Vitor</h3>
+            <p class="team-desc">Especialista em análise facial e consultoria de imagem para descobrir o corte ideal para cada formato de rosto.</p>
+          </div>
+
+          <div class="team-card">
+            <div class="team-avatar">E</div>
+            <span class="team-role">Designer de Corte</span>
+            <h3 class="team-name">Evelyn</h3>
+            <p class="team-desc">Foco em design moderno, alinhamento capilar milimétrico e tendências globais de barbearia.</p>
+          </div>
+
+          <div class="team-card">
+            <div class="team-avatar">G</div>
+            <span class="team-role">Segurança</span>
+            <h3 class="team-name">Gabriel</h3>
+            <p class="team-desc">Garante a tranquilidade, o bem-estar e a segurança de todos os clientes e colaboradores no estúdio.</p>
+          </div>
+
+          <div class="team-card">
+            <div class="team-avatar">M</div>
+            <span class="team-role">Marketing</span>
+            <h3 class="team-name">Matheus</h3>
+            <p class="team-desc">Responsável pela estratégia digital, experiências interativas com IA e expansão da marca Style Relo.</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -56,25 +169,27 @@
           </div>
           <p>Um fluxo direto, pensado para evitar dúvidas, retrabalho e resultados fora do esperado.</p>
         </div>
-        <div class="grid-3">
-          <article class="card">
-            <h3>1. Diagnóstico</h3>
-            <p>Entendemos seu estilo, rotina e manutenção desejada antes de sugerir o corte.</p>
+        <div class="grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+          <article class="card" style="background: var(--surface-strong); padding: 32px; border-radius: var(--radius-lg); border: 1px solid var(--line);">
+            <h3 style="color: var(--gold-2); margin-bottom: 12px;">1. Diagnóstico</h3>
+            <p style="color: var(--muted); margin: 0;">Entendemos seu estilo, rotina e manutenção desejada antes de sugerir o corte.</p>
           </article>
-          <article class="card">
-            <h3>2. Execução</h3>
-            <p>Aplicamos técnica de corte, acabamento de nuca, costeleta e finalização proporcional.</p>
+          <article class="card" style="background: var(--surface-strong); padding: 32px; border-radius: var(--radius-lg); border: 1px solid var(--line);">
+            <h3 style="color: var(--gold-2); margin-bottom: 12px;">2. Execução</h3>
+            <p style="color: var(--muted); margin: 0;">Aplicamos técnica de corte, acabamento de nuca, costeleta e finalização proporcional.</p>
           </article>
-          <article class="card">
-            <h3>3. Manutenção</h3>
-            <p>Você sai com indicação de produto, intervalo ideal de retorno e cuidados em casa.</p>
+          <article class="card" style="background: var(--surface-strong); padding: 32px; border-radius: var(--radius-lg); border: 1px solid var(--line);">
+            <h3 style="color: var(--gold-2); margin-bottom: 12px;">3. Manutenção</h3>
+            <p style="color: var(--muted); margin: 0;">Você sai com indicação de produto, intervalo ideal de retorno e cuidados em casa.</p>
           </article>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="footer"><div class="container">© 2026 Style Relo Barber — Precisão, estética e confiança.</div></footer>
+  <footer class="footer" style="padding: 40px 0; border-top: 1px solid var(--line); margin-top: 60px; text-align: center; color: var(--muted);">
+    <div class="container">© 2026 Style Relo Barber — Precisão, estética e confiança.</div>
+  </footer>
   <script src="script.js" defer></script>
 </body>
 </html>

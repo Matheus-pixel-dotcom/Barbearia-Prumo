@@ -1,5 +1,5 @@
-// Cliente Supabase para integração com banco de dados
-const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co/rest/v1/';
+// Cliente Supabase para integração com banco de dados corrigido
+const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoZndndWNvYXlrYmdveXFpYmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDA2MTMsImV4cCI6MjA5NzE3NjYxM30.h8JmAb6Ifyw94rtmHRiegrvJLAC08knYK6Ez4bRyYCg';
 
 class SupabaseClient {
@@ -17,7 +17,8 @@ class SupabaseClient {
         headers: {
           'Content-Type': 'application/json',
           'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`
+          'Authorization': `Bearer ${this.authToken || this.key}`,
+          'Prefer': 'return=representation'
         },
         body: JSON.stringify({
           style_name: styleName,
@@ -47,7 +48,8 @@ class SupabaseClient {
         headers: {
           'Content-Type': 'application/json',
           'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`
+          'Authorization': `Bearer ${this.authToken || this.key}`,
+          'Prefer': 'return=representation'
         },
         body: JSON.stringify({
           service: service,
@@ -126,7 +128,8 @@ class SupabaseClient {
         headers: {
           'Content-Type': 'application/json',
           'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`
+          'Authorization': `Bearer ${this.authToken || this.key}`,
+          'Prefer': 'return=representation'
         },
         body: JSON.stringify({
           full_name: fullName,
@@ -153,7 +156,6 @@ class SupabaseClient {
     try {
       let url = `${this.url}/rest/v1/${table}`;
       
-      // Construir query string
       const params = new URLSearchParams();
       if (options.select) params.append('select', options.select);
       if (options.filter) params.append('filter', options.filter);
@@ -186,11 +188,9 @@ class SupabaseClient {
     }
   }
 
-  // Definir token de autenticação
   setAuthToken(token) {
     this.authToken = token;
   }
 }
 
-// Instância global do cliente Supabase
 const supabaseClient = new SupabaseClient(SUPABASE_URL, SUPABASE_KEY);
