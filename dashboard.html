@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Barbearia Prumo</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .dashboard-container {
+      max-width: 900px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+    .welcome-card {
+      background: var(--surface-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      margin-bottom: 30px;
+    }
+    .welcome-card h1 {
+      color: var(--gold-2);
+      margin-top: 0;
+    }
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .action-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-decoration: none;
+      color: var(--text);
+      display: block;
+      transition: all 0.3s;
+    }
+    .action-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-2px);
+    }
+    .action-card h3 {
+      color: var(--gold);
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .action-card p {
+      color: var(--muted);
+      margin: 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar container">
+      <a class="brand" href="index.html">Style Relo Barber</a>
+      <div class="nav-links">
+        <a href="index.html">Início</a>
+        <a href="admin.html" style="color: var(--gold); font-weight: bold;">Painel Admin</a>
+        <a href="#" onclick="logoutUser()">Sair</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="dashboard-container">
+    <div class="welcome-card">
+      <h1 id="user-greeting">Bem-vindo à sua conta!</h1>
+      <p id="user-email-display" style="color: var(--muted); margin-bottom: 20px;">Carregando dados da sessão...</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <a href="ia-tryon.html" class="btn btn-primary">Testar Visagismo com IA</a>
+        <a href="admin.html" class="btn btn-outline" style="border-color: var(--gold); color: var(--gold);">Acessar Painel Administrativo</a>
+      </div>
+    </div>
+
+    <h2 style="margin-bottom: 20px;">Ações Rápidas</h2>
+    <div class="actions-grid">
+      <a href="admin.html" class="action-card">
+        <h3>📊 Área Administrativa</h3>
+        <p>Gerencie logins de clientes, estoque (entrada/saída), manutenção e despesas.</p>
+      </a>
+      <a href="ia-tryon.html" class="action-card">
+        <h3>✂️ Simulador de IA</h3>
+        <p>Experimente cortes em tempo real com detecção facial e recomendações.</p>
+      </a>
+      <a href="servicos.html" class="action-card">
+        <h3>💈 Tabela de Serviços</h3>
+        <p>Consulte cortes, barboterapia e combos com preços atualizados.</p>
+      </a>
+      <a href="contato.html" class="action-card">
+        <h3>📅 Agendar Atendimento</h3>
+        <p>Fale diretamente com o barbeiro via WhatsApp e garanta seu horário.</p>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const email = localStorage.getItem('user_email') || 'Cliente Prumo';
+      document.getElementById('user-email-display').innerText = `Logado como: ${email}`;
+      document.getElementById('user-greeting').innerText = `Olá, ${email.split('@')[0]}!`;
+    });
+
+    function logoutUser() {
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('user_email');
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
