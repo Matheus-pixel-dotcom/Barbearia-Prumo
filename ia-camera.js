@@ -1,4 +1,9 @@
+// Reconhecimento facial integrado na página ia-tryon.html.
+// IIFE: evita colidir com script.js / supabase-client.js no escopo global.
 // Reconhecimento facial integrado na página ia-tryon.html (Otimizado e Robusto)
+(function () {
+  'use strict';
+
 let video = null;
 let canvas = null;
 let stream = null;
@@ -196,6 +201,46 @@ function showCameraError(message) {
   stopCamera();
 }
 
+/** Escreve um aviso não-bloqueante no #camera-status (não usa alert: a análise já deu certo). */
+function setCameraStatus(message) {
+  const el = document.getElementById('camera-status');
+  if (!el) return;
+  el.textContent = message;
+}
+
+/**
+ * Persiste a simulação no banco. Falha aqui NÃO invalida a análise local, mas é
+ * reportada na tela e no console — antes a chamada era fire-and-forget e o erro
+ * sumia (o try/catch em volta de uma promise não aguardada nunca capturava nada).
+ */
+async function persistSimulation() {
+  const client = window.supabaseClient;
+  if (!client) {
+    console.warn('Simulação não salva: supabase-client.js não está carregado nesta página.');
+    return false;
+  }
+
+  const analysis = window.currentAnalysis || {};
+  try {
+    await client.saveFaceSimulation(
+      analysis.shapeName || 'Não identificado',
+      'IA Visagismo',
+      {
+        faceShape: analysis.faceShape || null,
+        symmetry: analysis.symmetry || null,
+        foreheadRatio: analysis.foreheadRatio || null,
+        confidence: analysis.confidence ?? null,
+        recommendedStyles: analysis.recommendedStyles || [],
+      }
+    );
+    return true;
+  } catch (error) {
+    console.error('Não foi possível salvar a simulação no banco:', error);
+    setCameraStatus(`Análise concluída, mas não foi possível salvá-la no histórico (${error.message}).`);
+    return false;
+  }
+}
+
 // Parar câmera
 function stopCamera() {
   console.log('Parando câmera...');
@@ -329,14 +374,12 @@ async function captureAndAnalyze() {
       landmarks: { positions: Array(68).fill({x: 200, y: 200}) }
     });
     
-    // Tentar salvar simulação no Supabase (silenciosamente se falhar)
-    try {
-      if (typeof supabaseClient !== 'undefined') {
-        supabaseClient.saveFaceSimulation('Executive Contour', 'IA Visagismo', { confidence: 95 });
-      }
-    } catch (e) {
-      console.log('Supabase sync skipped:', e);
-    }
+    // Salvar a simulação no Supabase. O await é obrigatório: sem ele o try/catch
+    // nunca vê a rejeição e a falha some em silêncio.
+    await persistSimulation();
+
+    // Missão principal: desenhar o corte na foto com o Nano Banana e mandar pro chat.
+    await startImageSimulation(imageData);
 
     console.log('✓ Captura e análise concluídas com sucesso');
 
@@ -363,6 +406,56 @@ function analyzeDetection(detection) {
   console.log('Análise completa gerada:', window.currentAnalysis);
 }
 
+// ---------------------------------------------------------------- estilo escolhido
+// Os botões ".style-option" existiam no HTML mas não tinham handler nenhum: clicar
+// neles não fazia nada. Agora eles registram a escolha e alimentam o cartão final.
+let selectedStyle = null;
+
+function initStyleOptions() {
+  document.querySelectorAll('.style-option').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedStyle = {
+        name: btn.getAttribute('data-style-name') || 'Estilo personalizado',
+        type: btn.getAttribute('data-style-type') || '',
+      };
+
+      document.querySelectorAll('.style-option').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      const resNome = document.getElementById('res-nome');
+      const resTipo = document.getElementById('res-tipo');
+      const finalCard = document.getElementById('final-card');
+      if (resNome) resNome.textContent = selectedStyle.name;
+      if (resTipo) resTipo.textContent = selectedStyle.type;
+      if (finalCard) finalCard.classList.remove('hidden');
+
+      // Se já existe uma simulação, a escolha vira pedido de edição no chat.
+      if (window.ReloIA?.getSimulation()?.currentDataUrl) {
+        window.ReloIA.applyEdit(`Trocar o corte para ${selectedStyle.name} (${selectedStyle.type}).`);
+      }
+    });
+  });
+}
+
+/**
+ * Gera a imagem de try-on com o Nano Banana e joga o resultado no chat.
+ * Não bloqueia a captura: se falhar, o chat explica o motivo.
+ */
+async function startImageSimulation(imageDataUrl) {
+  if (!window.ReloIA || typeof window.ReloIA.startSimulation !== 'function') {
+    console.warn('Relo IA não disponível; simulação de imagem pulada.');
+    return null;
+  }
+
+  const analysis = window.currentAnalysis || {};
+  return window.ReloIA.startSimulation(imageDataUrl, {
+    styleName: selectedStyle ? selectedStyle.name : null,
+    styleType: selectedStyle ? selectedStyle.type : null,
+    faceShape: analysis.shapeName || null,
+    symmetry: analysis.symmetry || null,
+  });
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Inicializando ia-camera.js otimizado...');
@@ -376,6 +469,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Falha ao inicializar elementos de câmera');
     return;
   }
+
+  initStyleOptions();
 
   if (cameraBtn) {
     cameraBtn.addEventListener('click', () => {
@@ -416,9 +511,28 @@ document.addEventListener('DOMContentLoaded', () => {
       
       currentDetection = null;
       window.currentAnalysis = null;
+      selectedStyle = null;
+      document.querySelectorAll('.style-option').forEach((b) => b.classList.remove('is-active'));
+      window.ReloIA?.resetSimulation();
     });
   }
 
   // Carregar modelos em background logo após o carregamento da página
   setTimeout(loadFaceModels, 2000);
 });
+
+  // script.js chama window.stopCamera(); o restante fica disponivel para os
+  // listeners inline e para depuracao.
+  window.startCamera = startCamera;
+  window.stopCamera = stopCamera;
+  window.captureAndAnalyze = captureAndAnalyze;
+  window.loadFaceModels = loadFaceModels;
+  window.initCameraElements = initCameraElements;
+  window.detectFaceRealtime = detectFaceRealtime;
+  window.analyzeDetection = analyzeDetection;
+  window.showCameraError = showCameraError;
+  window.setCameraStatus = setCameraStatus;
+  window.persistSimulation = persistSimulation;
+  window.initStyleOptions = initStyleOptions;
+  window.startImageSimulation = startImageSimulation;
+})();

@@ -1,6 +1,10 @@
+// Configuração da detecção facial.
+// IIFE: evita colidir com script.js no escopo global. As constantes
+// SUPABASE_URL/SUPABASE_KEY que existiam aqui não eram usadas e foram removidas.
 // Configuração da detecção facial
-const SUPABASE_FACE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
-const SUPABASE_FACE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
+(function () {
+  'use strict';
+
 
 let video = null;
 let canvas = null;
@@ -75,6 +79,13 @@ function initializeElements() {
 // Carregar modelos de detecção facial
 async function loadFaceModels() {
   try {
+    // Sem a lib do CDN (offline/bloqueado) `faceapi` nem existe — checar antes evita
+    // ReferenceError e devolve uma mensagem clara ao usuário.
+    if (typeof faceapi === 'undefined') {
+      updateStatus('A biblioteca de detecção facial não carregou. Verifique sua conexão e recarregue a página.', 'error');
+      return false;
+    }
+
     const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
     
     await Promise.all([
@@ -418,3 +429,16 @@ window.addEventListener('beforeunload', () => {
     stream.getTracks().forEach(track => track.stop());
   }
 });
+
+  // script.js chama window.stopCamera(); o restante fica disponivel para os
+  // listeners inline e para depuracao.
+  window.startCamera = startCamera;
+  window.stopCamera = stopCamera;
+  window.detectFace = detectFace;
+  window.analyzeFeatures = analyzeFeatures;
+  window.initializeElements = initializeElements;
+  window.loadFaceModels = loadFaceModels;
+  window.clearAnalysis = clearAnalysis;
+  window.updateStatus = updateStatus;
+  window.updateUIState = updateUIState;
+})();

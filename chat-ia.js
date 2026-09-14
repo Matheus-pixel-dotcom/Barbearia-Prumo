@@ -1,7 +1,12 @@
-// Relo IA — consultor de corte por chat (roda 100% no navegador)
-// Usa a análise facial (window.currentAnalysis) e o volume escolhido
-// para adaptar a recomendação ao rosto da pessoa.
-
+// Relo IA — consultora de corte + simulação de imagem (Nano Banana).
+//
+// Fluxo:
+//   1. O cliente captura a foto -> ia-camera.js chama window.ReloIA.startSimulation(...).
+//   2. Este módulo gera a primeira imagem com o Nano Banana e posta no chat.
+//   3. Cada mensagem seguinte do cliente vira uma EDIÇÃO daquela imagem: o resultado
+//      anterior volta para o modelo junto com o pedido, e a nova imagem aparece no chat.
+//
+// O núcleo (nano-banana.js) não conhece o DOM; toda a apresentação fica aqui.
 (function () {
   'use strict';
 
@@ -41,6 +46,22 @@
 
   var vol = 2;
   var chatBody, chatInput;
+  var generating = false;
+
+  /**
+   * Estado da simulação atual.
+   * photoDataUrl  -> a foto original do cliente (nunca muda)
+   * currentDataUrl-> o último resultado gerado (base da próxima edição)
+   * analysis      -> { styleName, faceShape }
+   * edits         -> quantas alterações o cliente já pediu
+   */
+  var simulation = null;
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
   function analise() {
     return (typeof window !== 'undefined' && window.currentAnalysis) || null;
@@ -51,26 +72,64 @@
     return a && a.shapeName ? a.shapeName : null;
   }
 
+  function scrollToEnd() {
+    if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  /** Mensagem de texto. `quem` = 'ia' | 'user'. */
   function add(texto, quem) {
-    if (!chatBody) return;
+    if (!chatBody) return null;
     var el = document.createElement('div');
     el.className = 'chat-msg ' + (quem === 'user' ? 'from-user' : 'from-ia');
     el.innerHTML = texto;
     chatBody.appendChild(el);
-    chatBody.scrollTop = chatBody.scrollHeight;
+    scrollToEnd();
+    return el;
+  }
+
+  /** Mensagem com a imagem gerada. */
+  function addImage(dataUrl, legenda, quem) {
+    if (!chatBody) return null;
+    var el = document.createElement('div');
+    el.className = 'chat-msg ' + (quem === 'user' ? 'from-user' : 'from-ia');
+
+    if (legenda) {
+      var cap = document.createElement('div');
+      cap.innerHTML = legenda;
+      el.appendChild(cap);
+    }
+
+    var img = document.createElement('img');
+    img.className = 'nb-img';
+    img.src = dataUrl;
+    img.alt = 'Simulação de corte gerada pela IA';
+    el.appendChild(img);
+
+    chatBody.appendChild(el);
+    scrollToEnd();
+    return el;
+  }
+
+  /** Indicador "gerando…" que fica até a imagem chegar. Retorna a função que remove. */
+  function showBusy(texto) {
+    if (!chatBody) return function () {};
+    var el = document.createElement('div');
+    el.className = 'chat-msg from-ia chat-typing';
+    el.textContent = texto;
+    chatBody.appendChild(el);
+    scrollToEnd();
+    return function () { el.remove(); };
   }
 
   function digitando(cb) {
-    var el = document.createElement('div');
-    el.className = 'chat-msg from-ia chat-typing';
-    el.textContent = 'Relo IA está digitando...';
-    chatBody.appendChild(el);
-    chatBody.scrollTop = chatBody.scrollHeight;
+    var done = showBusy('Relo IA está digitando...');
     setTimeout(function () {
-      el.remove();
+      done();
       cb();
     }, 500);
   }
+
+  // ------------------------------------------------------------- recomendação textual
 
   function recomendacao() {
     var v = VOLUMES[vol];
@@ -137,6 +196,12 @@
     return 'Posso te ajudar com: <strong>volume do corte</strong>, formato de rosto, cabelo cacheado, entradas, barba, preços e agendamento. Sobre o que você quer falar?';
   }
 
+  /** Perguntas que merecem resposta em texto mesmo durante a simulação. */
+  function isFaq(msg) {
+    var t = msg.toLowerCase();
+    return /(pre[çc]o|valor|quanto custa|custa|tabela|agendar|hor[áa]rio|marcar|reservar|whats|manuten[çc][ãa]o)/.test(t);
+  }
+
   function setVol(v) {
     vol = v;
     document.querySelectorAll('[data-volume]').forEach(function (b) {
@@ -146,12 +211,163 @@
     if (label) label.textContent = VOLUMES[vol].nome + ' — ' + VOLUMES[vol].desc;
   }
 
-  function enviar(msg) {
+  // ------------------------------------------------------------- geração de imagem
+
+  function nbApi() {
+    return window.NanoBanana || null;
+  }
+
+  function analysisForPrompt() {
+    // A análise que veio junto com a foto tem prioridade sobre window.currentAnalysis:
+    // no fluxo de upload de arquivo não existe detecção facial, e o formato informado
+    // por quem chamou não pode ser descartado.
+    var a = (simulation && simulation.analysis) || {};
+    return {
+      styleName: a.styleName || null,
+      faceShape: a.faceShape || shapeName(),
+      volume: VOLUMES[vol].nome,
+    };
+  }
+
+  /**
+   * Gera a primeira simulação a partir da foto capturada e posta no chat.
+   * Chamado por ia-camera.js (e pelo upload de foto).
+   */
+  async function startSimulation(photoDataUrl, analysis) {
+    var api = nbApi();
+    if (!api) {
+      add('Não consegui carregar o gerador de imagem. Recarregue a página.', 'ia');
+      return null;
+    }
+    if (!api.isConfigured()) {
+      add(
+        'Sua foto foi analisada ✅ — rosto lido como <strong>' +
+        escapeHtml((analysis && analysis.faceShape) || shapeName() || 'não identificado') +
+        '</strong>.<br>Para eu <strong>desenhar o corte na sua foto</strong>, clique em ' +
+        '<strong>⚙️ Configurar IA</strong> aí em cima e conecte o Nano Banana.',
+        'ia'
+      );
+      return null;
+    }
+
+    simulation = {
+      photoDataUrl: photoDataUrl,
+      currentDataUrl: null,
+      analysis: analysis || {},
+      edits: 0,
+    };
+
+    var done = showBusy('🍌 Desenhando o corte na sua foto…');
+    try {
+      var result = await api.generate({
+        photoDataUrl: photoDataUrl,
+        analysis: analysisForPrompt(),
+      });
+      simulation.currentDataUrl = result.dataUrl;
+
+      done();
+      var nome = (analysis && analysis.styleName) || 'o corte sugerido';
+      addImage(
+        result.dataUrl,
+        'Prontinho! Simulei <strong>' + escapeHtml(nome) + '</strong> na sua foto com volume <strong>' +
+        escapeHtml(VOLUMES[vol].nome.toLowerCase()) + '</strong>.<br>' +
+        'Quer mudar alguma coisa? É só escrever — “deixa mais curto”, “aumenta o volume”, “coloca barba”…'
+      );
+      if (result.text) add(escapeHtml(result.text), 'ia');
+      return result;
+    } catch (error) {
+      done();
+      reportError(error);
+      return null;
+    }
+  }
+
+  /** Edita a simulação atual a partir de um pedido do cliente. */
+  async function applyEdit(instruction) {
+    var api = nbApi();
+    if (!api || !simulation || !simulation.currentDataUrl) return null;
+
+    var done = showBusy('🍌 Aplicando a mudança…');
+    generating = true;
+    try {
+      var result = await api.generate({
+        photoDataUrl: simulation.photoDataUrl,
+        baseDataUrl: simulation.currentDataUrl,   // <- itera sobre o resultado anterior
+        instruction: instruction,
+        analysis: analysisForPrompt(),
+      });
+      simulation.currentDataUrl = result.dataUrl;
+      simulation.edits += 1;
+
+      done();
+      addImage(
+        result.dataUrl,
+        'Ajustado: <strong>' + escapeHtml(instruction) + '</strong> ' +
+        '(versão ' + (simulation.edits + 1) + '). Quer mais alguma coisa?'
+      );
+      if (result.text) add(escapeHtml(result.text), 'ia');
+      return result;
+    } catch (error) {
+      done();
+      reportError(error);
+      return null;
+    } finally {
+      generating = false;
+    }
+  }
+
+  function reportError(error) {
+    console.error('Nano Banana:', error);
+    var kind = error && error.kind;
+    var msg;
+
+    if (kind === 'not-configured') {
+      msg = 'O gerador de imagem não está conectado. Clique em <strong>⚙️ Configurar IA</strong> para ativar.';
+    } else if (kind === 'blocked') {
+      msg = 'A imagem foi recusada pelo modelo. ' + escapeHtml(error.message) +
+        '<br>Tente uma foto com o rosto inteiro visível, de frente e bem iluminada.';
+    } else if (kind === 'rate-limit') {
+      msg = 'Muitas gerações em seguida. Espera uns segundos e pede de novo. ' +
+        '<br><small>' + escapeHtml(error.message) + '</small>';
+    } else if (kind === 'network') {
+      msg = 'Não consegui falar com o gerador de imagem — parece falta de conexão. ' +
+        '<br><small>' + escapeHtml(error.message) + '</small>';
+    } else {
+      msg = 'Não consegui gerar a imagem. ' + escapeHtml(error && error.message ? error.message : 'Erro desconhecido.');
+    }
+
+    add('⚠️ ' + msg, 'ia');
+  }
+
+  // ------------------------------------------------------------- envio
+
+  async function enviar(msg) {
     if (!msg.trim()) return;
-    add(msg.replace(/</g, '&lt;'), 'user');
+    if (generating) {
+      add('Calma, ainda estou gerando a imagem anterior. 😉', 'ia');
+      return;
+    }
+
+    add(escapeHtml(msg), 'user');
+
+    // Com simulação ativa, a mensagem vira pedido de edição — exceto FAQ, que responde em texto.
+    if (simulation && simulation.currentDataUrl && nbApi() && nbApi().isConfigured() && !isFaq(msg)) {
+      await applyEdit(msg.trim());
+      return;
+    }
+
     digitando(function () {
       add(responder(msg), 'ia');
     });
+  }
+
+  /** ia-camera.js chama isto depois de configurar window.currentAnalysis. */
+  function onConfigChanged() {
+    if (window.NanoBananaUI && window.NanoBananaUI.refreshStatus) window.NanoBananaUI.refreshStatus();
+  }
+
+  function resetSimulation() {
+    simulation = null;
   }
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -173,8 +389,9 @@
     if (form) {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
-        enviar(chatInput.value);
+        var value = chatInput.value;
         chatInput.value = '';
+        enviar(value);
       });
     }
 
@@ -185,5 +402,21 @@
     });
 
     add('Fala! Sou a <strong>Relo IA</strong>, consultora de corte da Style Relo Barber. Escolha o <strong>volume</strong> que você quer no topo aí em cima, ou me pergunte qualquer coisa sobre o seu corte.', 'ia');
+
+    if (window.NanoBananaUI && window.NanoBananaUI.refreshStatus) window.NanoBananaUI.refreshStatus();
   });
+
+  // API usada pelos outros módulos (ia-camera.js, script.js, nano-banana-ui.js).
+  window.ReloIA = {
+    startSimulation: startSimulation,
+    applyEdit: applyEdit,
+    resetSimulation: resetSimulation,
+    getSimulation: function () { return simulation; },
+    isGenerating: function () { return generating; },
+    postMessage: add,
+    postImage: addImage,
+    setVol: setVol,
+    getVol: function () { return vol; },
+    onConfigChanged: onConfigChanged,
+  };
 })();

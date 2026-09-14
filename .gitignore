@@ -1,6 +1,8 @@
 node_modules/
 .expo/
 dist/
+# Chave do Nano Banana / Gemini — NUNCA commitar. Use nano-banana.config.example.js.
+nano-banana.config.js
 npm-debug.*
 *.jks
 *.p8
