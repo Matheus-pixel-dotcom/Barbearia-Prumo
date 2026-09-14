@@ -16,3 +16,6 @@ web-build/
 
 # Banco de dados local gerado pelo servidor (npm run serve)
 data/
+
+# Arquivo de variáveis de ambiente (contém segredos)
+.env

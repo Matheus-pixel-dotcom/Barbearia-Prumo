@@ -414,7 +414,49 @@
   global.excluirDespesa = excluirDespesa;
 
   global.salvarCliente = salvarCliente;
+  global.baixarBackup = baixarBackup;
+  global.restaurarBackupSelecionado = restaurarBackupSelecionado;
   global.excluirUsuario = excluirUsuario;
+
+  async function baixarBackup() {
+    const resultado = await global.ReloAuth.baixarBackup();
+    if (!resultado.ok) {
+      global.alert(resultado.erro);
+      return;
+    }
+    avisar('Backup baixado: ' + resultado.nome, 'ok');
+  }
+
+  async function restaurarBackupSelecionado(input) {
+    const arquivo = input.files && input.files[0];
+    input.value = '';
+    if (!arquivo) return;
+    if (!global.confirm('Restaurar o backup "' + arquivo.name + '"?\n\nOs cadastros atuais serão substituídos pelos do arquivo.')) return;
+    try {
+      const conteudo = JSON.parse(await arquivo.text());
+      const resultado = await global.ReloAuth.restaurarBackup(conteudo);
+      if (!resultado.ok) {
+        avisar(resultado.erro, 'erro');
+        return;
+      }
+      avisar('Backup restaurado: ' + resultado.restaurado.usuarios + ' cadastro(s).', 'ok');
+      carregarUsuarios();
+    } catch (erro) {
+      avisar('Arquivo inválido: ' + erro.message, 'erro');
+    }
+  }
+
+  function avisar(mensagem, tipo) {
+    const el = document.getElementById('admin-aviso');
+    if (!el) {
+      global.alert(mensagem);
+      return;
+    }
+    el.textContent = mensagem;
+    el.className = 'badge ' + (tipo === 'erro' ? 'danger' : 'success');
+    el.hidden = false;
+    global.setTimeout(() => { el.hidden = true; }, 6000);
+  }
 
   async function sairDaConta() {
     await global.ReloAuth.sair();

@@ -361,12 +361,17 @@
         </p>
       </div>
 
+      <div id="admin-aviso" class="badge success" hidden style="margin-bottom: 18px;"></div>
+
       <!-- CLIENTS TAB -->
       <div id="tab-clients" class="section-panel">
         <div class="panel-header">
           <h2>Banco de Clientes &amp; Logins</h2>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <button class="btn btn-secondary" onclick="loadAdminData()">Atualizar</button>
+            <button class="btn btn-secondary" onclick="baixarBackup()" title="Baixa uma cópia do banco de clientes em arquivo JSON">⬇️ Backup</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('arquivo-backup').click()" title="Restaura um backup baixado antes">⬆️ Restaurar</button>
+            <input type="file" id="arquivo-backup" accept="application/json,.json" hidden onchange="restaurarBackupSelecionado(this)">
             <button class="btn" onclick="openModal('cliente-modal')">+ Novo Cliente</button>
           </div>
         </div>
@@ -582,6 +587,7 @@
   </div>
 
   <!-- Login e banco de dados -->
+  <script src="config.js?v=20260914" defer></script>
   <script src="auth-hash.js?v=20260914" defer></script>
   <script src="admin-accounts.js?v=20260914" defer></script>
   <script src="auth-core.js?v=20260914" defer></script>

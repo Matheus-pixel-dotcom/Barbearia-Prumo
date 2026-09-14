@@ -138,11 +138,19 @@
   };
 
   /* ------------------------- comunicação com a API ------------------------- */
+  // Endereço do servidor do banco de dados.
+  // Vazio = mesmo endereço do site. Preenchido em config.js quando o site é
+  // hospedado separado do servidor (ex.: GitHub Pages + Render).
+  function baseApi() {
+    const base = (global.RELO_API_BASE || '').replace(/\/+$/, '');
+    return base ? base + '/' : '';
+  }
+
   async function chamarApi(caminho, opcoes) {
     const config = Object.assign({ headers: {} }, opcoes || {});
     config.headers = Object.assign({ 'Content-Type': 'application/json' }, config.headers || {});
     if (token) config.headers.Authorization = 'Bearer ' + token;
-    const resposta = await fetch('api/' + caminho.replace(/^\/+/, ''), config);
+    const resposta = await fetch(baseApi() + 'api/' + caminho.replace(/^\/+/, ''), config);
     let dados = {};
     try {
       dados = await resposta.json();
@@ -183,7 +191,7 @@
 
     // 1) Existe servidor com a API do banco de dados?
     try {
-      const resposta = await fetch('api/health', { cache: 'no-store' });
+      const resposta = await fetch(baseApi() + 'api/health', { cache: 'no-store' });
       if (resposta.ok) {
         const dados = await resposta.json();
         modo = dados && dados.ok ? 'servidor' : 'local';
@@ -447,6 +455,41 @@
     return { ok: true };
   }
 
+  async function baixarBackup() {
+    await ready();
+    if (!ehAdmin(usuario)) return { ok: false, erro: 'Acesso restrito aos administradores.' };
+    try {
+      const resposta = await fetch(baseApi() + 'api/admin/backup', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (!resposta.ok) return { ok: false, erro: 'Não foi possível gerar o backup.' };
+      const blob = await resposta.blob();
+      const nome = 'banco-clientes-style-relo-' + new Date().toISOString().slice(0, 10) + '.json';
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = nome;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      return { ok: true, nome };
+    } catch (erro) {
+      return { ok: false, erro: 'Falha ao baixar o backup: ' + erro.message };
+    }
+  }
+
+  async function restaurarBackup(conteudo) {
+    await ready();
+    if (!ehAdmin(usuario)) return { ok: false, erro: 'Acesso restrito aos administradores.' };
+    const { ok, dados } = await chamarApi('admin/restaurar', {
+      method: 'POST',
+      body: JSON.stringify(conteudo)
+    });
+    if (!ok) return { ok: false, erro: dados.erro || 'Não foi possível restaurar o backup.' };
+    return { ok: true, restaurado: dados.restaurado };
+  }
+
   function ehAdmin(u) {
     return !!u && u.perfil === 'admin';
   }
@@ -480,6 +523,8 @@
     sair,
     listarUsuarios,
     criarCliente,
+    baixarBackup,
+    restaurarBackup,
     removerUsuario,
     ehAdmin,
     aoMudar,
@@ -494,6 +539,9 @@
     get token() {
       return token;
     },
-    CHAVES
+    CHAVES,
+    get enderecoDaApi() {
+      return baseApi() || 'mesmo endereço do site';
+    }
   };
 })(typeof window !== 'undefined' ? window : this);

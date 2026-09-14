@@ -1,0 +1,36 @@
+# Deploy do Style Relo Barber no Render (hospedagem gratuita)
+#
+# Como usar: no Render, clique em "New +" → "Blueprint" e escolha este repositório.
+# O Render lê este arquivo e cria o serviço já configurado.
+#
+# O site inteiro (páginas + API + banco de clientes) roda em um único endereço.
+services:
+  - type: web
+    name: style-relo-barber
+    runtime: node
+    plan: free
+    region: ohio
+    branch: main
+    # O projeto não tem dependências para instalar (usa só o Node nativo),
+    # então o build apenas confirma que está tudo certo.
+    buildCommand: node -e "console.log('Sem dependências para instalar.')"
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: NODE_ENV
+        value: production
+      # Pasta do banco em arquivo (usada quando o Supabase não está configurado).
+      # Importante: no plano gratuito o disco é temporário — o backup do painel
+      # admin (botão "⬇️ Backup") guarda uma cópia dos cadastros.
+      - key: RELO_DATA_DIR
+        value: /opt/render/project/src/data
+      # ---- Banco de dados durável e compartilhado (opcional, recomendado) ----
+      # Preencha no painel do Render com os dados do seu projeto Supabase.
+      # Sem isso, o banco usa arquivo local.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false

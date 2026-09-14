@@ -225,3 +225,14 @@ Para dúvidas ou problemas com as novas funcionalidades, entre em contato atrav�
 * Texto reduzido (de ~700 para ~250 palavras visíveis), sem blocos repetidos.
 * Vitrine de 3 serviços com foto, preço e botão de agendamento.
 * Faixa de estilos animada, contadores que sobem e entrada suave dos blocos ao rolar a página.
+
+### Publicação (deploy) com banco compartilhado
+* `DEPLOY.md` — passo a passo do Render (grátis), Railway, Docker/Fly/Koyeb e do
+  cenário "GitHub Pages + servidor".
+* `render.yaml`, `Procfile`, `Dockerfile` e `.env.example` prontos para publicar.
+* `supabase/relo_db.sql` — tabela que deixa os cadastros permanentes no Supabase.
+* `config.js` — permite apontar o site (ex.: no Pages) para o servidor do banco.
+* `db.js` agora escolhe automaticamente entre Supabase (durável), arquivo
+  (padrão) e modo local do navegador, com aviso claro se o Supabase falhar.
+* API com CORS liberado para o site hospedado em outro endereço.
+* Painel admin ganhou **⬇️ Backup** e **⬆️ Restaurar** na aba Banco de Clientes.

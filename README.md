@@ -27,10 +27,28 @@ Depois abra **http://localhost:8000/index.html**
 * **Admin** — painel exclusivo para os e-mails de administrador cadastrados em
   `admin-accounts.js`: banco de clientes, histórico de logins, estoque, manutenção e despesas.
 
+## Publicar na internet
+
+Guia completo em **[DEPLOY.md](DEPLOY.md)**. Resumo:
+
+```bash
+# no seu computador (banco em arquivo)
+npm run serve
+
+# na internet (Render, grátis) — site + API + banco no mesmo endereço
+#   Runtime: Node | Build: node -e "console.log('ok')" | Start: node server.js
+#   Health check: /api/health
+```
+
+Para os cadastros ficarem salvos para sempre, rode `supabase/relo_db.sql` no Supabase e
+cadastre `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` nas variáveis de ambiente
+(ou use o backup do painel admin). O `Dockerfile`, `render.yaml` e `Procfile` já estão prontos.
+
 ## Documentação
 
 | Arquivo | Conteúdo |
 | --- | --- |
+| `DEPLOY.md` | **Como publicar o site com o banco compartilhado (Render, Railway, Docker, Supabase)** |
 | `LOGIN_E_BANCO_DE_DADOS.md` | Login, banco de clientes, lista de admins, API e como rodar |
 | `ATUALIZACOES.md` | Histórico de atualizações anteriores do projeto |
 | `IMPLEMENTACAO_IA.md` | Recursos de IA (câmera/visagismo) |
@@ -49,4 +67,7 @@ login-modal.js       caixinha de login injetada em todas as páginas
 admin.html / admin.js   painel administrativo
 dashboard.html       área do cliente
 ferramentas/gerar-senha.js   gerador de hash para novos admins
+config.js            endereço do servidor do banco (quando site e API ficam separados)
+Dockerfile / render.yaml / Procfile / .env.example   arquivos de publicação
+supabase/relo_db.sql tabela do banco durável no Supabase
 ```

@@ -40,6 +40,18 @@ http://localhost:8000/api/health      # conferir se a API está no ar
 Não precisa instalar nada: o servidor usa apenas recursos nativos do Node.
 O banco de dados é o arquivo **`data/db.json`**, criado automaticamente na primeira execução.
 
+### Onde os dados ficam guardados
+
+| Modo | Quando acontece | O que muda |
+| --- | --- | --- |
+| **Supabase** | quando `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` estão configurados | Cadastros permanentes e compartilhados entre todos os aparelhos (veja `supabase/relo_db.sql` e `DEPLOY.md`) |
+| **Arquivo** | padrão (`data/db.json`) | Ótimo no computador/em servidor com disco; em hospedagem gratuita o disco pode ser temporário |
+| **Local (navegador)** | quando não existe servidor (ex.: GitHub Pages puro) | Tudo funciona, mas cada aparelho tem seus próprios cadastros |
+
+O endereço `/api/health` mostra qual armazenamento está em uso, e o painel admin exibe isso
+no topo. Para não perder nada, o painel tem os botões **⬇️ Backup** e **⬆️ Restaurar**
+aba *Banco de Clientes*.
+
 ### Também funciona sem servidor (modo local)
 
 Se alguém abrir o site direto pelo arquivo (duplo clique em `index.html`) ou hospedar em
@@ -150,6 +162,10 @@ Para trocar a senha de um admin, gere o hash novo e substitua o `senhaHash` daqu
 | `auth-core.js` | **novo** — ReloAuth: login, cadastro, sessão, modo servidor/local |
 | `login-modal.js` | **novo** — a caixinha de login injetada em todas as páginas |
 | `ferramentas/gerar-senha.js` | **novo** — gerador de hash para novos admins |
+| `config.js` | **novo** — endereço do servidor do banco (para site e API em endereços diferentes) |
+| `db.js` | atualizado — escolhe entre Supabase (durável) e arquivo (padrão) |
+| `server.js` | atualizado — CORS, backup/restauração e informação do armazenamento |
+| `Dockerfile`, `render.yaml`, `Procfile`, `.env.example`, `supabase/relo_db.sql`, `DEPLOY.md` | **novos** — publicação do site na internet |
 | `auth.js` | reescrito para usar o banco novo (login.html / signup.html) |
 | `admin.js`, `admin.html` | painel com banco de clientes, logins e bloqueio de acesso |
 | `dashboard.html` | área do cliente com os dados do próprio cadastro |

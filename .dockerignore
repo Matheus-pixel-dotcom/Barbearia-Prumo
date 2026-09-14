@@ -1,0 +1,11 @@
+# Arquivos que NÃO entram na imagem Docker
+.git
+.gitignore
+node_modules
+data
+coverage
+dist
+web-build
+.expo
+*.md
+!README.md

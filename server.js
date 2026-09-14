@@ -46,12 +46,14 @@ const tentativas = new Map(); // email -> { total, desde }
 /* ------------------------------------------------------------------ */
 /* Utilidades                                                          */
 /* ------------------------------------------------------------------ */
-function json(res, status, corpo) {
+function json(res, status, corpo, extras) {
   const texto = JSON.stringify(corpo);
-  res.writeHead(status, {
+  res.writeHead(status, Object.assign({
     'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'no-store'
-  });
+    'Cache-Control': 'no-store',
+    // Permite que o site publicado em outro endereço (ex.: GitHub Pages) use esta API
+    'Access-Control-Allow-Origin': '*'
+  }, extras || {}));
   res.end(texto);
 }
 
@@ -129,20 +131,21 @@ function contarTentativa(email, sucesso) {
 /* Rotas da API                                                        */
 /* ------------------------------------------------------------------ */
 async function tratarApi(req, res, url) {
-  const banco = db.carregar();
+  const banco = await db.carregar();
   const criados = db.semearAdmins(banco);
-  if (criados > 0) db.salvar(banco);
+  if (criados > 0) await db.salvar(banco);
 
   const rota = url.pathname.replace(/\/+$/, '') || '/api';
 
   // GET /api/health — usado pelo navegador para saber se o banco do servidor está ativo
   if (rota === '/api' || rota === '/api/health') {
-    db.salvar(banco);
+    await db.salvar(banco);
     return json(res, 200, {
       ok: true,
       servico: 'Style Relo Barber',
       modo: 'servidor',
       banco: path.relative(RAIZ, db.DB_FILE),
+      armazenamento: db.descricaoArmazenamento(),
       usuarios: banco.usuarios.length,
       administradores: banco.usuarios.filter((u) => u.perfil === 'admin').length,
       hora: new Date().toISOString()
@@ -169,7 +172,7 @@ async function tratarApi(req, res, url) {
     if (!confere) {
       contarTentativa(email, false);
       db.registrarLogin(banco, { email, sucesso: false, origem: 'servidor' });
-      db.salvar(banco);
+      await db.salvar(banco);
       return json(res, 401, { ok: false, erro: 'E-mail ou senha incorretos.' });
     }
 
@@ -184,7 +187,7 @@ async function tratarApi(req, res, url) {
       sucesso: true,
       origem: 'servidor'
     });
-    db.salvar(banco);
+    await db.salvar(banco);
     return json(res, 200, { ok: true, token, usuario: db.usuarioPublico(usuario) });
   }
 
@@ -234,7 +237,7 @@ async function tratarApi(req, res, url) {
       sucesso: true,
       origem: 'cadastro'
     });
-    db.salvar(banco);
+    await db.salvar(banco);
     return json(res, 201, { ok: true, token, usuario: db.usuarioPublico(usuario) });
   }
 
@@ -248,7 +251,7 @@ async function tratarApi(req, res, url) {
   // POST /api/auth/sair
   if (rota === '/api/auth/sair' && req.method === 'POST') {
     db.removerSessao(banco, tokenDaRequisicao(req));
-    db.salvar(banco);
+    await db.salvar(banco);
     return json(res, 200, { ok: true });
   }
 
@@ -267,6 +270,32 @@ async function tratarApi(req, res, url) {
       totalClientes: usuarios.filter((u) => u.perfil === 'cliente').length,
       totalAdmins: usuarios.filter((u) => u.perfil === 'admin').length
     });
+  }
+
+  // GET /api/admin/backup — baixa uma cópia do banco de dados (só admin)
+  if ((rota === '/api/admin/backup' || rota === '/api/admin/exportar') && req.method === 'GET') {
+    const sessao = exigeAdmin(req, banco, res);
+    if (!sessao) return undefined;
+    const copia = db.paraBackup(banco);
+    const nomeArquivo = 'banco-clientes-style-relo-' + new Date().toISOString().slice(0, 10) + '.json';
+    return json(res, 200, copia, {
+      'Content-Disposition': 'attachment; filename="' + nomeArquivo + '"',
+      'Access-Control-Expose-Headers': 'Content-Disposition'
+    });
+  }
+
+  // POST /api/admin/restaurar — restaura um backup baixado antes (só admin)
+  if (rota === '/api/admin/restaurar' && req.method === 'POST') {
+    const sessao = exigeAdmin(req, banco, res);
+    if (!sessao) return undefined;
+    const corpo = await lerCorpo(req);
+    try {
+      const resultado = db.aplicarBackup(banco, corpo);
+      await db.salvar(banco);
+      return json(res, 200, { ok: true, restaurado: resultado });
+    } catch (erro) {
+      return json(res, 400, { ok: false, erro: erro.message });
+    }
   }
 
   // POST /api/admin/usuarios — admin cadastra um cliente manualmente
@@ -300,7 +329,7 @@ async function tratarApi(req, res, url) {
       totalLogins: 0
     };
     banco.usuarios.push(usuario);
-    db.salvar(banco);
+    await db.salvar(banco);
     return json(res, 201, { ok: true, usuario: db.usuarioPublico(usuario) });
   }
 
@@ -316,7 +345,7 @@ async function tratarApi(req, res, url) {
     }
     banco.usuarios = banco.usuarios.filter((u) => u.id !== alvo.id);
     banco.sessoes = banco.sessoes.filter((s) => s.usuarioId !== alvo.id);
-    db.salvar(banco);
+    await db.salvar(banco);
     return json(res, 200, { ok: true, removido: db.usuarioPublico(alvo) });
   }
 
@@ -381,17 +410,26 @@ const servidor = http.createServer((req, res) => {
   return servirArquivo(req, res, url);
 });
 
-servidor.listen(PORTA, HOST, () => {
-  const banco = db.carregar();
-  const criados = db.semearAdmins(banco);
-  db.salvar(banco);
+servidor.listen(PORTA, HOST, async () => {
+  let banco;
+  try {
+    banco = await db.carregar();
+    const criados = db.semearAdmins(banco);
+    await db.salvar(banco);
+    banco.criadosAgora = criados;
+  } catch (erro) {
+    console.error('[servidor] Falha ao abrir o banco de dados:', erro.message);
+    banco = { usuarios: [], criadosAgora: 0 };
+  }
   console.log('======================================================');
   console.log('  Style Relo Barber — servidor no ar');
   console.log(`  Site:    http://localhost:${PORTA}/index.html`);
   console.log(`  Admin:   http://localhost:${PORTA}/admin.html`);
   console.log(`  API:     http://localhost:${PORTA}/api/health`);
-  console.log(`  Banco:   ${db.DB_FILE}`);
+  console.log(`  Banco:   ${db.descricaoArmazenamento()}`);
   console.log(`  Usuários cadastrados: ${banco.usuarios.length}`);
-  if (criados > 0) console.log(`  ${criados} conta(s) de administrador criada(s) agora.`);
+  if (banco.criadosAgora > 0) {
+    console.log(`  ${banco.criadosAgora} conta(s) de administrador criada(s) agora.`);
+  }
   console.log('======================================================');
 });
