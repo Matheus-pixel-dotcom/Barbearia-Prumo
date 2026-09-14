@@ -1,9 +1,10 @@
 const WHATSAPP_NUMBER = '5541996484980';
 const WHATSAPP_BASE = `https://wa.me/${WHATSAPP_NUMBER}`;
 
-// Supabase integration
-const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
+// Integração Supabase (opcional). Estes nomes são exclusivos deste arquivo para
+// não colidir com as constantes de supabase-client.js / face-recognition.js.
+const SUPABASE_SITE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
+const SUPABASE_SITE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
 
 function buildWhatsappUrl(message) {
   return `${WHATSAPP_BASE}?text=${encodeURIComponent(message)}`;
@@ -112,8 +113,81 @@ function initTryOn() {
   });
 }
 
+// Aparece suavemente conforme o usuário rola a página (usado em [data-reveal])
+function initScrollReveal() {
+  const alvos = document.querySelectorAll('[data-reveal]');
+  if (!alvos.length) return;
+
+  // Sem suporte (ou usuário pediu menos animação): mostra tudo direto
+  const prefereMenosMovimento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!('IntersectionObserver' in window) || prefereMenosMovimento) {
+    alvos.forEach((el) => el.classList.add('revelado'));
+    return;
+  }
+
+  // Escalona os itens que estão lado a lado (cards de uma mesma grade)
+  alvos.forEach((el) => {
+    const irmaos = Array.from(el.parentElement.querySelectorAll('[data-reveal]'));
+    const posicao = irmaos.indexOf(el);
+    if (posicao > 0) el.style.transitionDelay = Math.min(posicao, 5) * 90 + 'ms';
+  });
+
+  const observador = new IntersectionObserver((entradas) => {
+    entradas.forEach((entrada) => {
+      if (!entrada.isIntersecting) return;
+      entrada.target.classList.add('revelado');
+      observador.unobserve(entrada.target);
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  alvos.forEach((el) => observador.observe(el));
+}
+
+// Números que sobem no carregamento (data-counter / data-decimals)
+function initCounters() {
+  const alvos = document.querySelectorAll('[data-counter]');
+  if (!alvos.length) return;
+
+  const casas = (el) => parseInt(el.dataset.decimals || '0', 10);
+  const destino = (el) => parseFloat(el.dataset.counter);
+
+  const animar = (el) => {
+    const fim = destino(el);
+    const decimais = casas(el);
+    const duracao = 900;
+    const inicio = performance.now();
+
+    const passo = (agora) => {
+      const progresso = Math.min(1, (agora - inicio) / duracao);
+      const suavizado = 1 - Math.pow(1 - progresso, 3);
+      el.textContent = (fim * suavizado).toFixed(decimais);
+      if (progresso < 1) requestAnimationFrame(passo);
+      else el.textContent = fim.toFixed(decimais);
+    };
+    requestAnimationFrame(passo);
+  };
+
+  const prefereMenosMovimento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!('IntersectionObserver' in window) || prefereMenosMovimento) {
+    alvos.forEach((el) => { el.textContent = destino(el).toFixed(casas(el)); });
+    return;
+  }
+
+  const observador = new IntersectionObserver((entradas) => {
+    entradas.forEach((entrada) => {
+      if (!entrada.isIntersecting) return;
+      animar(entrada.target);
+      observador.unobserve(entrada.target);
+    });
+  }, { threshold: 0.4 });
+
+  alvos.forEach((el) => observador.observe(el));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initMobileMenu();
   initContactForm();
   initTryOn();
+  initScrollReveal();
+  initCounters();
 });

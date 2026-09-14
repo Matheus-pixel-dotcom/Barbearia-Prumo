@@ -96,7 +96,7 @@
     var t = msg.toLowerCase();
 
     if (/(pre[çc]o|valor|quanto custa|custa|tabela)/.test(t)) {
-      return 'O Combo Style Relo (corte + barba + consultoria de visagismo) sai por <strong>R$ 90</strong>. Tem a tabela completa em <a href="servicos.html">Serviços</a>.';
+      return 'O Combo Style Relo (corte + barba + consultoria de visagismo) sai por <strong>R$ 90</strong> e o Corte Style Relo por <strong>R$ 45</strong>. Para casamento temos o pacote <strong>Dia do Noivo por R$ 250</strong>. Tabela completa em <a href="servicos.html">Serviços</a>.';
     }
     if (/(agendar|hor[áa]rio|marcar|reservar|whats)/.test(t)) {
       return 'Bora! Você agenda direto pelo <a href="https://wa.me/5541996484980" target="_blank" rel="noopener">WhatsApp</a> ou pela página de <a href="contato.html">Contato</a>.';
@@ -115,6 +115,9 @@
     }
     if (/(cacho|crespo|ondulado|frizz)/.test(t)) {
       return 'Cabelo com cacho segura volume naturalmente: peça um <strong>topo texturizado com degradê médio</strong> e finalize com creme de definição. Evite raspar demais as laterais, senão o topo fica desproporcional.';
+    }
+    if (/(noivo|casamento|noiva|casando|boda)/.test(t)) {
+      return 'Para o grande dia tem o pacote <strong>Dia do Noivo — R$ 250</strong>: corte personalizado, barboterapia com navalha, sobrancelha, hidratação e finalização, com horário reservado. Veja em <a href="servicos.html#dia-do-noivo">Serviços</a> ou agende no <a href="https://wa.me/5541996484980" target="_blank" rel="noopener">WhatsApp</a>.';
     }
     if (/(barba|bigode)/.test(t)) {
       return 'A barboterapia inclui navalha, toalha quente e hidratação. Se você escolher volume alto no topo, uma barba mais aparada equilibra o conjunto.';

@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | Barbearia Prumo</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="description" content="Minha conta no Style Relo Barber: dados do cadastro, agendamentos e simulador de visagismo.">
+  <title>Minha Conta | Style Relo Barber</title>
+  <link rel="stylesheet" href="style.css?v=20260914">
   <style>
     .dashboard-container {
       max-width: 900px;
-      margin: 60px auto;
+      margin: 40px auto 60px;
       padding: 0 20px;
     }
     .welcome-card {
@@ -21,6 +22,31 @@
     .welcome-card h1 {
       color: var(--gold-2);
       margin-top: 0;
+    }
+    .dados-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin: 22px 0;
+    }
+    .dado {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .dado span {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted-2);
+      margin-bottom: 4px;
+    }
+    .dado strong {
+      font-size: 15px;
+      color: var(--text);
+      word-break: break-word;
     }
     .actions-grid {
       display: grid;
@@ -41,26 +67,26 @@
       border-color: var(--gold);
       transform: translateY(-2px);
     }
-    .action-card h3 {
-      color: var(--gold);
-      margin-top: 0;
-      margin-bottom: 10px;
-    }
-    .action-card p {
-      color: var(--muted);
-      margin: 0;
-      font-size: 14px;
-    }
+    .action-card h3 { color: var(--gold); margin-top: 0; margin-bottom: 10px; }
+    .action-card p { color: var(--muted); margin: 0; font-size: 14px; }
+    .action-card.bloqueado { opacity: 0.55; cursor: not-allowed; }
+    .action-card.bloqueado:hover { border-color: var(--line); transform: none; }
+    .welcome-actions { display: flex; gap: 12px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
+  <!-- Login e banco de dados de clientes -->
+  <script src="auth-hash.js?v=20260914" defer></script>
+  <script src="admin-accounts.js?v=20260914" defer></script>
+  <script src="auth-core.js?v=20260914" defer></script>
+  <script src="login-modal.js?v=20260914" defer></script>
   <header class="site-header">
     <nav class="navbar container">
       <a class="brand" href="index.html">Style Relo Barber</a>
       <div class="nav-links">
         <a href="index.html">Início</a>
-        <a href="admin.html" style="color: var(--gold); font-weight: bold;">Painel Admin</a>
-        <a href="#" onclick="logoutUser()">Sair</a>
+        <a href="admin.html" style="color: var(--gold); font-weight: 600;">Admin</a>
+        <a href="#" onclick="sairDaConta(); return false;">Sair</a>
       </div>
     </nav>
   </header>
@@ -68,18 +94,29 @@
   <main class="dashboard-container">
     <div class="welcome-card">
       <h1 id="user-greeting">Bem-vindo à sua conta!</h1>
-      <p id="user-email-display" style="color: var(--muted); margin-bottom: 20px;">Carregando dados da sessão...</p>
-      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <p id="user-status" style="color: var(--muted); margin: 0;">Carregando dados da sessão...</p>
+
+      <div class="dados-grid">
+        <div class="dado"><span>Nome</span><strong id="dado-nome">—</strong></div>
+        <div class="dado"><span>E-mail de acesso</span><strong id="dado-email">—</strong></div>
+        <div class="dado"><span>Perfil</span><strong id="dado-perfil">—</strong></div>
+        <div class="dado"><span>Último acesso</span><strong id="dado-ultimo">—</strong></div>
+        <div class="dado"><span>Total de acessos</span><strong id="dado-total">—</strong></div>
+        <div class="dado"><span>Banco de dados</span><strong id="dado-banco">—</strong></div>
+      </div>
+
+      <div class="welcome-actions">
         <a href="ia-tryon.html" class="btn btn-primary">Testar Visagismo com IA</a>
-        <a href="admin.html" class="btn btn-outline" style="border-color: var(--gold); color: var(--gold);">Acessar Painel Administrativo</a>
+        <a href="contato.html" class="btn btn-outline">Agendar horário</a>
+        <a id="btn-admin" href="admin.html" class="btn btn-outline" style="border-color: var(--gold); color: var(--gold); display: none;">Acessar Painel Administrativo</a>
       </div>
     </div>
 
     <h2 style="margin-bottom: 20px;">Ações Rápidas</h2>
     <div class="actions-grid">
-      <a href="admin.html" class="action-card">
+      <a id="cartao-admin" href="admin.html" class="action-card" data-admin-card>
         <h3>📊 Área Administrativa</h3>
-        <p>Gerencie logins de clientes, estoque (entrada/saída), manutenção e despesas.</p>
+        <p id="cartao-admin-texto">Gerencie o banco de clientes, logins, estoque, manutenção e despesas.</p>
       </a>
       <a href="ia-tryon.html" class="action-card">
         <h3>✂️ Simulador de IA</h3>
@@ -96,18 +133,61 @@
     </div>
   </main>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const email = localStorage.getItem('user_email') || 'Cliente Prumo';
-      document.getElementById('user-email-display').innerText = `Logado como: ${email}`;
-      document.getElementById('user-greeting').innerText = `Olá, ${email.split('@')[0]}!`;
-    });
+  <footer class="footer">
+    <div class="container">© 2026 Style Relo Barber — Técnica, ordem e estilo.</div>
+  </footer>
 
-    function logoutUser() {
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('user_email');
+  <script src="script.js?v=20260914" defer></script>
+  <script>
+    function formatarDataHora(iso) {
+      if (!iso) return '—';
+      const data = new Date(iso);
+      if (isNaN(data.getTime())) return '—';
+      return data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function preencher(usuario) {
+      if (!usuario) return;
+      document.getElementById('user-greeting').textContent = 'Olá, ' + String(usuario.nome || usuario.email).split(' ')[0] + '!';
+      document.getElementById('user-status').textContent = 'Seu cadastro está salvo no banco de dados da barbearia.';
+      document.getElementById('dado-nome').textContent = usuario.nome || '—';
+      document.getElementById('dado-email').textContent = usuario.email;
+      document.getElementById('dado-perfil').textContent = usuario.perfil === 'admin' ? 'Administrador' : 'Cliente';
+      document.getElementById('dado-ultimo').textContent = formatarDataHora(usuario.ultimoLogin);
+      document.getElementById('dado-total').textContent = String(usuario.totalLogins || 1) + ' acesso(s)';
+      document.getElementById('dado-banco').textContent =
+        window.ReloAuth.modo === 'servidor' ? 'Servidor (compartilhado)' : 'Local do navegador';
+
+      const admin = window.ReloAuth.ehAdmin(usuario);
+      document.getElementById('btn-admin').style.display = admin ? 'inline-block' : 'none';
+      const cartaoAdmin = document.getElementById('cartao-admin');
+      const textoAdmin = document.getElementById('cartao-admin-texto');
+      if (admin) {
+        cartaoAdmin.classList.remove('bloqueado');
+        textoAdmin.textContent = 'Gerencie o banco de clientes, logins, estoque, manutenção e despesas.';
+      } else {
+        cartaoAdmin.classList.add('bloqueado');
+        textoAdmin.textContent = 'Exclusivo dos administradores. Sua conta é de cliente.';
+      }
+    }
+
+    async function sairDaConta() {
+      await window.ReloAuth.sair();
       window.location.href = 'index.html';
     }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await window.ReloAuth.ready();
+      const usuario = window.ReloAuth.usuario;
+      if (!usuario) {
+        window.location.href = 'index.html';
+        return;
+      }
+      preencher(usuario);
+      window.ReloAuth.aoMudar((atual) => {
+        if (atual) preencher(atual);
+      });
+    });
   </script>
 </body>
 </html>

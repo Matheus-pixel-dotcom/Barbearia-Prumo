@@ -1,6 +1,6 @@
 // Cliente Supabase para integração com banco de dados corrigido
-const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co/rest/v1/';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoZndndWNvYXlrYmdveXFpYmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDA2MTMsImV4cCI6MjA5NzE3NjYxM30.h8JmAb6Ifyw94rtmHRiegrvJLAC08knYK6Ez4bRyYCg';
+const SUPABASE_REST_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co/rest/v1/';
+const SUPABASE_REST_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoZndndWNvYXlrYmdveXFpYmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDA2MTMsImV4cCI6MjA5NzE3NjYxM30.h8JmAb6Ifyw94rtmHRiegrvJLAC08knYK6Ez4bRyYCg';
 
 class SupabaseClient {
   constructor(url, key) {
@@ -193,4 +193,4 @@ class SupabaseClient {
   }
 }
 
-const supabaseClient = new SupabaseClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = new SupabaseClient(SUPABASE_REST_URL, SUPABASE_REST_KEY);
