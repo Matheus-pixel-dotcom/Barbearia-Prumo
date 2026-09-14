@@ -1,6 +1,6 @@
 // Configuração da detecção facial
-const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
+const SUPABASE_FACE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
+const SUPABASE_FACE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
 
 let video = null;
 let canvas = null;

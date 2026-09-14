@@ -1,9 +1,10 @@
 const WHATSAPP_NUMBER = '5541996484980';
 const WHATSAPP_BASE = `https://wa.me/${WHATSAPP_NUMBER}`;
 
-// Supabase integration
-const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
+// Integração Supabase (opcional). Estes nomes são exclusivos deste arquivo para
+// não colidir com as constantes de supabase-client.js / face-recognition.js.
+const SUPABASE_SITE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
+const SUPABASE_SITE_KEY = 'sb_publishable_WCFJ3pqXM30no8I7rxsmFg_eXMQBdH0';
 
 function buildWhatsappUrl(message) {
   return `${WHATSAPP_BASE}?text=${encodeURIComponent(message)}`;

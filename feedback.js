@@ -33,51 +33,72 @@ const mockFeedbacks = [
   }
 ];
 
-// Carregar Supabase JS
+// Supabase continua sendo OPCIONAL: o banco de clientes oficial do site agora é o
+// ReloAuth (auth-core.js / servidor Node). Se o CDN do Supabase não responder em
+// 3 segundos, a página segue funcionando com os feedbacks locais.
+const SUPABASE_URL_FEEDBACK = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
+const SUPABASE_ANON_FEEDBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoZndndWNvYXlrYmdveXFpYmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDA2MTMsImV4cCI6MjA5NzE3NjYxM30.h8JmAb6Ifyw94rtmHRiegrvJLAC08knYK6Ez4bRyYCg';
+
 const scriptSupabase = document.createElement('script');
 scriptSupabase.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 scriptSupabase.onload = () => {
   window.supabase = window.supabase || {};
+  window.supabasePronto = true;
 };
 document.head.appendChild(scriptSupabase);
 
-async function getSupabaseClient() {
+function getSupabaseClient() {
   return new Promise((resolve) => {
-    const checkInterval = setInterval(() => {
+    const inicio = Date.now();
+    const timer = setInterval(() => {
       if (window.supabase && window.supabase.createClient) {
-        clearInterval(checkInterval);
-        const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoZndndWNvYXlrYmdveXFpYmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDA2MTMsImV4cCI6MjA5NzE3NjYxM30.h8JmAb6Ifyw94rtmHRiegrvJLAC08knYK6Ez4bRyYCg';
-        resolve(window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+        clearInterval(timer);
+        resolve(window.supabase.createClient(SUPABASE_URL_FEEDBACK, SUPABASE_ANON_FEEDBACK));
+        return;
       }
-    }, 100);
+      if (Date.now() - inicio > 3000) {
+        clearInterval(timer);
+        resolve(null); // sem Supabase: seguimos com o que já está no navegador
+      }
+    }, 150);
   });
 }
 
 async function checkUserAuth() {
+  const feedbackFormCard = document.getElementById('feedbackFormCard');
+  const loginPrompt = document.getElementById('loginPrompt');
   try {
-    const supabase = await getSupabaseClient();
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (error || !data.session?.user) {
-      // Permitir envio ou simular usuário para facilitar testes do cliente
-      currentUser = { id: 'guest-user', email: 'cliente@stylirelo.com' };
-    } else {
-      currentUser = data.session.user;
+    if (window.ReloAuth) {
+      await window.ReloAuth.ready();
+      const usuario = window.ReloAuth.usuario;
+      currentUser = usuario
+        ? { id: usuario.id, email: usuario.email, nome: usuario.nome, perfil: usuario.perfil }
+        : null;
     }
-    
-    const feedbackFormCard = document.getElementById('feedbackFormCard');
-    const loginPrompt = document.getElementById('loginPrompt');
-    if (feedbackFormCard) feedbackFormCard.style.display = 'block';
-    if (loginPrompt) loginPrompt.style.display = 'none';
-    updateAuthLink();
-  } catch (error) {
-    console.warn('Modo livre ativado para feedbacks:', error);
-    currentUser = { id: 'guest-user', email: 'cliente@stylirelo.com' };
-    const feedbackFormCard = document.getElementById('feedbackFormCard');
-    const loginPrompt = document.getElementById('loginPrompt');
-    if (feedbackFormCard) feedbackFormCard.style.display = 'block';
-    if (loginPrompt) loginPrompt.style.display = 'none';
+  } catch (erro) {
+    console.warn('Não foi possível consultar a sessão do cliente:', erro);
+    currentUser = null;
+  }
+
+  if (feedbackFormCard) feedbackFormCard.style.display = 'block';
+  if (loginPrompt) {
+    if (currentUser) {
+      loginPrompt.style.display = 'none';
+    } else {
+      loginPrompt.style.display = 'block';
+      loginPrompt.innerHTML =
+        'Você está navegando como visitante. <a href="#" onclick="abrirLoginFeedback(); return false;" style="color: var(--gold); font-weight: 600;">Entre na sua conta</a> para o feedback ficar vinculado ao seu cadastro.';
+    }
+  }
+  updateAuthLink();
+}
+
+function abrirLoginFeedback() {
+  if (window.ReloLoginModal) {
+    window.ReloLoginModal.abrir({
+      aba: 'entrar',
+      mensagem: 'Entre para que sua avaliação fique registrada no seu cadastro de cliente.'
+    });
   }
 }
 
@@ -89,14 +110,15 @@ function showLoginPrompt() {
 }
 
 function updateAuthLink() {
+  // O botão de login do menu é controlado pelo login-modal.js (mostra "Sair" quando logado).
   const authLink = document.getElementById('authLink');
   if (authLink && currentUser) {
-    authLink.textContent = 'Cliente Conectado';
-    authLink.href = 'index.html';
+    authLink.title = 'Cliente conectado: ' + currentUser.email;
   }
 }
 
 async function logout() {
+  if (window.ReloAuth) await window.ReloAuth.sair();
   window.location.href = 'index.html';
 }
 
@@ -182,6 +204,7 @@ async function initFeedbackForm() {
       // Tentar salvar no Supabase também
       try {
         const supabase = await getSupabaseClient();
+        if (!supabase) throw new Error('Supabase indisponível');
         await supabase.from('feedbacks').insert([
           {
             user_id: currentUser?.id || 'guest',
@@ -226,6 +249,7 @@ async function loadFeedbacks() {
 
   try {
     const supabase = await getSupabaseClient();
+    if (!supabase) throw new Error('Supabase indisponível');
     const { data, error } = await supabase
       .from('feedbacks')
       .select('*')
