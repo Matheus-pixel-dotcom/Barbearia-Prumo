@@ -204,3 +204,24 @@ Para dúvidas ou problemas com as novas funcionalidades, entre em contato atrav�
 
 **Última atualização**: 22 de junho de 2026
 **Versão**: 2.0.0
+
+
+---
+
+## 🆕 Atualização de 14/09/2026
+
+### Aba "Sobre" virou "Equipe"
+* A página agora mostra **apenas a equipe e a função de cada profissional** (história institucional e o bloco "Como funciona" saíram).
+* Arquivo renomeado para `equipe.html`; o menu de todas as páginas passou a exibir **Equipe**.
+* Novo integrante: **Marcos — Gerente de Vendas de Produtos da barbearia**.
+
+### Nova oferta: "Dia do Noivo" — R$ 250,00
+* Pacote com corte personalizado, barboterapia completa (navalha e toalha quente), sobrancelha,
+  hidratação/finalização e horário reservado.
+* Divulgado na página inicial (`#dia-do-noivo`), na tabela de preços de `servicos.html`, no
+  formulário de `contato.html` e nas respostas da Relo IA (`chat-ia.js`).
+
+### Início mais dinâmico
+* Texto reduzido (de ~700 para ~250 palavras visíveis), sem blocos repetidos.
+* Vitrine de 3 serviços com foto, preço e botão de agendamento.
+* Faixa de estilos animada, contadores que sobem e entrada suave dos blocos ao rolar a página.

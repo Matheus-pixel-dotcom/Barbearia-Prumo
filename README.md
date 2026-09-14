@@ -16,10 +16,11 @@ Depois abra **http://localhost:8000/index.html**
 
 ## O que tem no site
 
-* **Início / Serviços / Sobre / Contato** — apresentação, tabela de preços, planos e agendamento via WhatsApp.
+* **Início / Serviços / Equipe / Contato** — vitrine de preços, pacote **Dia do Noivo (R$ 250)**, planos e agendamento via WhatsApp.
 * **Corte Style Relo** — card com foto própria em `assets/cortes/corte-style-relo.jpg`
   (degradê, social ou tesoura, com lavagem e finalização).
 * **Experimente com IA** — simulador de visagismo com câmera e chat da Relo IA.
+* **Equipe** — quem é quem na barbearia, com a função de cada profissional (inclui o Marcos na gerência de vendas de produtos).
 * **Feedback** — avaliações dos barbeiros.
 * **Login / Criar conta** — caixinha de login que abre em todas as páginas; o cadastro do
   cliente (nome, e-mail e senha protegida) é salvo no banco de dados.
@@ -34,6 +35,7 @@ Depois abra **http://localhost:8000/index.html**
 | `ATUALIZACOES.md` | Histórico de atualizações anteriores do projeto |
 | `IMPLEMENTACAO_IA.md` | Recursos de IA (câmera/visagismo) |
 | `RELATORIO_FINAL.md` | Relatório geral das entregas |
+| `novos_precos.md` | Tabela de preços e planos (inclui o Dia do Noivo) |
 
 ## Estrutura principal
 

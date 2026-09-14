@@ -3,9 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Style Relo Barber: barbearia premium com cortes modernos, barboterapia e visagismo digital em Curitiba.">
+  <meta name="description" content="Style Relo Barber: cortes com degradê, social ou tesoura, barboterapia e a oferta Dia do Noivo (R$ 250) em Curitiba.">
   <title>Style Relo Barber | Barbearia Premium</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* --- Vitrine de serviços --- */
+    .servico-card {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+    .servico-card img {
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+    }
+    .servico-corpo {
+      padding: 22px 24px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .servico-preco {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 8px;
+    }
+    .servico-preco strong {
+      font-size: 1.6rem;
+      font-weight: 950;
+      color: var(--gold-2);
+      letter-spacing: -0.03em;
+    }
+    .servico-preco span {
+      color: var(--muted-2);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .servico-card h3 { margin: 0; }
+    .servico-card p { margin: 0; }
+
+    /* --- Faixa animada de estilos --- */
+    .faixa {
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 16px 0;
+      margin: 10px 0 0;
+    }
+    .faixa-trilha {
+      display: flex;
+      gap: 44px;
+      width: max-content;
+      animation: faixaRolar 26s linear infinite;
+    }
+    .faixa-trilha span {
+      display: inline-flex;
+      align-items: center;
+      gap: 44px;
+      font-size: clamp(1rem, 2.4vw, 1.45rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: rgba(248, 250, 252, 0.35);
+      white-space: nowrap;
+    }
+    .faixa-trilha span::after {
+      content: '✂';
+      color: var(--gold);
+      font-size: 0.8em;
+    }
+    .faixa:hover .faixa-trilha { animation-play-state: paused; }
+    @keyframes faixaRolar {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    /* --- Oferta Dia do Noivo --- */
+    .oferta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 34px;
+      align-items: center;
+      padding: 30px;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(150deg, rgba(245, 158, 11, 0.10), rgba(255, 255, 255, 0.02) 45%);
+    }
+    .oferta img {
+      border-radius: var(--radius-lg);
+      height: 100%;
+      max-height: 420px;
+      width: 100%;
+      object-fit: cover;
+    }
+    .oferta-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--gold);
+      color: #0b0b0f;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .oferta-preco {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 16px 0 6px;
+    }
+    .oferta-preco strong {
+      font-size: clamp(2.4rem, 6vw, 3.4rem);
+      font-weight: 950;
+      color: var(--gold-2);
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+    .oferta-preco span { color: var(--muted-2); font-size: 0.85rem; }
+    .oferta-lista {
+      list-style: none;
+      padding: 0;
+      margin: 18px 0 0;
+      display: grid;
+      gap: 10px;
+    }
+    .oferta-lista li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      color: #e4e4e7;
+      font-size: 0.95rem;
+    }
+    .oferta-lista li::before {
+      content: '✓';
+      color: var(--gold);
+      font-weight: 900;
+    }
+
+    /* --- Faixa final da IA --- */
+    .ia-band {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 26px 30px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .ia-band h2 { margin: 0; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900; letter-spacing: -0.03em; }
+    .ia-band p { margin: 6px 0 0; color: var(--muted); max-width: 520px; }
+
+    @media (max-width: 860px) {
+      .oferta { grid-template-columns: 1fr; padding: 22px; }
+      .oferta img { max-height: 300px; }
+    }
+  </style>
 </head>
 <body>
   <!-- Login e banco de dados de clientes -->
@@ -15,13 +182,13 @@
   <script src="login-modal.js" defer></script>
   <header class="site-header">
     <nav class="navbar container" aria-label="Navegação principal">
-      <a class="brand" href="index.html" aria-label="Style Relo Barber - início"><img src="assets/logo-gentleman.png" alt="Logo Gentleman's Cut" style="height: 40px; width: auto; margin-right: 8px;">Style Relo Barber</a>
+      <a class="brand" href="index.html" aria-label="Style Relo Barber - início"><img src="assets/logo-gentleman.png" alt="Logo Style Relo Barber" style="height: 40px; width: auto; margin-right: 8px;">Style Relo Barber</a>
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menu">Menu</button>
       <div class="nav-links" data-nav-links>
         <a class="active" href="index.html">Início</a>
         <a href="servicos.html">Serviços</a>
         <a href="ia-tryon.html">Experimente com IA</a>
-        <a href="sobre.html">Sobre</a>
+        <a href="equipe.html">Equipe</a>
         <a href="feedback.html">Feedback</a>
         <a href="contato.html">Contato</a>
         <a href="admin.html" style="color: var(--gold); font-weight: 600;">Admin</a>
@@ -31,69 +198,144 @@
   </header>
 
   <main>
-    <section class="hero">
+    <!-- HERO -->
+    <section class="hero" style="padding-bottom:34px">
       <div class="container hero-grid">
-        <div class="reveal">
+        <div data-reveal>
           <span class="eyebrow">Barbearia premium</span>
-          <h1 class="display-title">Precisão no corte. <span class="text-gold">Atitude no estilo.</span></h1>
-          <p class="lead">O Style Relo Barber une técnica, atendimento direto e visual moderno para transformar cada corte em uma experiência completa: diagnóstico, execução e finalização com padrão profissional.</p>
+          <h1 class="display-title">Seu corte, <span class="text-gold">no ponto.</span></h1>
+          <p class="lead">Degradê, social ou tesoura — com lavagem premium, finalização e atendimento consultivo.</p>
           <div class="actions">
-            <a class="btn btn-primary" href="contato.html">Agendar horário</a>
-            <a class="btn btn-outline" href="ia-tryon.html">Testar visagismo com IA</a>
+            <a class="btn btn-primary" href="contato.html">Agendar agora</a>
+            <a class="btn btn-outline" href="servicos.html">Ver preços</a>
           </div>
           <div class="stats" aria-label="Indicadores do estúdio">
-            <div class="stat"><strong>4.9</strong><span>Avaliação média</span></div>
-            <div class="stat"><strong>45min</strong><span>Experiência completa</span></div>
-            <div class="stat"><strong>2026</strong><span>Lookbook atualizado</span></div>
+            <div class="stat">
+              <strong data-counter="4.9" data-decimals="1">0</strong>
+              <span>Avaliação média</span>
+            </div>
+            <div class="stat">
+              <strong><span data-counter="45">0</span>min</strong>
+              <span>Experiência completa</span>
+            </div>
+            <div class="stat">
+              <strong>R$ <span data-counter="45">0</span></strong>
+              <span>Corte com lavagem</span>
+            </div>
           </div>
         </div>
-        <aside class="hero-card reveal" aria-label="Ambiente da barbearia">
-          <img src="assets/cortes/hero-barbearia.jpg" alt="Barbeiro realizando corte moderno em cliente">
+        <aside class="hero-card" data-reveal>
+          <img src="assets/cortes/hero-barbearia.jpg" alt="Barbeiro trabalhando com máquina em cliente na barbearia">
           <div class="hero-card-caption">
-            <strong>Combo Experience</strong>
-            <p>Corte + barba + consultoria de visagismo a partir de R$ 90.</p>
+            <strong>Corte na régua, sem enrolação</strong>
+            <p>Diagnóstico, execução e finalização em uma única visita.</p>
           </div>
         </aside>
       </div>
     </section>
 
+    <!-- FAIXA ANIMADA -->
+    <div class="faixa" aria-hidden="true">
+      <div class="faixa-trilha">
+        <span>Degradê</span><span>Social</span><span>Tesoura</span><span>Barboterapia</span><span>Visagismo</span><span>Dia do Noivo</span>
+        <span>Degradê</span><span>Social</span><span>Tesoura</span><span>Barboterapia</span><span>Visagismo</span><span>Dia do Noivo</span>
+      </div>
+    </div>
+
+    <!-- SERVIÇOS DESTAQUE -->
     <section class="section">
       <div class="container">
         <div class="section-head">
           <div>
-            <span class="eyebrow">Serviços destaque</span>
-            <h2 class="section-title">Do clássico ao contemporâneo.</h2>
+            <span class="eyebrow">Direto ao ponto</span>
+            <h2 class="section-title">Escolha e agende.</h2>
           </div>
-          <p>Cards enxutos, preços claros e jornada direta para o agendamento, sem páginas soltas ou botões sem destino.</p>
+          <p>Três caminhos, preço na frente e um toque para marcar.</p>
         </div>
+
         <div class="grid-3">
-          <article class="card">
-            <img src="assets/cortes/corte-style-relo.jpg" alt="Corte clássico feito na tesoura">
-            <h3>Corte Style Relo</h3>
-            <p>Degradê, social ou tesoura, com lavagem e finalização alinhada ao seu estilo.</p>
+          <article class="card servico-card" data-reveal>
+            <img src="assets/cortes/corte-style-relo.jpg" alt="Corte degradê com acabamento na tesoura">
+            <div class="servico-corpo">
+              <h3>Corte Style Relo</h3>
+              <p>Degradê, social ou tesoura, com lavagem e finalização.</p>
+              <div class="servico-preco">
+                <strong>R$ 45</strong>
+                <span>45 min</span>
+              </div>
+              <a class="btn btn-outline" style="margin-top:14px" href="contato.html">Agendar corte</a>
+            </div>
           </article>
-          <article class="card">
-            <img src="assets/cortes/barboterapia.jpg" alt="Barba sendo alinhada com precisão">
-            <h3>Barboterapia</h3>
-            <p>Navalha, toalha quente, hidratação e contorno para uma barba limpa e marcante.</p>
+
+          <article class="card servico-card" data-reveal>
+            <img src="assets/cortes/barboterapia.jpg" alt="Barba alinhada com navalha e toalha quente">
+            <div class="servico-corpo">
+              <h3>Barboterapia</h3>
+              <p>Navalha, toalha quente, hidratação e contorno marcado.</p>
+              <div class="servico-preco">
+                <strong>R$ 75</strong>
+                <span>40 min</span>
+              </div>
+              <a class="btn btn-outline" style="margin-top:14px" href="contato.html">Agendar barba</a>
+            </div>
           </article>
-          <article class="card">
-            <img src="assets/cortes/visagismo-digital.jpg" alt="Pessoa olhando referência de estilo no celular">
-            <h3>Visagismo Digital</h3>
-            <p>Simulação guiada para escolher um corte com mais segurança antes da cadeira.</p>
+
+          <article class="card servico-card" data-reveal>
+            <img src="assets/cortes/visagismo-digital.jpg" alt="Cliente escolhendo o corte no celular">
+            <div class="servico-corpo">
+              <h3>Combo Experience</h3>
+              <p>Cabelo + barba + consultoria rápida de visagismo.</p>
+              <div class="servico-preco">
+                <strong>R$ 90</strong>
+                <span>1h20</span>
+              </div>
+              <a class="btn btn-primary" style="margin-top:14px" href="contato.html">Agendar combo</a>
+            </div>
           </article>
         </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container cta-band">
-        <span class="eyebrow" style="color:#111">Mais procurado</span>
-        <h2 class="section-title">Combo Experience por R$ 90.</h2>
-        <p style="max-width:620px;color:#211307">Corte, barba e consultoria rápida de visagismo para sair pronto, alinhado e com manutenção recomendada.</p>
-        <div class="actions">
-          <a class="btn" style="background:#050505;color:#fff" href="contato.html">Agendar combo</a>
-          <a class="btn" style="border-color:#111;color:#111" href="servicos.html#planos">Ver planos de assinatura</a>
+    <!-- OFERTA DIA DO NOIVO -->
+    <section class="section" id="dia-do-noivo" style="padding-top:20px">
+      <div class="container">
+        <div class="oferta" data-reveal>
+          <img src="assets/cortes/dia-do-noivo.jpg" alt="Noivo sendo preparado na barbearia antes do casamento">
+          <div>
+            <span class="oferta-tag">✦ Nova oferta</span>
+            <h2 class="section-title" style="margin-bottom:10px">Dia do Noivo</h2>
+            <p style="color:#d4d4d8;margin:0">Preparação completa para o seu grande dia: corte, barba e acabamento fino, com horário reservado só para você.</p>
+            <div class="oferta-preco">
+              <strong>R$ 250</strong>
+              <span>pacote fechado</span>
+            </div>
+            <ul class="oferta-lista">
+              <li>Corte de cabelo personalizado + lavagem premium</li>
+              <li>Barboterapia completa com navalha e toalha quente</li>
+              <li>Design de sobrancelha e acabamento de contornos</li>
+              <li>Hidratação, finalização com produtos premium e atendimento reservado</li>
+            </ul>
+            <div class="actions">
+              <a class="btn btn-whatsapp" href="https://wa.me/5541996484980?text=Ol%C3%A1!%20Quero%20agendar%20o%20pacote%20Dia%20do%20Noivo%20(R%24%20250)%20no%20Style%20Relo%20Barber." target="_blank" rel="noopener noreferrer">Agendar Dia do Noivo</a>
+              <a class="btn btn-outline" href="servicos.html#dia-do-noivo">Ver detalhes</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IA + CONTATO -->
+    <section class="section" style="padding-top:10px;padding-bottom:80px">
+      <div class="container">
+        <div class="ia-band" data-reveal>
+          <div>
+            <h2>Na dúvida do corte? A IA mostra antes.</h2>
+            <p>Envie uma foto (ou use a câmera) e receba a indicação de corte para o seu formato de rosto.</p>
+          </div>
+          <div class="actions" style="margin:0">
+            <a class="btn btn-primary" href="ia-tryon.html">Testar com IA</a>
+            <a class="btn btn-outline" href="feedback.html">Ver avaliações</a>
+          </div>
         </div>
       </div>
     </section>

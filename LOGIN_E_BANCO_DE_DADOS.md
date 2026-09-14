@@ -18,7 +18,8 @@ salvas dentro do próprio projeto, na pasta `assets/cortes/`:
 | `assets/cortes/hero-barbearia.jpg` | Card grande da página inicial (Combo Experience) |
 | `assets/cortes/barboterapia.jpg` | Card **Barboterapia** |
 | `assets/cortes/visagismo-digital.jpg` | Card **Visagismo Digital** |
-| `assets/cortes/ambiente-barbearia.jpg` | Foto do ambiente na página **Sobre** |
+| `assets/cortes/dia-do-noivo.jpg` | Pacote **Dia do Noivo** (início e serviços) |
+| `assets/cortes/ambiente-barbearia.jpg` | Foto do ambiente na página **Equipe** |
 
 Como agora as fotos são locais, o site não depende mais de internet para exibi-las.
 
@@ -152,7 +153,9 @@ Para trocar a senha de um admin, gere o hash novo e substitua o `senhaHash` daqu
 | `auth.js` | reescrito para usar o banco novo (login.html / signup.html) |
 | `admin.js`, `admin.html` | painel com banco de clientes, logins e bloqueio de acesso |
 | `dashboard.html` | área do cliente com os dados do próprio cadastro |
-| `index.html`, `sobre.html` | fotos locais (fim das imagens quebradas) |
+| `index.html` | início remodelado (vitrine de serviços, faixa animada e pacote Dia do Noivo) |
+| `equipe.html` | equipe e funções (substitui o antigo `sobre.html`) |
+| `script.js` | animação de rolagem (`data-reveal`) e contadores (`data-counter`) |
 | `feedback.js` | não trava mais esperando um CDN; usa a sessão do site |
 | `style.css` | estilos da caixinha de login e da área do usuário |
 | `package.json` | `npm run serve` |
