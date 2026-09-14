@@ -1,6 +1,6 @@
 # tools/ — suítes de verificação
 
-Três suítes independentes, sem framework: só Node + [jsdom](https://github.com/jsdom/jsdom).
+Quatro suítes independentes, sem framework: só Node + [jsdom](https://github.com/jsdom/jsdom).
 Elas executam o **HTML e o JS reais do repositório** — não há reimplementação da lógica.
 
 ```bash
@@ -8,6 +8,7 @@ npm i jsdom                 # única dependência
 node tools/verify-pages.mjs
 node tools/verify-supabase-client.mjs
 node tools/verify-behavior.mjs
+node tools/verify-nano-banana.mjs
 ```
 
 Cada uma sai com exit code `1` se algo falhar, então dá para usar em CI.
@@ -58,6 +59,39 @@ antes falhavam sem avisar:
   contava 1 cliente.
 - `escapeHtml` barra payload malicioso vindo do banco.
 - `dashboard.html` bloqueia quem não tem sessão.
+
+## `verify-nano-banana.mjs`
+
+Cobre o simulador de imagem (Nano Banana) em duas camadas.
+
+No núcleo (`nano-banana.js`), com `fetch` stubado:
+
+- o payload enviado ao Gemini (`contents[0].parts`, `inline_data`, `responseModalities`),
+  a URL com o modelo e o header `x-goog-api-key`;
+- no modo proxy, a chamada vai para o proxy, **nenhuma chave sai do navegador** e o
+  modelo segue no corpo;
+- a iteração: a segunda geração usa o **resultado anterior** como base, não a foto
+  original — é isso que permite "muda mais uma coisa";
+- erros viram `kind` específicos (`blocked`, `rate-limit`, `network`, `no-image`,
+  `not-configured`), inclusive o bloqueio de segurança, que o Gemini devolve tanto em
+  HTTP 200 quanto junto com um status de erro.
+
+Na página real (`ia-tryon.html`), com o DOM e os handlers de verdade:
+
+- `ReloIA.startSimulation(...)` — exatamente o que `ia-camera.js` chama depois da
+  captura — faz a imagem aparecer no chat com legenda convidando a pedir mudanças;
+- digitar no campo e enviar gera uma **nova** imagem; duas mensagens, duas chamadas;
+- pergunta de preço responde em texto e **não** gasta uma geração;
+- sem IA configurada o chat explica o que falta em vez de fingir que gerou;
+- salvar a configuração no painel ativa a IA e muda o indicador de status.
+
+A captura da câmera em si não é exercitada (jsdom não tem `getUserMedia`); o teste entra
+pela costura documentada, que é a chamada `ReloIA.startSimulation`.
+
+## `gemini-proxy/`
+
+Worker pronto para Cloudflare. O site é estático, então uma chave no front-end é uma
+chave pública — o proxy guarda a chave no servidor. Detalhes em `gemini-proxy/README.md`.
 
 ## Observação sobre `innerText`
 

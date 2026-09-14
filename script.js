@@ -77,6 +77,9 @@
       // A câmera é de outro arquivo (ia-camera.js / face-recognition.js), que a expõe
       // em window. Olhar window explicitamente em vez de um global implícito.
       if (typeof window.stopCamera === 'function') window.stopCamera();
+
+      // Foto enviada por arquivo também gera a simulação no chat.
+      window.startImageSimulation?.(src);
     };
 
     dropArea.addEventListener('click', (e) => {

@@ -378,6 +378,9 @@ async function captureAndAnalyze() {
     // nunca vê a rejeição e a falha some em silêncio.
     await persistSimulation();
 
+    // Missão principal: desenhar o corte na foto com o Nano Banana e mandar pro chat.
+    await startImageSimulation(imageData);
+
     console.log('✓ Captura e análise concluídas com sucesso');
 
   } catch (error) {
@@ -403,6 +406,56 @@ function analyzeDetection(detection) {
   console.log('Análise completa gerada:', window.currentAnalysis);
 }
 
+// ---------------------------------------------------------------- estilo escolhido
+// Os botões ".style-option" existiam no HTML mas não tinham handler nenhum: clicar
+// neles não fazia nada. Agora eles registram a escolha e alimentam o cartão final.
+let selectedStyle = null;
+
+function initStyleOptions() {
+  document.querySelectorAll('.style-option').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedStyle = {
+        name: btn.getAttribute('data-style-name') || 'Estilo personalizado',
+        type: btn.getAttribute('data-style-type') || '',
+      };
+
+      document.querySelectorAll('.style-option').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      const resNome = document.getElementById('res-nome');
+      const resTipo = document.getElementById('res-tipo');
+      const finalCard = document.getElementById('final-card');
+      if (resNome) resNome.textContent = selectedStyle.name;
+      if (resTipo) resTipo.textContent = selectedStyle.type;
+      if (finalCard) finalCard.classList.remove('hidden');
+
+      // Se já existe uma simulação, a escolha vira pedido de edição no chat.
+      if (window.ReloIA?.getSimulation()?.currentDataUrl) {
+        window.ReloIA.applyEdit(`Trocar o corte para ${selectedStyle.name} (${selectedStyle.type}).`);
+      }
+    });
+  });
+}
+
+/**
+ * Gera a imagem de try-on com o Nano Banana e joga o resultado no chat.
+ * Não bloqueia a captura: se falhar, o chat explica o motivo.
+ */
+async function startImageSimulation(imageDataUrl) {
+  if (!window.ReloIA || typeof window.ReloIA.startSimulation !== 'function') {
+    console.warn('Relo IA não disponível; simulação de imagem pulada.');
+    return null;
+  }
+
+  const analysis = window.currentAnalysis || {};
+  return window.ReloIA.startSimulation(imageDataUrl, {
+    styleName: selectedStyle ? selectedStyle.name : null,
+    styleType: selectedStyle ? selectedStyle.type : null,
+    faceShape: analysis.shapeName || null,
+    symmetry: analysis.symmetry || null,
+  });
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Inicializando ia-camera.js otimizado...');
@@ -416,6 +469,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Falha ao inicializar elementos de câmera');
     return;
   }
+
+  initStyleOptions();
 
   if (cameraBtn) {
     cameraBtn.addEventListener('click', () => {
@@ -456,6 +511,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       currentDetection = null;
       window.currentAnalysis = null;
+      selectedStyle = null;
+      document.querySelectorAll('.style-option').forEach((b) => b.classList.remove('is-active'));
+      window.ReloIA?.resetSimulation();
     });
   }
 
@@ -475,4 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.showCameraError = showCameraError;
   window.setCameraStatus = setCameraStatus;
   window.persistSimulation = persistSimulation;
+  window.initStyleOptions = initStyleOptions;
+  window.startImageSimulation = startImageSimulation;
 })();

@@ -30,7 +30,9 @@ const GLOBALS_BY_FILE = {
   'face-recognition.js':  ['startCamera', 'stopCamera', 'detectFace', 'analyzeFeatures'],
   'ia-camera.js':         ['startCamera', 'stopCamera', 'captureAndAnalyze', 'loadFaceModels'],
   'supabase-client.js':   ['supabaseClient', 'SupabaseClient'],
-  'chat-ia.js':           [],
+  'nano-banana.js':       ['NanoBanana'],
+  'nano-banana-ui.js':    ['NanoBananaUI'],
+  'chat-ia.js':           ['ReloIA'],
 };
 
 const PAGES = [
