@@ -727,3 +727,303 @@ select.field option {
   color: var(--gold);
   font-weight: bold;
 }
+
+/* =========================================================
+   Caixinha de login global + área do usuário (login-modal.js)
+   ========================================================= */
+body.relo-modal-aberto {
+  overflow: hidden;
+}
+
+.relo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(2, 2, 4, 0.78);
+  backdrop-filter: blur(6px);
+  animation: reloFade 0.25s ease;
+}
+
+.relo-modal-backdrop[hidden] {
+  display: none;
+}
+
+@keyframes reloFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.relo-modal {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: linear-gradient(180deg, #14141a 0%, #0b0b0f 100%);
+  box-shadow: var(--shadow);
+  animation: reloSubir 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes reloSubir {
+  from { transform: translateY(18px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.relo-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.relo-modal-close:hover {
+  color: var(--gold-2);
+  border-color: var(--gold);
+}
+
+.relo-modal-top {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+  padding-right: 28px;
+}
+
+.relo-modal-mark {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #0b0b0f;
+  font-weight: 900;
+  font-size: 22px;
+}
+
+.relo-modal-top h2 {
+  margin: 0 0 4px;
+  font-size: 1.28rem;
+  color: var(--gold-2);
+}
+
+.relo-modal-top p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.relo-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 5px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.relo-tab {
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.relo-tab.active {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #0b0b0f;
+}
+
+.relo-alert {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  display: none;
+}
+
+.relo-alert.show {
+  display: block;
+}
+
+.relo-alert.erro {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.relo-alert.ok {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #86efac;
+}
+
+.relo-form[hidden] {
+  display: none;
+}
+
+.relo-field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.relo-field span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.relo-field input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+  transition: 0.2s;
+}
+
+.relo-field input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.relo-submit {
+  width: 100%;
+  margin-top: 6px;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #0b0b0f;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.relo-submit:hover {
+  filter: brightness(1.08);
+}
+
+.relo-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.relo-hint,
+.relo-foot {
+  margin: 14px 0 0;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--muted-2);
+}
+
+.relo-foot {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+/* Barra de sessão visível no topo das páginas */
+.relo-session-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.relo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.relo-pill.admin {
+  background: rgba(245, 158, 11, 0.16);
+  color: var(--gold-2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.relo-pill.cliente {
+  background: rgba(34, 197, 94, 0.14);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+@media (max-width: 520px) {
+  .relo-modal {
+    padding: 24px 20px;
+  }
+}
+
+/* =========================================================
+   Animação de entrada ao rolar a página (script.js)
+   ========================================================= */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+[data-reveal].revelado {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .faixa-trilha {
+    animation: none;
+  }
+}

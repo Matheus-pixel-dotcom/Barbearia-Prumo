@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Simulador de visagismo do Style Relo Barber para testar estilos antes de agendar.">
   <title>Simulador IA | Style Relo Barber</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260914">
   <style>
     .camera-input-wrapper {
       position: relative;
@@ -275,6 +275,11 @@
   </style>
 </head>
 <body>
+  <!-- Login e banco de dados de clientes -->
+  <script src="auth-hash.js?v=20260914" defer></script>
+  <script src="admin-accounts.js?v=20260914" defer></script>
+  <script src="auth-core.js?v=20260914" defer></script>
+  <script src="login-modal.js?v=20260914" defer></script>
   <header class="site-header">
     <nav class="navbar container" aria-label="Navegação principal">
       <a class="brand" href="index.html"><img src="assets/logo-gentleman.png" alt="Logo Gentleman's Cut" style="height: 40px; width: auto; margin-right: 8px;">Style Relo Barber</a>
@@ -283,7 +288,7 @@
         <a href="index.html">Início</a>
         <a href="servicos.html">Serviços</a>
         <a class="active" href="ia-tryon.html">Experimente com IA</a>
-        <a href="sobre.html">Sobre</a>
+        <a href="equipe.html">Equipe</a>
         <a href="feedback.html">Feedback</a>
         <a href="contato.html">Contato</a>
         <a href="admin.html" style="color: var(--gold); font-weight: 600;">Admin</a>
@@ -494,14 +499,14 @@
 
   <!-- Carregar Face-api.js para detecção facial -->
   <script async defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
-  <script src="script.js" defer></script>
-  <script src="supabase-client.js" defer></script>
+  <script src="script.js?v=20260914" defer></script>
+  <script src="supabase-client.js?v=20260914" defer></script>
   <!-- Para configurar via arquivo em vez do painel, copie nano-banana.config.example.js
        para nano-banana.config.js e descomente a linha abaixo: -->
   <!-- <script src="nano-banana.config.js"></script> -->
-  <script src="nano-banana.js" defer></script>
-  <script src="nano-banana-ui.js" defer></script>
-  <script src="ia-camera.js" defer></script>
-  <script src="chat-ia.js" defer></script>
+  <script src="nano-banana.js?v=20260914" defer></script>
+  <script src="nano-banana-ui.js?v=20260914" defer></script>
+  <script src="ia-camera.js?v=20260914" defer></script>
+  <script src="chat-ia.js?v=20260914" defer></script>
 </body>
 </html>

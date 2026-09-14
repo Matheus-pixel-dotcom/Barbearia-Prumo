@@ -8,6 +8,7 @@ Valores ajustados para o padrão de barbearias de alto nível em Araucária (Cal
 | **Corte Style Relo** | R$ 45 | Degradê, social ou tesoura. Inclui lavagem premium e finalização. |
 | **Barboterapia** | R$ 75 | Navalha, toalha quente, produtos premium e massagem facial. |
 | **Combo Style Relo** | R$ 90 | Cabelo + Barba + Consultoria de Visagismo rápida. |
+| **Dia do Noivo** | R$ 250 | Pacote do noivo: corte personalizado, barboterapia completa, sobrancelha, hidratação e finalização, com horário reservado. |
 | **Máquina Full** | R$ 25 | Praticidade com acabamento limpo. |
 | **Sobrancelha** | R$ 15 | Design com navalha ou pinça. |
 | **Camuflagem de Grisalhos** | R$ 25 | Cobertura natural e discreta. |

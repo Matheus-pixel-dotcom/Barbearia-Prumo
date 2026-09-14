@@ -105,19 +105,45 @@
     const feedbackFormCard = document.getElementById('feedbackFormCard');
     const loginPrompt = document.getElementById('loginPrompt');
 
+    // A sessão vem do ReloAuth (auth-core.js + servidor Node), que é a fonte de
+    // verdade do projeto. Se ele não estiver carregado, avalia como visitante.
     try {
-      const supabase = await getSupabaseClient();
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      currentUser = data.session?.user || { id: 'guest-user', email: null };
+      if (window.ReloAuth) {
+        await window.ReloAuth.ready();
+        const usuario = window.ReloAuth.usuario;
+        currentUser = usuario
+          ? { id: usuario.id, email: usuario.email, nome: usuario.nome, perfil: usuario.perfil }
+          : null;
+      } else {
+        currentUser = null;
+      }
     } catch (error) {
-      console.warn('Sessão indisponível; avaliando como visitante:', error.message);
-      currentUser = { id: 'guest-user', email: null };
+      console.warn('Não foi possível consultar a sessão do cliente:', error);
+      currentUser = null;
     }
 
     if (feedbackFormCard) feedbackFormCard.style.display = 'block';
-    if (loginPrompt) loginPrompt.style.display = 'none';
+    if (loginPrompt) {
+      if (currentUser) {
+        loginPrompt.style.display = 'none';
+      } else {
+        loginPrompt.style.display = 'block';
+        loginPrompt.innerHTML =
+          'Você está navegando como visitante. <a href="#" onclick="abrirLoginFeedback(); return false;" ' +
+          'style="color: var(--gold); font-weight: 600;">Entre na sua conta</a> para o feedback ' +
+          'ficar vinculado ao seu cadastro.';
+      }
+    }
     updateAuthLink();
+  }
+
+  function abrirLoginFeedback() {
+    if (window.ReloLoginModal) {
+      window.ReloLoginModal.abrir({
+        aba: 'entrar',
+        mensagem: 'Entre para que sua avaliação fique registrada no seu cadastro de cliente.',
+      });
+    }
   }
 
   function showLoginPrompt() {
@@ -135,7 +161,11 @@
     }
   }
 
-  function logout() {
+  async function logout() {
+    if (window.ReloAuth) {
+      try { await window.ReloAuth.sair(); }
+      catch (error) { console.warn('Falha ao encerrar a sessão:', error); }
+    }
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');
     window.location.href = 'index.html';
@@ -340,6 +370,7 @@
   window.initFeedbackForm = initFeedbackForm;
   window.initRatingSystem = initRatingSystem;
   window.showLoginPrompt = showLoginPrompt;
+  window.abrirLoginFeedback = abrirLoginFeedback;   // chamado por onclick no loginPrompt
   window.logout = logout;
   window.updateAuthLink = updateAuthLink;
 

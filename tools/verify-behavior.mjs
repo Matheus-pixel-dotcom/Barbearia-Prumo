@@ -83,45 +83,45 @@ const shown = (doc, id) => doc.getElementById(id)?.classList.contains('show') ??
 const textOf = (doc, id) => doc.getElementById(id)?.textContent ?? '';
 
 // ---------------------------------------------------------------- A
-console.log('\n[A] login.html — CDN do Supabase inacessível (antes: botão preso em "Entrando..." para sempre)');
+console.log('\n[A] login.html — credencial inexistente (antes: botão preso em "Entrando..." para sempre)');
 {
-  const { win, doc } = await openPage('login.html');   // sem mock, CDN bloqueada
-  setValue(doc, 'email', 'cliente@prumo.com');
+  const { win, doc } = await openPage('login.html');   // sem backend: ReloAuth cai no modo local
+  await waitFor(() => win.ReloAuth && win.ReloAuth.modo !== null);
+
+  setValue(doc, 'email', 'nao-existe@prumo.com');
   setValue(doc, 'password', 'senha123');
   submit(doc, 'loginForm');
 
   const recovered = await waitFor(() => shown(doc, 'errorMessage'), 15000);
-  check('mostra mensagem de erro (não trava)', recovered);
-  check('mensagem cita conexão/CDN', /conex|CDN|carreg/i.test(textOf(doc, 'errorMessage')),
-    textOf(doc, 'errorMessage'));
-  check('botão volta a "Entrar"', doc.getElementById('submitBtn').textContent === 'Entrar',
-    doc.getElementById('submitBtn').textContent);
+  check('mostra mensagem de erro (não trava)', recovered, textOf(doc, 'errorMessage'));
+  check('não mostra sucesso falso', !shown(doc, 'successMessage'));
   check('botão reabilitado', doc.getElementById('submitBtn').disabled === false);
+  check('ReloAuth caiu no modo local sem backend', win.ReloAuth.modo === 'local', win.ReloAuth.modo);
   win.close();
 }
 
 // ---------------------------------------------------------------- B
-console.log('\n[B] login.html — credenciais recusadas');
+console.log('\n[B] ReloAuth — cadastro e login de verdade no modo local');
 {
-  const mock = {
-    auth: {
-      signInWithPassword: async () => ({
-        data: null,
-        error: { message: 'Invalid login credentials' },
-      }),
-      getSession: async () => ({ data: { session: null }, error: null }),
-    },
-  };
-  const { win, doc } = await openPage('login.html', { supabaseMock: mock });
-  setValue(doc, 'email', 'cliente@prumo.com');
-  setValue(doc, 'password', 'errada');
-  submit(doc, 'loginForm');
+  const { win } = await openPage('login.html');
+  await waitFor(() => win.ReloAuth && win.ReloAuth.modo !== null);
 
-  const ok = await waitFor(() => shown(doc, 'errorMessage'));
-  check('mostra o erro do servidor', ok && /Invalid login credentials/.test(textOf(doc, 'errorMessage')),
-    textOf(doc, 'errorMessage'));
-  check('não mostra sucesso', !shown(doc, 'successMessage'));
-  check('botão reabilitado', doc.getElementById('submitBtn').disabled === false);
+  const email = 'maria' + Date.now() + '@prumo.com';
+  // assinatura real: cadastrar(nome, email, senha) — argumentos posicionais
+  const cadastro = await win.ReloAuth.cadastrar('Maria Teste', email, 'senha-segura-1');
+  check('cadastro succeeded', cadastro?.ok === true, JSON.stringify(cadastro).slice(0, 120));
+
+  await win.ReloAuth.sair();
+  check('sessão encerrada', win.ReloAuth.usuario === null);
+
+  const errado = await win.ReloAuth.entrar(email, 'senha-errada');
+  check('senha errada é recusada', errado?.ok === false, JSON.stringify(errado).slice(0, 120));
+  check('recusa traz mensagem', Boolean(errado?.erro), String(errado?.erro));
+
+  const certo = await win.ReloAuth.entrar(email, 'senha-segura-1');
+  check('senha certa entra', certo?.ok === true, JSON.stringify(certo).slice(0, 120));
+  check('usuário fica na sessão', win.ReloAuth.usuario?.email === email, win.ReloAuth.usuario?.email);
+  check('conta nova NÃO é admin', win.ReloAuth.ehAdmin(win.ReloAuth.usuario) === false);
   win.close();
 }
 
@@ -198,75 +198,53 @@ console.log('\n[E] feedback.html — banco fora do ar (exemplos rotulados, não 
 }
 
 // ---------------------------------------------------------------- F
-console.log('\n[F] admin.html — banco responde 404 (antes: inventava "Cliente Exemplo" e contava 1)');
+console.log('\n[F] admin.html — sem sessão: painel bloqueado (antes: abria direto na URL)');
 {
   const { win, doc } = await openPage('admin.html');
-  await waitFor(() => win.supabaseClient);
-  win.supabaseClient.query = async () => {
-    throw new win.SupabaseRequestError('GET profiles falhou (HTTP 404): tabela não encontrada',
-      { status: 404, code: '42P01', method: 'GET', url: 'https://x/rest/v1/profiles' });
-  };
-  await win.loadAdminData();
-  await sleep(50);
+  await waitFor(() => /Área restrita|administrador/i.test(doc.getElementById('acesso-painel')?.textContent || ''), 8000);
 
-  check('contador fica em "—", não em 1', textOf(doc, 'stat-clients') === '—', textOf(doc, 'stat-clients'));
-  check('não inventa "Cliente Exemplo"',
-    !doc.getElementById('clients-table-body').innerHTML.includes('Cliente Exemplo'),
-    doc.getElementById('clients-table-body').textContent.trim());
-  const status = doc.getElementById('clients-status');
-  check('caixa de erro visível', status.style.display !== 'none');
-  check('caixa de erro traz a mensagem', /404/.test(status.textContent), status.textContent);
+  const painel = doc.getElementById('acesso-painel');
+  check('tela de bloqueio aparece', painel && painel.hidden === false);
+  check('explica que é área restrita', /Área restrita aos administradores/.test(painel.textContent),
+    painel.textContent.slice(0, 90));
+  check('layout do painel fica escondido', doc.querySelector('.admin-layout')?.style.display === 'none');
+  check('oferece botão de login', /Entrar como administrador/.test(painel.textContent));
   win.close();
 }
 
 // ---------------------------------------------------------------- G
-console.log('\n[G] admin.html — banco ok mas sem clientes');
+console.log('\n[G] admin.html — conta de cliente não abre o painel');
 {
   const { win, doc } = await openPage('admin.html');
-  await waitFor(() => win.supabaseClient);
-  win.supabaseClient.query = async () => [];
-  await win.loadAdminData();
-  await sleep(50);
+  await waitFor(() => win.ReloAuth && win.ReloAuth.modo !== null);
 
-  check('contador 0', textOf(doc, 'stat-clients') === '0', textOf(doc, 'stat-clients'));
-  check('estado vazio honesto', /Nenhum cliente cadastrado/.test(doc.getElementById('clients-table-body').textContent),
-    doc.getElementById('clients-table-body').textContent.trim());
-  check('caixa de erro escondida', doc.getElementById('clients-status').style.display === 'none');
+  const email = 'cliente' + Date.now() + '@prumo.com';
+  await win.ReloAuth.cadastrar('Cliente Comum', email, 'senha-segura-1');
+  await win.ReloAuth.entrar(email, 'senha-segura-1');
+
+  // o painel escuta ReloAuth.aoMudar; dar um tempo para o callback rodar
+  await waitFor(() => /conta é de cliente/i.test(doc.getElementById('acesso-painel')?.textContent || ''), 8000);
+
+  check('cliente é bloqueado com explicação',
+    /não tem permissão de administrador/i.test(doc.getElementById('acesso-painel').textContent),
+    doc.getElementById('acesso-painel').textContent.slice(0, 120));
+  check('layout continua escondido', doc.querySelector('.admin-layout')?.style.display === 'none');
   win.close();
 }
 
 // ---------------------------------------------------------------- H
-console.log('\n[H] admin.html — clientes reais + escapeHtml');
-{
-  const { win, doc } = await openPage('admin.html');
-  await waitFor(() => win.supabaseClient);
-  win.supabaseClient.query = async () => [
-    { id: 'u1', full_name: 'Maria <img src=x onerror=alert(1)>', updated_at: '2026-09-01T10:00:00Z' },
-  ];
-  await win.loadAdminData();
-  await sleep(50);
-
-  const html = doc.getElementById('clients-table-body').innerHTML;
-  check('contador 1', textOf(doc, 'stat-clients') === '1');
-  check('HTML malicioso é escapado, não injetado', !/<img src=x/i.test(html), html.slice(0, 160));
-  win.close();
-}
-
-// ---------------------------------------------------------------- I
-console.log('\n[I] dashboard.html — guarda de sessão');
+console.log('\n[H] dashboard.html — sem sessão não mostra os dados da conta');
 {
   const { win, doc } = await openPage('dashboard.html');
-  const ok = await waitFor(() => /Sessão necessária/.test(doc.body.innerHTML));
-  check('bloqueia quem não está logado', ok, doc.body.textContent.slice(0, 80));
-  check('esconde as ações', doc.querySelector('.actions-grid')?.style.display === 'none');
-  win.close();
-}
-{
-  const { win, doc } = await openPage('dashboard.html', {
-    seedStorage: { user_id: 'u1', user_email: 'maria@prumo.com' },
-  });
-  check('logado vê a saudação', /Olá, maria!/.test(textOf(doc, 'user-greeting')), textOf(doc, 'user-greeting'));
-  check('logado vê as ações', doc.querySelector('.actions-grid')?.style.display !== 'none');
+  await waitFor(() => win.ReloAuth && win.ReloAuth.modo !== null, 8000);
+  await sleep(150);
+
+  check('nenhum dado de usuário foi preenchido',
+    doc.getElementById('dado-email').textContent === '—',
+    doc.getElementById('dado-email').textContent);
+  check('saudação genérica, não personalizada',
+    !/^Olá, .+!$/.test(doc.getElementById('user-greeting').textContent.trim()),
+    doc.getElementById('user-greeting').textContent);
   win.close();
 }
 

@@ -15,7 +15,7 @@
  * Exit code 1 se alguma pagina falhar.
  */
 import { JSDOM, VirtualConsole, ResourceLoader } from 'jsdom';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -23,23 +23,34 @@ const HOST = 'https://prumo.test';
 
 /** globals top-level de cada arquivo -> prova de que o script executou inteiro */
 const GLOBALS_BY_FILE = {
-  'script.js':            ['initMobileMenu', 'initContactForm', 'initTryOn', 'buildWhatsappUrl'],
-  'auth.js':              ['getSupabaseClient', 'initLoginForm', 'initSignupForm', 'checkAuth', 'logout'],
-  'admin.js':             ['switchTab', 'openModal', 'closeModal', 'loadAdminData', 'saveProduct'],
-  'feedback.js':          ['getSupabaseClient', 'loadFeedbacks', 'initFeedbackForm', 'initRatingSystem'],
+  'script.js':            ['initMobileMenu', 'initContactForm', 'initTryOn', 'buildWhatsappUrl',
+                           'initScrollReveal', 'initCounters'],
+  'auth.js':              ['checkAuth', 'logout'],
+  'auth-core.js':         ['ReloAuth'],
+  'auth-hash.js':         ['ReloHash'],
+  'admin-accounts.js':    ['ReloAdminAccounts'],
+  'login-modal.js':       ['ReloLoginModal'],
+  'admin.js':             ['switchTab', 'openModal', 'closeModal', 'deleteProduct',
+                           'saveMaintenance', 'toggleMaintenance', 'saveExpense',
+                           'salvarCliente', 'sairDaConta'],
+  'feedback.js':          ['loadFeedbacks', 'initFeedbackForm', 'initRatingSystem',
+                           'abrirLoginFeedback'],
   'face-recognition.js':  ['startCamera', 'stopCamera', 'detectFace', 'analyzeFeatures'],
-  'ia-camera.js':         ['startCamera', 'stopCamera', 'captureAndAnalyze', 'loadFaceModels'],
+  'ia-camera.js':         ['startCamera', 'stopCamera', 'captureAndAnalyze', 'loadFaceModels',
+                           'startImageSimulation', 'initStyleOptions'],
   'supabase-client.js':   ['supabaseClient', 'SupabaseClient'],
   'nano-banana.js':       ['NanoBanana'],
   'nano-banana-ui.js':    ['NanoBananaUI'],
   'chat-ia.js':           ['ReloIA'],
 };
 
-const PAGES = [
-  'index.html', 'servicos.html', 'sobre.html', 'contato.html',
-  'login.html', 'signup.html', 'dashboard.html', 'admin.html',
-  'feedback.html', 'face-recognition.html', 'ia-tryon.html',
-];
+/**
+ * Páginas descobertas do disco, não hardcoded: a lista fixa que existia aqui quebrou
+ * quando sobre.html foi removida e equipe.html entrou.
+ */
+const PAGES = readdirSync(ROOT)
+  .filter(f => f.endsWith('.html'))
+  .sort();
 
 /** So serve arquivos locais do repo; todo o resto (CDN, Supabase) volta vazio. */
 class LocalLoader extends ResourceLoader {
@@ -56,6 +67,7 @@ class LocalLoader extends ResourceLoader {
 function localScriptsOf(html) {
   return [...html.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)]
     .map(m => m[1])
+    .map(s => s.split('?')[0])        // ignora o cache-busting ?v=20260914
     .filter(s => !/^(https?:)?\/\//.test(s));
 }
 
