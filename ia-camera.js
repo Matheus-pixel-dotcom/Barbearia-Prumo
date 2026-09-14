@@ -1,4 +1,9 @@
+// Reconhecimento facial integrado na página ia-tryon.html.
+// IIFE: evita colidir com script.js / supabase-client.js no escopo global.
 // Reconhecimento facial integrado na página ia-tryon.html (Otimizado e Robusto)
+(function () {
+  'use strict';
+
 let video = null;
 let canvas = null;
 let stream = null;
@@ -196,6 +201,46 @@ function showCameraError(message) {
   stopCamera();
 }
 
+/** Escreve um aviso não-bloqueante no #camera-status (não usa alert: a análise já deu certo). */
+function setCameraStatus(message) {
+  const el = document.getElementById('camera-status');
+  if (!el) return;
+  el.textContent = message;
+}
+
+/**
+ * Persiste a simulação no banco. Falha aqui NÃO invalida a análise local, mas é
+ * reportada na tela e no console — antes a chamada era fire-and-forget e o erro
+ * sumia (o try/catch em volta de uma promise não aguardada nunca capturava nada).
+ */
+async function persistSimulation() {
+  const client = window.supabaseClient;
+  if (!client) {
+    console.warn('Simulação não salva: supabase-client.js não está carregado nesta página.');
+    return false;
+  }
+
+  const analysis = window.currentAnalysis || {};
+  try {
+    await client.saveFaceSimulation(
+      analysis.shapeName || 'Não identificado',
+      'IA Visagismo',
+      {
+        faceShape: analysis.faceShape || null,
+        symmetry: analysis.symmetry || null,
+        foreheadRatio: analysis.foreheadRatio || null,
+        confidence: analysis.confidence ?? null,
+        recommendedStyles: analysis.recommendedStyles || [],
+      }
+    );
+    return true;
+  } catch (error) {
+    console.error('Não foi possível salvar a simulação no banco:', error);
+    setCameraStatus(`Análise concluída, mas não foi possível salvá-la no histórico (${error.message}).`);
+    return false;
+  }
+}
+
 // Parar câmera
 function stopCamera() {
   console.log('Parando câmera...');
@@ -329,14 +374,9 @@ async function captureAndAnalyze() {
       landmarks: { positions: Array(68).fill({x: 200, y: 200}) }
     });
     
-    // Tentar salvar simulação no Supabase (silenciosamente se falhar)
-    try {
-      if (typeof supabaseClient !== 'undefined') {
-        supabaseClient.saveFaceSimulation('Executive Contour', 'IA Visagismo', { confidence: 95 });
-      }
-    } catch (e) {
-      console.log('Supabase sync skipped:', e);
-    }
+    // Salvar a simulação no Supabase. O await é obrigatório: sem ele o try/catch
+    // nunca vê a rejeição e a falha some em silêncio.
+    await persistSimulation();
 
     console.log('✓ Captura e análise concluídas com sucesso');
 
@@ -422,3 +462,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Carregar modelos em background logo após o carregamento da página
   setTimeout(loadFaceModels, 2000);
 });
+
+  // script.js chama window.stopCamera(); o restante fica disponivel para os
+  // listeners inline e para depuracao.
+  window.startCamera = startCamera;
+  window.stopCamera = stopCamera;
+  window.captureAndAnalyze = captureAndAnalyze;
+  window.loadFaceModels = loadFaceModels;
+  window.initCameraElements = initCameraElements;
+  window.detectFaceRealtime = detectFaceRealtime;
+  window.analyzeDetection = analyzeDetection;
+  window.showCameraError = showCameraError;
+  window.setCameraStatus = setCameraStatus;
+  window.persistSimulation = persistSimulation;
+})();

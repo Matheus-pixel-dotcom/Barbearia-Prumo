@@ -97,17 +97,46 @@
   </main>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const email = localStorage.getItem('user_email') || 'Cliente Prumo';
-      document.getElementById('user-email-display').innerText = `Logado como: ${email}`;
-      document.getElementById('user-greeting').innerText = `Olá, ${email.split('@')[0]}!`;
-    });
+    // Guarda de sessão: o dashboard é área logada. Antes bastava abrir a URL para
+    // enxergar os atalhos do painel administrativo.
+    (function () {
+      function hasSession() {
+        return Boolean(localStorage.getItem('user_id') && localStorage.getItem('user_email'));
+      }
 
-    function logoutUser() {
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('user_email');
-      window.location.href = 'index.html';
-    }
+      function renderGreeting() {
+        const email = localStorage.getItem('user_email') || '';
+        const name = email.split('@')[0] || 'Cliente Prumo';
+        document.getElementById('user-email-display').textContent = `Logado como: ${email}`;
+        document.getElementById('user-greeting').textContent = `Olá, ${name}!`;
+      }
+
+      function denyAccess() {
+        const card = document.querySelector('.welcome-card');
+        if (!card) return;
+        card.innerHTML = `
+          <h1 style="color: var(--gold-2); margin-top: 0;">Sessão necessária</h1>
+          <p style="color: var(--muted); line-height: 1.6;">
+            Você precisa entrar na sua conta para acessar esta área.
+            Redirecionando para o login...
+          </p>
+          <a href="login.html" class="btn btn-primary">Ir para o login agora</a>`;
+        const actions = document.querySelector('.actions-grid');
+        if (actions) actions.style.display = 'none';
+        setTimeout(() => { window.location.href = 'login.html'; }, 2500);
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        if (hasSession()) renderGreeting();
+        else denyAccess();
+      });
+
+      window.logoutUser = function logoutUser() {
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('user_email');
+        window.location.href = 'index.html';
+      };
+    })();
   </script>
 </body>
 </html>

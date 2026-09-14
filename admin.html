@@ -232,11 +232,11 @@
           <span>✂️ Prumo Admin</span>
         </div>
         <div class="nav-links">
-          <a class="nav-link active" onclick="switchTab('dashboard')">📊 Visão Geral</a>
-          <a class="nav-link" onclick="switchTab('clients')">👥 Clientes & Logins</a>
-          <a class="nav-link" onclick="switchTab('products')">📦 Estoque (Entrada/Saída)</a>
-          <a class="nav-link" onclick="switchTab('maintenance')">🔧 Manutenção</a>
-          <a class="nav-link" onclick="switchTab('expenses')">💸 Despesas</a>
+          <a class="nav-link active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Visão Geral</a>
+          <a class="nav-link" data-tab="clients" onclick="switchTab('clients')">👥 Clientes & Logins</a>
+          <a class="nav-link" data-tab="products" onclick="switchTab('products')">📦 Estoque (Entrada/Saída)</a>
+          <a class="nav-link" data-tab="maintenance" onclick="switchTab('maintenance')">🔧 Manutenção</a>
+          <a class="nav-link" data-tab="expenses" onclick="switchTab('expenses')">💸 Despesas</a>
         </div>
       </div>
       <div>
@@ -288,6 +288,7 @@
         <div class="panel-header">
           <h2>Gestão de Clientes & Logins</h2>
         </div>
+        <div id="clients-status" style="display: none; color: var(--danger); background: rgba(229, 72, 77, 0.08); border: 1px solid var(--danger); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;"></div>
         <table>
           <thead>
             <tr>
@@ -296,7 +297,7 @@
               <th>Última Atualização</th>
               <th>Ações</th>
             </tr>
-          Ref</thead>
+          </thead>
           <tbody id="clients-table-body">
             <tr><td colspan="4" style="text-align: center; color: var(--muted);">Carregando clientes...</td></tr>
           </tbody>

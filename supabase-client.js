@@ -1,196 +1,175 @@
-// Cliente Supabase para integração com banco de dados corrigido
-const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co/rest/v1/';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoZndndWNvYXlrYmdveXFpYmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDA2MTMsImV4cCI6MjA5NzE3NjYxM30.h8JmAb6Ifyw94rtmHRiegrvJLAC08knYK6Ez4bRyYCg';
+// Cliente REST (PostgREST) do Supabase — Barbearia Prumo.
+//
+// SUPABASE_URL é a ORIGEM do projeto, SEM caminho. O sufixo /rest/v1 é adicionado uma
+// única vez, por request(). (Antes a origem já vinha com "/rest/v1/" e cada método
+// acrescentava "/rest/v1/" de novo, produzindo /rest/v1//rest/v1/<tabela> — rota
+// inexistente, que falhava em silêncio.)
+//
+// Erros NÃO são engolidos: todo método rejeita com SupabaseRequestError, que carrega
+// status, código PostgREST, corpo da resposta, método e URL. Quem chama decide se trata.
+//
+// Tudo roda dentro de uma IIFE para não vazar `const` para o escopo global da página —
+// a colisão de nomes entre os <script> clássicos derrubava páginas inteiras.
+(function () {
+  'use strict';
 
-class SupabaseClient {
-  constructor(url, key) {
-    this.url = url;
-    this.key = key;
-    this.authToken = null;
+  const SUPABASE_URL = 'https://jhfwgucoaykbgoyqibdn.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoZndndWNvYXlrYmdveXFpYmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDA2MTMsImV4cCI6MjA5NzE3NjYxM30.h8JmAb6Ifyw94rtmHRiegrvJLAC08knYK6Ez4bRyYCg';
+  const REST_PATH = '/rest/v1';
+
+  class SupabaseRequestError extends Error {
+    constructor(message, details = {}) {
+      super(message);
+      this.name = 'SupabaseRequestError';
+      this.status = details.status ?? null;
+      this.code = details.code ?? null;
+      this.body = details.body ?? null;
+      this.method = details.method ?? null;
+      this.url = details.url ?? null;
+    }
   }
 
-  // Salvar simulação facial no banco de dados
-  async saveFaceSimulation(styleName, styleType, faceData = {}) {
-    try {
-      const response = await fetch(`${this.url}/rest/v1/face_simulations`, {
+  class SupabaseClient {
+    constructor(url, key) {
+      // Normaliza a origem: remove barra final E um eventual sufixo "/rest/v1".
+      // Assim o erro original (origem já com o caminho + método adicionando de novo)
+      // não consegue voltar, nem por configuração equivocada.
+      this.url = String(url).trim().replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
+      this.key = key;
+      this.authToken = null;
+    }
+
+    setAuthToken(token) {
+      this.authToken = token;
+    }
+
+    /**
+     * Única porta de saída para o PostgREST.
+     * @param {string} table  nome da tabela
+     * @param {{method?:string, body?:any, params?:object, prefer?:string}} options
+     */
+    async request(table, options = {}) {
+      const { method = 'GET', body, params, prefer } = options;
+
+      const url = new URL(`${this.url}${REST_PATH}/${encodeURIComponent(table)}`);
+      for (const [key, value] of Object.entries(params || {})) {
+        if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+      }
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.authToken || this.key}`,
+      };
+      if (prefer) headers['Prefer'] = prefer;
+
+      let response;
+      try {
+        response = await fetch(url, {
+          method,
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+        });
+      } catch (networkError) {
+        // Sem resposta HTTP (offline, CORS, DNS). Preserva a causa em vez de sumir com ela.
+        throw new SupabaseRequestError(
+          `Falha de rede em ${method} ${table}: ${networkError.message}`,
+          { method, url: String(url), body: { cause: String(networkError) } }
+        );
+      }
+
+      const raw = await response.text();
+      let data = null;
+      if (raw) {
+        try { data = JSON.parse(raw); } catch { data = raw; }
+      }
+
+      if (!response.ok) {
+        const detail = (data && (data.message || data.hint)) || response.statusText || 'sem detalhe';
+        throw new SupabaseRequestError(
+          `${method} ${table} falhou (HTTP ${response.status}): ${detail}`,
+          {
+            status: response.status,
+            code: data && typeof data === 'object' ? data.code : null,
+            body: data,
+            method,
+            url: String(url),
+          }
+        );
+      }
+
+      return data;
+    }
+
+    /** Salva uma simulação de visagismo. Rejeita em caso de erro. */
+    saveFaceSimulation(styleName, styleType, faceData = {}) {
+      return this.request('face_simulations', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
+        prefer: 'return=representation',
+        body: {
           style_name: styleName,
           style_type: styleType,
-          face_data: faceData
-        })
+          face_data: faceData,
+        },
       });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao salvar simulação: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Simulação salva com sucesso:', data);
-      return data;
-    } catch (error) {
-      console.error('Erro ao salvar simulação:', error);
-      return null;
     }
-  }
 
-  // Salvar agendamento
-  async saveAppointment(service, barber, appointmentDate) {
-    try {
-      const response = await fetch(`${this.url}/rest/v1/appointments`, {
+    /** Salva um agendamento. Rejeita em caso de erro. */
+    saveAppointment(service, barber, appointmentDate) {
+      return this.request('appointments', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
-          service: service,
-          barber: barber,
+        prefer: 'return=representation',
+        body: {
+          service,
+          barber,
           appointment_date: appointmentDate,
-          status: 'pending'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao salvar agendamento: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Agendamento salvo com sucesso:', data);
-      return data;
-    } catch (error) {
-      console.error('Erro ao salvar agendamento:', error);
-      return null;
-    }
-  }
-
-  // Obter histórico de simulações
-  async getFaceSimulations() {
-    try {
-      const response = await fetch(`${this.url}/rest/v1/face_simulations`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao obter simulações: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Erro ao obter simulações:', error);
-      return [];
-    }
-  }
-
-  // Obter agendamentos
-  async getAppointments() {
-    try {
-      const response = await fetch(`${this.url}/rest/v1/appointments`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao obter agendamentos: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Erro ao obter agendamentos:', error);
-      return [];
-    }
-  }
-
-  // Atualizar perfil do usuário
-  async updateProfile(fullName, avatarUrl) {
-    try {
-      const response = await fetch(`${this.url}/rest/v1/profiles`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`,
-          'Prefer': 'return=representation'
+          status: 'pending',
         },
-        body: JSON.stringify({
+      });
+    }
+
+    getFaceSimulations() {
+      return this.request('face_simulations');
+    }
+
+    getAppointments() {
+      return this.request('appointments');
+    }
+
+    updateProfile(fullName, avatarUrl) {
+      return this.request('profiles', {
+        method: 'PATCH',
+        prefer: 'return=representation',
+        body: {
           full_name: fullName,
           avatar_url: avatarUrl,
-          updated_at: new Date().toISOString()
-        })
+          updated_at: new Date().toISOString(),
+        },
       });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao atualizar perfil: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Perfil atualizado com sucesso:', data);
-      return data;
-    } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
-      return null;
     }
-  }
 
-  // Executar query customizada
-  async query(table, options = {}) {
-    try {
-      let url = `${this.url}/rest/v1/${table}`;
-      
-      const params = new URLSearchParams();
-      if (options.select) params.append('select', options.select);
-      if (options.filter) params.append('filter', options.filter);
-      if (options.limit) params.append('limit', options.limit);
-      if (options.offset) params.append('offset', options.offset);
-      if (options.order) params.append('order', options.order);
-
-      if (params.toString()) {
-        url += '?' + params.toString();
-      }
-
-      const response = await fetch(url, {
+    /**
+     * Query customizada. Rejeita em caso de erro — não devolve [] silenciosamente.
+     * @param {string} table
+     * @param {{select?:string, filter?:string, limit?:number, offset?:number, order?:string}} options
+     */
+    query(table, options = {}) {
+      return this.request(table, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': this.key,
-          'Authorization': `Bearer ${this.authToken || this.key}`
-        }
+        params: {
+          select: options.select,
+          filter: options.filter,
+          limit: options.limit,
+          offset: options.offset,
+          order: options.order,
+        },
       });
-
-      if (!response.ok) {
-        throw new Error(`Erro na query: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Erro na query:', error);
-      return [];
     }
   }
 
-  setAuthToken(token) {
-    this.authToken = token;
-  }
-}
-
-const supabaseClient = new SupabaseClient(SUPABASE_URL, SUPABASE_KEY);
+  // Exportados explicitamente: admin.js e ia-camera.js usam `supabaseClient` por
+  // identificador global, então precisa existir em window.
+  window.SupabaseClient = SupabaseClient;
+  window.SupabaseRequestError = SupabaseRequestError;
+  window.supabaseClient = new SupabaseClient(SUPABASE_URL, SUPABASE_KEY);
+})();
