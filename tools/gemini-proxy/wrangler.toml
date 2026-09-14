@@ -1,0 +1,10 @@
+name = "prumo-nano-banana"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# Restrinja à origem do site antes de publicar. "*" aceita qualquer site.
+[vars]
+ALLOWED_ORIGIN = "*"
+
+# A chave NÃO vai aqui. Ela é um segredo:
+#   npx wrangler secret put GEMINI_API_KEY

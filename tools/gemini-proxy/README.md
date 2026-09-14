@@ -19,16 +19,8 @@ wrangler secret put GEMINI_API_KEY     # cola a chave do AI Studio
 wrangler deploy                        # sai uma URL tipo https://xxx.workers.dev
 ```
 
-Crie um `wrangler.toml` se quiser fixar o nome:
-
-```toml
-name = "prumo-nano-banana"
-main = "worker.js"
-compatibility_date = "2026-01-01"
-
-[vars]
-ALLOWED_ORIGIN = "https://seu-site.com"
-```
+O `wrangler.toml` já está aqui com o nome `prumo-nano-banana`. Antes de publicar, troque
+`ALLOWED_ORIGIN` pela origem do seu site (o padrão `*` aceita chamada de qualquer lugar).
 
 Depois, no site, abra **⚙️ Configurar IA** e cole a URL do Worker no campo *URL do proxy*.
 
@@ -52,27 +44,40 @@ O proxy confere o `model` contra uma lista permitida, remove o campo e encaminha
 `https://generativelanguage.googleapis.com/v1/models/<model>:generateContent`. A resposta
 volta como veio — inclusive os erros, que o front-end trata (`blocked`, `rate-limit`, `http`).
 
-## Alternativa: Node
+## Alternativa: Node (sem Cloudflare)
 
-Qualquer servidor funciona. O essencial é **não** deixar a chave chegar ao navegador:
+`server.mjs` é um servidor Node puro, sem dependências:
 
-```js
-// server.mjs  ->  node server.mjs   (porta 8787)
-const KEY = process.env.GEMINI_API_KEY;
-Bun.serve?.({}) // ou use http do node; o importante é o handler abaixo:
-export async function handler(req) {
-  const body = await req.json();
-  const model = body.model || 'gemini-2.5-flash-image';
-  delete body.model;
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`,
-    { method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY },
-      body: JSON.stringify(body) });
-  return new Response(r.body, { status: r.status,
-    headers: { 'Content-Type': 'application/json',
-               'Access-Control-Allow-Origin': 'https://seu-site.com' } });
-}
+```bash
+GEMINI_API_KEY=AIza... node tools/gemini-proxy/server.mjs
+# Proxy do Nano Banana em http://0.0.0.0:8787
+```
+
+Variáveis:
+
+| var | default | para quê |
+|---|---|---|
+| `GEMINI_API_KEY` | — (obrigatória) | a chave. Nunca sai do processo |
+| `PORT` | `8787` | porta |
+| `ALLOWED_ORIGIN` | `*` | **restrinja em produção** à origem do site |
+| `GEMINI_UPSTREAM` | URL do Google | só para testar contra um servidor falso |
+
+Serve em `/` e em `/api/nano-banana`. Sem `GEMINI_API_KEY` ele responde `500` explicando,
+em vez de encaminhar algo sem autenticação.
+
+## Teste do proxy
+
+`tools/verify-proxy.mjs` sobe um "Gemini falso" local, sobe o proxy apontando para ele e
+faz HTTP de verdade (22 verificações): a chave chega no upstream e não volta para o
+cliente, a allowlist de modelos funciona, erros e status passam intactos, CORS e
+preflight funcionam, e sem chave o proxy avisa.
+
+O último trecho é ponta a ponta: abre o `ia-tryon.html` real no jsdom com o fetch de
+verdade, dispara a captura e confere que **a imagem chega no chat** depois de atravessar
+o proxy — sem nenhuma chave no navegador.
+
+```bash
+node tools/verify-proxy.mjs
 ```
 
 ## Se você só quer testar agora

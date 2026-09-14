@@ -1,6 +1,6 @@
 # tools/ — suítes de verificação
 
-Quatro suítes independentes, sem framework: só Node + [jsdom](https://github.com/jsdom/jsdom).
+Cinco suítes independentes, sem framework: só Node + [jsdom](https://github.com/jsdom/jsdom).
 Elas executam o **HTML e o JS reais do repositório** — não há reimplementação da lógica.
 
 ```bash
@@ -9,6 +9,7 @@ node tools/verify-pages.mjs
 node tools/verify-supabase-client.mjs
 node tools/verify-behavior.mjs
 node tools/verify-nano-banana.mjs
+node tools/verify-proxy.mjs          # sobe o proxy de verdade e faz HTTP real
 ```
 
 Cada uma sai com exit code `1` se algo falhar, então dá para usar em CI.
