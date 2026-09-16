@@ -321,7 +321,7 @@ p {
   line-height: 1;
 }
 
-.stat span {
+.stat > span {
   color: var(--muted);
   font-size: 0.82rem;
 }
