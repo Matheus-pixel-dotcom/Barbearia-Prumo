@@ -272,6 +272,7 @@ p {
 .card,
 .price-card,
 .panel {
+  min-width: 0;
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
   box-shadow: var(--shadow);
@@ -319,6 +320,8 @@ p {
   color: var(--gold-2);
   font-size: 1.55rem;
   line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat span {

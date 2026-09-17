@@ -41,6 +41,7 @@
 
   var vol = 2;
   var chatBody, chatInput;
+  var MAX_CHARS = 300;
 
   function analise() {
     return (typeof window !== 'undefined' && window.currentAnalysis) || null;
@@ -147,8 +148,9 @@
   }
 
   function enviar(msg) {
-    if (!msg.trim()) return;
-    add(msg.replace(/</g, '&lt;'), 'user');
+    msg = String(msg || '').trim().slice(0, MAX_CHARS);
+    if (!msg) return;
+    add(msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), 'user');
     digitando(function () {
       add(responder(msg), 'ia');
     });

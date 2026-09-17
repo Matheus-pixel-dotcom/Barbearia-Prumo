@@ -150,6 +150,7 @@ function initCounters() {
 
   const casas = (el) => parseInt(el.dataset.decimals || '0', 10);
   const destino = (el) => parseFloat(el.dataset.counter);
+  const formatar = (el, valor) => (el.dataset.prefix || '') + valor.toFixed(casas(el)) + (el.dataset.suffix || '');
 
   const animar = (el) => {
     const fim = destino(el);
@@ -160,16 +161,16 @@ function initCounters() {
     const passo = (agora) => {
       const progresso = Math.min(1, (agora - inicio) / duracao);
       const suavizado = 1 - Math.pow(1 - progresso, 3);
-      el.textContent = (fim * suavizado).toFixed(decimais);
+      el.textContent = formatar(el, fim * suavizado);
       if (progresso < 1) requestAnimationFrame(passo);
-      else el.textContent = fim.toFixed(decimais);
+      else el.textContent = formatar(el, fim);
     };
     requestAnimationFrame(passo);
   };
 
   const prefereMenosMovimento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!('IntersectionObserver' in window) || prefereMenosMovimento) {
-    alvos.forEach((el) => { el.textContent = destino(el).toFixed(casas(el)); });
+    alvos.forEach((el) => { el.textContent = formatar(el, destino(el)); });
     return;
   }
 
@@ -179,7 +180,7 @@ function initCounters() {
       animar(entrada.target);
       observador.unobserve(entrada.target);
     });
-  }, { threshold: 0.4 });
+  }, { threshold: 0.1 });
 
   alvos.forEach((el) => observador.observe(el));
 }
