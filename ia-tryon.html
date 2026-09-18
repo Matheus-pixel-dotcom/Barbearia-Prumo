@@ -308,9 +308,14 @@
   <main>
     <section class="hero" style="padding-bottom:40px">
       <div class="container">
-        <span class="eyebrow">Visagismo digital</span>
+        <span class="eyebrow">Visagismo digital com IA</span>
         <h1 class="display-title">Experimente antes de <span class="text-gold">cortar.</span></h1>
-        <p class="lead">Suba uma foto ou use a câmera para análise em tempo real. Receba uma recomendação visual simulada para chegar ao atendimento com mais segurança.</p>
+        <p class="lead">Suba uma foto ou use a câmera e a IA <strong>Nano Banana</strong> (Gemini Image, do Google) monta na hora uma prévia realista de como o corte fica em você — mantendo seu rosto, sua pele e a iluminação da foto original.</p>
+        <div style="margin-top:18px">
+          <span id="ia-status-selo" class="ia-selo ia-selo-off" title="Verificando disponibilidade da IA">
+            <span class="ia-selo-dot"></span> Verificando IA...
+          </span>
+        </div>
       </div>
     </section>
 
@@ -358,24 +363,60 @@
             <button id="reset-btn" type="button" class="btn btn-outline hidden" style="flex: 1">Trocar foto</button>
             <button id="camera-btn" type="button" class="btn btn-primary" style="flex: 1">📷 Usar câmera</button>
           </div>
+
+          <!-- Avisos da IA (chave ausente, erro, sucesso) -->
+          <div id="ia-aviso" class="ia-aviso hidden" role="status" aria-live="polite"></div>
+
+          <!-- Resultado gerado pelo Nano Banana -->
+          <section id="resultado-card" class="resultado-card hidden" aria-label="Simulação gerada por IA">
+            <span class="eyebrow">Prévia gerada por IA</span>
+            <div class="resultado-moldura">
+              <img id="resultado-img" class="hidden" alt="Simulação do corte gerada por IA">
+              <img id="resultado-antes" class="hidden" alt="Foto original enviada">
+              <span class="resultado-marcacao">Simulado por IA</span>
+            </div>
+            <p id="resultado-legenda" class="resultado-legenda"></p>
+
+            <div class="resultado-comparador">
+              <figure>
+                <img id="comparador-antes" alt="Antes: foto original">
+                <figcaption>Antes</figcaption>
+              </figure>
+              <figure>
+                <img id="comparador-depois" alt="Depois: corte simulado por IA">
+                <figcaption>Depois (IA)</figcaption>
+              </figure>
+            </div>
+
+            <div class="resultado-acoes">
+              <button id="alternar-antes" type="button" class="btn btn-outline">Ver antes (foto original)</button>
+              <button id="baixar-simulacao" type="button" class="btn btn-outline">⬇ Baixar imagem</button>
+              <button id="gerar-simulacao" type="button" class="btn btn-primary">🍌 Gerar de novo</button>
+            </div>
+          </section>
         </div>
 
         <div>
           <section id="style-selection" class="panel">
             <span class="eyebrow">Escolha o shape</span>
             <h2 class="section-title" style="font-size:clamp(2rem,4vw,3.4rem)">Estilos sugeridos.</h2>
+            <p class="lead" style="font-size:0.95rem;margin-top:-6px">Toque em um estilo: a IA gera na hora a prévia na <strong>sua</strong> foto.</p>
             <div class="form-grid">
               <button class="style-option" type="button" data-style-name="Executive Contour" data-style-type="Clássico social">
                 <span><strong>Executive Contour</strong><br><small>Acabamento polido, social e elegante.</small></span>
-                <span>→</span>
+                <span>🍌</span>
               </button>
               <button class="style-option" type="button" data-style-name="Mid Fade Moderno" data-style-type="Moderno texturizado">
                 <span><strong>Mid Fade</strong><br><small>Degradê médio com textura e manutenção prática.</small></span>
-                <span>→</span>
+                <span>🍌</span>
               </button>
               <button class="style-option" type="button" data-style-name="Buzz Cut com Degradê" data-style-type="Minimalista e forte">
                 <span><strong>Buzz Cut</strong><br><small>Raspado moderno com contorno limpo.</small></span>
-                <span>→</span>
+                <span>🍌</span>
+              </button>
+              <button class="style-option" type="button" data-style-name="Corte Style Relo" data-style-type="Assinatura da casa">
+                <span><strong>Style Relo</strong><br><small>Degradê marcado + topo texturizado. O nosso carro-chefe.</small></span>
+                <span>🍌</span>
               </button>
             </div>
           </section>
@@ -412,6 +453,7 @@
             <span class="eyebrow">Resultado</span>
             <h2 class="section-title" style="font-size:clamp(2rem,4vw,3.4rem)">Combinação encontrada.</h2>
             <p>A simulação indica que <strong id="res-nome" class="text-gold"></strong> combina com um perfil <strong id="res-tipo"></strong>. Leve essa referência para o barbeiro ajustar proporções, textura e acabamento.</p>
+            <p id="res-comentario" class="hidden" style="margin-top:10px;color:var(--muted);font-size:0.9rem;font-style:italic"></p>
             <div id="analysis-details" style="margin-top: 16px; padding: 12px; background: rgba(245, 158, 11, 0.05); border-radius: 8px; display: none;">
               <p style="font-size: 0.875rem; color: var(--muted); margin: 0;">
                 <strong>Análise facial:</strong> <span id="analysis-text"></span>
@@ -431,9 +473,11 @@
   
   <!-- Carregar Face-api.js para detecção facial -->
   <script async defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
-  <script src="script.js?v=20260914" defer></script>
-  <script src="supabase-client.js?v=20260914" defer></script>
-  <script src="ia-camera.js?v=20260914" defer></script>
-  <script src="chat-ia.js?v=20260914" defer></script>
+  <script src="script.js?v=20260918" defer></script>
+  <script src="supabase-client.js?v=20260918" defer></script>
+  <script src="ia-camera.js?v=20260918" defer></script>
+  <script src="chat-ia.js?v=20260918" defer></script>
+  <!-- Nano Banana (Gemini Image): gera a prévia do corte na foto do cliente -->
+  <script src="ia-gemini.js?v=20260918" defer></script>
 </body>
 </html>
