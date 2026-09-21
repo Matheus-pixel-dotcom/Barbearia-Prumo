@@ -17,6 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const ReloHash = require('./auth-hash');
 const db = require('./db');
+const nanoBanana = require('./nano-banana');
 
 const RAIZ = __dirname;
 const PORTA = Number(process.env.PORT || 8000);
@@ -55,14 +56,27 @@ function json(res, status, corpo) {
   res.end(texto);
 }
 
-function lerCorpo(req) {
+// As rotas de IA recebem fotos em base64, então precisam de um limite maior.
+const LIMITE_CORPO_PADRAO = 1e6; // ~1 MB (login, cadastro, admin)
+const LIMITE_CORPO_IA = 16e6; // ~16 MB (imagem codificada)
+
+function lerCorpo(req, limite = LIMITE_CORPO_PADRAO) {
   return new Promise((resolve, reject) => {
     let dados = '';
+    let estourou = false;
     req.on('data', (parte) => {
       dados += parte;
-      if (dados.length > 1e6) reject(new Error('Corpo muito grande'));
+      if (dados.length > limite) {
+        // Para de acumular e avisa uma única vez (evita estourar a memória).
+        if (!estourou) {
+          estourou = true;
+          reject(new Error('Corpo muito grande'));
+        }
+        dados = '';
+      }
     });
     req.on('end', () => {
+      if (estourou) return;
       if (!dados) return resolve({});
       try {
         resolve(JSON.parse(dados));
@@ -123,6 +137,54 @@ function contarTentativa(email, sucesso) {
   const registro = tentativas.get(email) || { total: 0, desde: Date.now() };
   registro.total += 1;
   tentativas.set(email, registro);
+}
+
+/* ------------------------------------------------------------------ */
+/* Proteção de cota da IA (Nano Banana)                                */
+/*                                                                     */
+/* A API do Google é paga por imagem gerada. Este limite simples evita  */
+/* que alguém (ou um loop no navegador) queime o crédito da chave.      */
+/* Ajuste pelo .env: IA_LIMITE_POR_HORA                                 */
+/* ------------------------------------------------------------------ */
+const IA_JANELA_MS = 60 * 60 * 1000;
+const IA_LIMITE_POR_HORA = Number(process.env.IA_LIMITE_POR_HORA || 30);
+const usoIA = new Map(); // ip -> [timestamps]
+
+function ipDaRequisicao(req) {
+  const encaminhado = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return encaminhado || req.socket?.remoteAddress || 'desconhecido';
+}
+
+function conferirCotaIA(req, res, custo = 1) {
+  const agora = Date.now();
+  const ip = ipDaRequisicao(req);
+  const historico = (usoIA.get(ip) || []).filter((marca) => agora - marca < IA_JANELA_MS);
+
+  if (historico.length + custo > IA_LIMITE_POR_HORA) {
+    usoIA.set(ip, historico);
+    json(res, 429, {
+      ok: false,
+      erro: `Limite de ${IA_LIMITE_POR_HORA} gerações por hora atingido. Aguarde um pouco e tente de novo.`
+    });
+    return false;
+  }
+
+  historico.push(agora);
+  usoIA.set(ip, historico);
+  return true;
+}
+
+function exigirIaAtiva(req, res) {
+  if (!nanoBanana.ativo()) {
+    json(res, 503, {
+      ok: false,
+      ativo: false,
+      erro:
+        'IA ainda não configurada neste servidor. Crie uma chave em https://aistudio.google.com/apikey e coloque GEMINI_API_KEY no arquivo .env (instruções em NANO_BANANA.md).'
+    });
+    return false;
+  }
+  return true;
 }
 
 /* ------------------------------------------------------------------ */
@@ -320,6 +382,83 @@ async function tratarApi(req, res, url) {
     return json(res, 200, { ok: true, removido: db.usuarioPublico(alvo) });
   }
 
+  /* ---------------------------------------------------------------- */
+  /* Rotas da IA — Nano Banana (Gemini Image)                          */
+  /* A chave fica só aqui no servidor; o navegador nunca vê.           */
+  /* ---------------------------------------------------------------- */
+
+  // GET /api/ia/status — o front usa isso para saber se a IA está ligada
+  if (rota === '/api/ia/status' && req.method === 'GET') {
+    return json(res, 200, nanoBanana.statusPublico());
+  }
+
+  // POST /api/ia/simular — gera a foto do cliente com o corte escolhido
+  if (rota === '/api/ia/simular' && req.method === 'POST') {
+    if (!exigirIaAtiva(req, res)) return undefined;
+
+    const corpo = await lerCorpo(req, LIMITE_CORPO_IA);
+    // Valida ANTES de gastar cota: pedido inválido não pode queimar crédito.
+    if (!corpo.fotoBase64) {
+      return json(res, 400, { ok: false, erro: 'Envie uma foto para simular o corte.' });
+    }
+    if (!nanoBanana.fotoValida(corpo.fotoBase64)) {
+      return json(res, 400, {
+        ok: false,
+        erro: 'Envie uma foto válida (JPEG, PNG, WEBP, GIF ou HEIC) de até ~10 MB.'
+      });
+    }
+    if (!conferirCotaIA(req, res, 1)) return undefined;
+
+    const resultado = await nanoBanana.gerarSimulacaoDeCorte({
+      fotoBase64: corpo.fotoBase64,
+      estilo: corpo.estilo,
+      tipo: corpo.tipo,
+      volume: corpo.volume,
+      rosto: corpo.rosto,
+      observacao: corpo.observacao,
+      proporcao: corpo.proporcao
+    });
+
+    db.salvar(banco);
+    return json(res, 200, resultado);  }
+
+  // POST /api/ia/analisar — leitura do rosto (formato, simetria, tipo de cabelo)
+  if (rota === '/api/ia/analisar' && req.method === 'POST') {
+    if (!exigirIaAtiva(req, res)) return undefined;
+
+    const corpo = await lerCorpo(req, LIMITE_CORPO_IA);
+    if (!corpo.fotoBase64) {
+      return json(res, 400, { ok: false, erro: 'Envie uma foto para análise facial.' });
+    }
+    if (!nanoBanana.fotoValida(corpo.fotoBase64)) {
+      return json(res, 400, {
+        ok: false,
+        erro: 'Envie uma foto válida (JPEG, PNG, WEBP, GIF ou HEIC) de até ~10 MB.'
+      });
+    }
+    if (!conferirCotaIA(req, res, 1)) return undefined;
+
+    return json(res, 200, await nanoBanana.analisarRosto({ fotoBase64: corpo.fotoBase64 }));
+  }
+
+  // POST /api/ia/chat — Relo IA conversando com um modelo real
+  if (rota === '/api/ia/chat' && req.method === 'POST') {
+    if (!exigirIaAtiva(req, res)) return undefined;
+
+    const corpo = await lerCorpo(req);
+    const mensagem = String(corpo.mensagem || '').trim();
+    if (!mensagem) {
+      return json(res, 400, { ok: false, erro: 'Escreva uma mensagem para a Relo IA.' });
+    }
+    if (!conferirCotaIA(req, res, 1)) return undefined;
+
+    return json(res, 200, await nanoBanana.conversar({
+      mensagem,
+      historico: Array.isArray(corpo.historico) ? corpo.historico : [],
+      contexto: corpo.contexto
+    }));
+  }
+
   return json(res, 404, { ok: false, erro: 'Rota da API não encontrada.' });
 }
 
@@ -337,7 +476,15 @@ function servirArquivo(req, res, url) {
   const protegidos = [path.join(RAIZ, 'data'), path.join(RAIZ, '.git')];
   const ehProtegido = protegidos.some((p) => alvo === p || alvo.startsWith(p + path.sep));
 
-  if (!dentroDoProjeto || ehProtegido) {
+  // Arquivos de ambiente guardam a chave da IA (GEMINI_API_KEY): ninguém pode
+  // baixá-los pelo navegador. O .env.example é permitido (não tem segredo).
+  const nome = path.basename(alvo);
+  const ehArquivoDeAmbiente =
+    nome === '.env' ||
+    (/^\.env\./i.test(nome) && !/^\.env\.example$/i.test(nome)) ||
+    /\.pem$|\.key$|\.p12$|\.jks$/i.test(nome);
+
+  if (!dentroDoProjeto || ehProtegido || ehArquivoDeAmbiente) {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     return res.end('404 — Arquivo não encontrado.');
   }
@@ -373,6 +520,21 @@ const servidor = http.createServer((req, res) => {
       return res.end();
     }
     return tratarApi(req, res, url).catch((erro) => {
+      // Erros da IA já vêm com código e mensagem próprios (chave inválida, cota, bloqueio...).
+      if (erro instanceof nanoBanana.ErroNanoBanana) {
+        console.warn(`[ia] ${erro.codigo}: ${erro.message}`);
+        return json(res, erro.codigo, {
+          ok: false,
+          erro: erro.message,
+          detalhes: erro.detalhes || undefined
+        });
+      }
+      if (erro.message === 'Corpo muito grande') {
+        return json(res, 413, {
+          ok: false,
+          erro: 'Arquivo muito grande. Envie uma foto de até ~10 MB.'
+        });
+      }
       console.error('[api] Erro:', erro.message);
       json(res, 500, { ok: false, erro: 'Erro interno do servidor.' });
     });
@@ -393,5 +555,12 @@ servidor.listen(PORTA, HOST, () => {
   console.log(`  Banco:   ${db.DB_FILE}`);
   console.log(`  Usuários cadastrados: ${banco.usuarios.length}`);
   if (criados > 0) console.log(`  ${criados} conta(s) de administrador criada(s) agora.`);
+  if (nanoBanana.ativo()) {
+    console.log(`  IA:      Nano Banana ATIVO (${nanoBanana.statusPublico().modelo})`);
+    console.log(`           Limite: ${IA_LIMITE_POR_HORA} gerações/hora por visitante`);
+  } else {
+    console.log('  IA:      Nano Banana em modo demonstrativo (sem GEMINI_API_KEY)');
+    console.log('           Para ligar: copie .env.example para .env e cole sua chave.');
+  }
   console.log('======================================================');
 });

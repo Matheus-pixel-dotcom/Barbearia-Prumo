@@ -1,5 +1,40 @@
 # Atualizações do Projeto - Style Relo Barber
 
+## 🍌 18 de setembro de 2026 — Nano Banana (IA de imagem do Google)
+
+### Novos arquivos
+- `nano-banana.js` — módulo do servidor que chama a API Gemini Image (Nano Banana).
+  Guarda a chave, monta os prompts de barbearia, faz fallback entre modelos e trata
+  erros/bloqueios. Sem dependências externas (usa o `fetch` nativo do Node).
+- `ia-gemini.js` — cliente no navegador que chama as rotas `/api/ia/*`, exibe a prévia
+  e religa os botões de estilo do simulador (antes não tinham nenhuma função).
+- `.env.example` — modelo comentado para ativar a IA. O `.env` real fica fora do Git.
+- `NANO_BANANA.md` — guia de ativação (2 minutos), rotas, segurança e custos.
+
+### Rotas de API adicionadas
+- `GET /api/ia/status` — informa se a IA está ativa (não gasta cota).
+- `POST /api/ia/simular` — gera a prévia do corte na foto do cliente.
+- `POST /api/ia/analisar` — leitura facial (formato, simetria, tipo de cabelo).
+- `POST /api/ia/chat` — Relo IA por modelo de texto real, com fallback local.
+
+### Melhorias e proteções
+- **Chave só no servidor**: o navegador nunca vê a `GEMINI_API_KEY`; o servidor passa a
+  bloquear o download de qualquer arquivo `.env` (retorna 404).
+- **Cota por visitante** (`IA_LIMITE_POR_HORA`) para proteger o crédito da API.
+- **Validação antes da cota**: foto inválida ou pedido vazio retorna `400` sem gastar geração.
+- **Fallback de modelo** automático entre as versões do Gemini Image.
+- **Simulador**: prévia com comparação antes/depois, download da imagem e WhatsApp
+  já preenchido com o corte escolhido.
+- **Câmera IA**: após capturar, tocar numa recomendação gera a prévia do corte.
+- **Chat**: usa modelo real quando a IA está ligada; caso contrário responde com as
+  regras locais (o chat nunca fica mudo).
+
+### Nada foi quebrado
+Todas as rotas antigas (`/api/auth/*`, `/api/admin/*`, `/api/health`) e páginas
+continuam funcionando. Sem a chave, o site roda em modo demonstrativo idêntico ao anterior.
+
+---
+
 ## 📋 Resumo das Mudanças
 
 Este documento descreve todas as atualizações realizadas no projeto da Barbearia Prumo em 22 de junho de 2026.

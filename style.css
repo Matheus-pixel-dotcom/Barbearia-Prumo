@@ -1030,3 +1030,177 @@ body.relo-modal-aberto {
     animation: none;
   }
 }
+
+/* ================================================================== */
+/* Nano Banana (IA de imagem) — estilos compartilhados                 */
+/* Usados em ia-tryon.html e face-recognition.html                     */
+/* ================================================================== */
+
+.ia-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: help;
+  border: 1px solid var(--line);
+}
+
+.ia-selo-on {
+  color: var(--green);
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.ia-selo-off {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ia-selo-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: ia-pulse 2s infinite;
+}
+
+@keyframes ia-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.ia-aviso {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+}
+
+.ia-aviso.erro {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.ia-aviso.sucesso {
+  color: #d9f99d;
+  background: rgba(132, 204, 22, 0.1);
+  border-color: rgba(132, 204, 22, 0.3);
+}
+
+/* Cartão do resultado da simulação */
+.resultado-card {
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.resultado-moldura {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-height: 520px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+
+.resultado-moldura img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.resultado-marcacao {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 2;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1a1205;
+  background: linear-gradient(135deg, var(--gold-2), var(--gold));
+}
+
+.resultado-legenda {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.resultado-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.resultado-acoes .btn {
+  flex: 1 1 auto;
+}
+
+/* Estado ativo dos botões de estilo (antes não existia) */
+.style-option.is-active {
+  border-color: var(--gold);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.style-option:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+/* Comparação antes/depois */
+.resultado-comparador {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.resultado-comparador figure {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.resultado-comparador img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+
+.resultado-comparador figcaption {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .resultado-acoes {
+    flex-direction: column;
+  }
+  .resultado-comparador {
+    grid-template-columns: 1fr;
+  }
+}

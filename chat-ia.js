@@ -147,12 +147,79 @@
     if (label) label.textContent = VOLUMES[vol].nome + ' — ' + VOLUMES[vol].desc;
   }
 
+  /* ---------------------------------------------------------------- */
+  /* Relo IA com modelo real (Nano Banana / Gemini) + fallback local    */
+  /* ---------------------------------------------------------------- */
+
+  var historico = []; // [{ papel: 'user'|'model', texto }]
+
+  // Deixa passar só formatação simples; qualquer outra tag vira texto puro.
+  // A resposta vem de um modelo de IA, então não pode entrar HTML cru na página.
+  function sanitizar(html) {
+    var texto = String(html || '');
+    // Links: só http/https, sem javascript: nem data:
+    texto = texto.replace(/<a\s+([^>]*)>/gi, function (inteiro, atributos) {
+      var href = /href\s*=\s*("([^"]*)"|'([^']*)')/i.exec(atributos);
+      var url = href ? (href[2] || href[3] || '') : '';
+      if (!/^https?:\/\//i.test(url.trim())) return '';
+      return '<a href="' + url.trim() + '" target="_blank" rel="noopener noreferrer">';
+    });
+    texto = texto.replace(/<\/a>/gi, '</a>');
+    texto = texto.replace(/<(\/?)(strong|em|b|i|br)\s*\/?>/gi, '<$1$2>');
+    texto = texto.replace(/<[^>]+>/g, function (tag) {
+      return /^<\/?(strong|em|b|i|br|a)\b/i.test(tag) ? tag : '';
+    });
+    return texto;
+  }
+
+  function lembrar(papel, texto) {
+    historico.push({ papel: papel, texto: texto });
+    if (historico.length > 8) historico.splice(0, historico.length - 8);
+  }
+
+  function contextoAtual() {
+    var v = VOLUMES[vol];
+    var forma = shapeName();
+    return [
+      'volume escolhido: ' + v.nome.toLowerCase() + ' (' + v.desc + ')',
+      forma ? 'formato de rosto lido pela câmera: ' + forma : 'rosto ainda não analisado pela câmera',
+      'página: simulador de visagismo do site da barbearia'
+    ].join('; ');
+  }
+
   function enviar(msg) {
     msg = String(msg || '').trim().slice(0, MAX_CHARS);
     if (!msg) return;
     add(msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), 'user');
+    lembrar('user', msg);
+
     digitando(function () {
-      add(responder(msg), 'ia');
+      var iaDisponivel = window.ReloIA && window.ReloIA.status;
+
+      if (!iaDisponivel) {
+        var respostaLocal = responder(msg);
+        lembrar('model', respostaLocal.replace(/<[^>]+>/g, ''));
+        add(respostaLocal, 'ia');
+        return;
+      }
+
+      window.ReloIA.status()
+        .then(function (st) {
+          if (!st.ativo) throw new Error('modo demonstrativo');
+          return window.ReloIA.chat(msg, historico.slice(0, -1), contextoAtual());
+        })
+        .then(function (resultado) {
+          var resposta = sanitizar(resultado.resposta);
+          lembrar('model', resposta.replace(/<[^>]+>/g, ''));
+          add(resposta, 'ia');
+        })
+        .catch(function () {
+          // Sem chave, sem servidor ou erro da API: responde com as regras locais,
+          // exatamente como o site sempre fez. O chat nunca fica mudo.
+          var fallback = responder(msg);
+          lembrar('model', fallback.replace(/<[^>]+>/g, ''));
+          add(fallback, 'ia');
+        });
     });
   }
 

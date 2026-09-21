@@ -317,7 +317,21 @@
 
             <div class="analysis-card hidden" id="recommendations-card">
               <div class="analysis-title">Estilos recomendados</div>
+              <p style="color: var(--muted); font-size: 0.8rem; margin: 4px 0 10px;">Toque em um estilo para a IA gerar a prévia na sua foto.</p>
               <div class="style-recommendations" id="recommendations-list"></div>
+            </div>
+
+            <!-- Prévia gerada pelo Nano Banana (Gemini Image) -->
+            <div class="analysis-card hidden" id="previa-ia">
+              <div class="analysis-title">
+                Prévia gerada por IA
+                <span id="ia-status-selo" class="ia-selo ia-selo-off" style="margin-left:8px">
+                  <span class="ia-selo-dot"></span> Verificando IA...
+                </span>
+              </div>
+              <img id="previa-img" class="hidden" alt="Prévia do corte gerada por IA"
+                   style="width:100%; max-height:420px; object-fit:cover; border-radius:16px; border:1px solid var(--line);">
+              <div id="previa-aviso" class="ia-aviso hidden" role="status" aria-live="polite"></div>
             </div>
 
             <div class="analysis-card hidden" id="action-card">
@@ -335,7 +349,9 @@
 
   <!-- Carregar Face-api.js para detecção facial -->
   <script async defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
-  <script src="script.js?v=20260914" defer></script>
-  <script src="face-recognition.js?v=20260914" defer></script>
+  <script src="script.js?v=20260918" defer></script>
+  <script src="face-recognition.js?v=20260918" defer></script>
+  <!-- Nano Banana (Gemini Image): prévia do corte recomendado na foto capturada -->
+  <script src="ia-gemini.js?v=20260918" defer></script>
 </body>
 </html>
