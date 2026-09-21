@@ -4,6 +4,25 @@
 
 O projeto foi revisado, corrigido e modernizado como um site estático compatível com **GitHub Pages**. A refatoração teve foco em resolver páginas sem conexão, remover código órfão, corrigir links quebrados e deixar a experiência visual mais fluida, responsiva e profissional.
 
+## 🍌 Destaque — Simulação de corte com Nano Banana (IA de imagem do Google)
+
+A evolução mais recente do projeto é a integração com o **Nano Banana**, o modelo de
+geração/edição de imagem da família Gemini (Google). Com ela, o simulador deixa de ser
+apenas uma recomendação de texto e passa a **gerar uma prévia visual realista do corte
+na própria foto do cliente**.
+
+| Aspecto | Solução |
+|---|---|
+| O que faz | Cliente sobe uma foto (ou usa a câmera), escolhe um estilo e a IA gera a prévia do corte nele, mantendo rosto, pele, fundo e iluminação |
+| Onde aparece | `ia-tryon.html` (simulador), `face-recognition.html` (câmera IA) e `chat-ia.js` (Relo IA por texto) |
+| Arquitetura | `nano-banana.js` no **servidor** (guarda a chave e chama a API) + `ia-gemini.js` no **navegador** (exibe o resultado) |
+| Segurança | A `GEMINI_API_KEY` fica apenas no `.env` do servidor; o navegador nunca a vê e o servidor bloqueia o download do `.env` |
+| Robustez | Fallback entre versões do modelo, cota por visitante, validação antes de gastar geração e mensagens de erro amigáveis |
+| Modo demonstrativo | Sem chave o site funciona normalmente, sem quebrar nada (requisito para a demonstração em banca) |
+
+O passo a passo de ativação, as rotas da API, as proteções de custo e os testes estão
+documentados em **`NANO_BANANA.md`**.
+
 ## Principais problemas encontrados
 
 | Problema identificado | Impacto | Correção aplicada |
@@ -30,6 +49,10 @@ O projeto foi revisado, corrigido e modernizado como um site estático compatív
 | `tryon.js` | Removido | Arquivo antigo estava órfão e incompatível com a página atual |
 | `auditoria_tecnica.md` | Criado | Registro técnico da auditoria e revisão visual |
 | `check_links.py` | Criado | Validador simples de links locais para manutenção futura |
+| `nano-banana.js` | Criado | Integração da IA de imagem (Nano Banana/Gemini) no servidor |
+| `ia-gemini.js` | Criado | Cliente no navegador que gera e exibe a prévia do corte |
+| `chat-ia.js` | Atualizado | Relo IA com modelo real + fallback para as regras locais |
+| `.env.example` / `NANO_BANANA.md` | Criados | Ativação segura da IA e documentação completa |
 
 ## Validações realizadas
 
@@ -38,6 +61,20 @@ A versão local foi aberta em navegador e revisada visualmente nas páginas `ind
 > OK: 6 páginas HTML verificadas, nenhum link local quebrado encontrado.
 
 Também foi executado `git diff --check`, sem apontamento de problemas de whitespace.
+
+### Validações da integração com o Nano Banana
+
+A integração de IA foi validada de ponta a ponta com um Gemini simulado local (sem custo
+e sem tocar na API real), somando mais de uma centena de verificações:
+
+- **Unidade** (`nano-banana.js`): montagem de prompts, fallback entre modelos, bloqueio
+  de segurança, chave inválida, foto inválida, chat e análise facial.
+- **HTTP**: todas as rotas `/api/ia/*`, cota por visitante (incluindo que pedidos
+  inválidos **não** gastam cota) e bloqueio do download de arquivos `.env`.
+- **Fluxo no navegador** (DOM simulado): subir foto → clicar num estilo → imagem gerada,
+  comparação antes/depois, card final preenchido e WhatsApp com o corte.
+- **Regressão**: nenhuma rota antiga (`/api/auth/*`, `/api/admin/*`, `/api/health`) ou
+  página foi quebrada; 206 links locais das 12 páginas conferidos sem erro.
 
 ## Como publicar no GitHub Pages
 
