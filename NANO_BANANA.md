@@ -159,6 +159,14 @@ Para conferir o servidor de forma rápida:
 curl http://localhost:8000/api/ia/status
 ```
 
+### Teste real direto do navegador (sem depender do servidor)
+
+Se o servidor estiver numa rede **sem acesso ao Google** (alguns sandboxes/nuvens
+bloqueiam `googleapis.com`), use a página
+**`ferramentas/teste-nano-banana.html`**. Ela chama a API **direto do seu navegador**:
+você cola a chave ali (fica só na sessão da aba), sobe uma foto e vê o resultado real.
+A chave não é enviada para nenhum outro lugar.
+
 ---
 
 ## ❓ Problemas comuns
