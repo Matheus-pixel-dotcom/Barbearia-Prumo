@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teste Nano Banana | Style Relo Barber</title>
+<style>
+  :root { --bg:#070708; --surface:#101014; --line:rgba(255,255,255,.1); --text:#f8fafc; --muted:#a1a1aa; --gold:#f59e0b; --gold2:#fbbf24; --green:#22c55e; --red:#ef4444; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--text); font-family:system-ui,Segoe UI,Roboto,sans-serif; padding:24px; }
+  .wrap { max-width:860px; margin:0 auto; display:grid; gap:18px; }
+  h1 { font-size:1.6rem; } h1 span { color:var(--gold2); }
+  p.sub { color:var(--muted); font-size:.9rem; line-height:1.6; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:18px; display:grid; gap:12px; }
+  label { font-size:.8rem; color:var(--muted); font-weight:600; }
+  input[type=password], input[type=text], select { width:100%; padding:12px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--text); font-family:inherit; }
+  input:focus, select:focus { outline:none; border-color:var(--gold); }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:640px){ .row{grid-template-columns:1fr;} }
+  button { padding:13px 18px; border:none; border-radius:10px; background:linear-gradient(135deg,var(--gold2),var(--gold)); color:#1a1205; font-weight:700; font-size:1rem; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:progress; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--muted); font-weight:600; }
+  .zona { border:2px dashed rgba(255,255,255,.2); border-radius:14px; padding:18px; text-align:center; color:var(--muted); cursor:pointer; }
+  .zona:hover { border-color:var(--gold); }
+  img#foto { max-height:260px; border-radius:12px; display:none; margin:0 auto; }
+  .aviso { padding:12px 14px; border-radius:12px; font-size:.875rem; line-height:1.5; display:none; }
+  .aviso.erro { display:block; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.4); color:#fecaca; }
+  .aviso.ok { display:block; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.35); color:#bbf7d0; }
+  .resultado { display:none; grid-template-columns:1fr 1fr; gap:12px; }
+  .resultado figure { display:grid; gap:6px; }
+  .resultado img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:12px; border:1px solid var(--line); }
+  .resultado figcaption { font-size:.75rem; color:var(--muted); text-align:center; }
+  small.nota { color:var(--muted); font-size:.75rem; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h1>🍌 Teste do <span>Nano Banana</span></h1>
+    <p class="sub">Página de teste da IA de imagem do Style Relo Barber. Ela chama a API do Google
+      <strong>direto do seu navegador</strong> — útil quando o servidor não tem acesso ao Google.
+      A chave fica só nesta aba (sessão do navegador) e não é enviada para mais ninguém.</p>
+  </div>
+
+  <div class="card">
+    <label for="chave">1. Sua chave da API (cole aqui — fica só no seu navegador)</label>
+    <input type="password" id="chave" placeholder="AIza... ou AQ..." autocomplete="off">
+    <small class="nota">🔒 A chave é usada apenas nas chamadas diretas a generativelanguage.googleapis.com,
+    guardada em memória de sessão. Feche a aba e ela some.</small>
+  </div>
+
+  <div class="card">
+    <label>2. Foto do cliente</label>
+    <div class="zona" id="zona">📸 Clique e escolha uma foto com o rosto bem visível
+      <input type="file" id="arquivo" accept="image/*" hidden>
+    </div>
+    <img id="foto" alt="Foto escolhida">
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="estilo">3. Estilo do corte</label>
+        <select id="estilo">
+          <option value="Mid Fade Moderno">Mid Fade Moderno</option>
+          <option value="Executive Contour">Executive Contour</option>
+          <option value="Buzz Cut com Degradê">Buzz Cut com Degradê</option>
+          <option value="Corte Style Relo">Corte Style Relo (assinatura)</option>
+        </select>
+      </div>
+      <div>
+        <label for="volume">Volume no topo</label>
+        <select id="volume">
+          <option value="1">Baixo</option>
+          <option value="2" selected>Médio</option>
+          <option value="3">Alto</option>
+          <option value="4">Muito alto</option>
+        </select>
+      </div>
+    </div>
+    <button id="gerar" type="button">🍌 Gerar simulação com IA</button>
+    <div id="aviso" class="aviso"></div>
+  </div>
+
+  <div class="card resultado" id="resultado">
+    <figure><img id="antes" alt="Antes"><figcaption>Antes (sua foto)</figcaption></figure>
+    <figure><img id="depois" alt="Depois (IA)"><figcaption>Depois (Nano Banana)</figcaption></figure>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var MODELOS = ['gemini-3.1-flash-image-preview', 'gemini-3.1-flash-image', 'gemini-2.5-flash-image'];
+  var VOLUMES = { 1:'muito baixo, cabelo curto no topo e laterais rentes', 2:'médio, topo com 3 a 5 cm e laterais em degradê', 3:'alto, topo cheio com franja com corpo', 4:'muito alto, volume máximo no topo, estilo pompadour' };
+  var fotoData = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  function aviso(msg, tipo) { var el = $('aviso'); el.className = 'aviso ' + tipo; el.textContent = msg; }
+
+  // Restaura a chave da sessão (só nesta aba).
+  try { $('chave').value = sessionStorage.getItem('gemini_key_teste') || ''; } catch (e) {}
+  $('chave').addEventListener('input', function () {
+    try { sessionStorage.setItem('gemini_key_teste', this.value.trim()); } catch (e) {}
+  });
+
+  $('zona').addEventListener('click', function () { $('arquivo').click(); });
+  $('arquivo').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      fotoData = r.result;
+      $('foto').src = fotoData;
+      $('foto').style.display = 'block';
+    };
+    r.readAsDataURL(f);
+  });
+
+  function promptTexto() {
+    return [
+      'Edite esta foto criando uma simulação realista de corte de cabelo masculino.',
+      'Aplique exatamente este estilo: ' + $('estilo').value + '.',
+      'Volume no topo: ' + VOLUMES[$('volume').value] + '.',
+      'Mantenha rosto, identidade, pele, olhos, barba, roupa, fundo e iluminação exatamente iguais.',
+      'Altere apenas o cabelo. Resultado fotográfico, sem texto, sem marca d\'água, sem molduras.'
+    ].join(' ');
+  }
+
+  async function chamar(modelo, chave, parteImagem) {
+    var corpo = { contents: [{ role: 'user', parts: [parteImagem, { text: promptTexto() }] }] };
+    if (modelo.indexOf('gemini-2.5') === 0) corpo.generationConfig = { responseModalities: ['IMAGE'] };
+    else corpo.generationConfig = { responseModalities: ['TEXT', 'IMAGE'], imageConfig: { aspectRatio: '3:4' } };
+
+    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelo + ':generateContent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chave },
+      body: JSON.stringify(corpo)
+    });
+    var dados = await res.json().catch(function () { return null; });
+    if (!res.ok) {
+      var msg = (dados && dados.error && dados.error.message) || ('HTTP ' + res.status);
+      var err = new Error(msg);
+      err.status = res.status;
+      throw err;
+    }
+    return dados;
+  }
+
+  $('gerar').addEventListener('click', async function () {
+    var chave = $('chave').value.trim();
+    if (!chave) return aviso('Cole sua chave da API no campo 1.', 'erro');
+    if (!fotoData) return aviso('Escolha uma foto no passo 2.', 'erro');
+
+    this.disabled = true;
+    aviso('Gerando com o Nano Banana... isso leva de 5 a 30 segundos. ⏳', 'ok');
+
+    var parteImagem = { inlineData: { mimeType: 'image/jpeg', data: fotoData.split(',')[1] } };
+    var ultimoErro = null;
+
+    for (var i = 0; i < MODELOS.length; i++) {
+      try {
+        var dados = await chamar(MODELOS[i], chave, parteImagem);
+        var partes = dados.candidates && dados.candidates[0] && dados.candidates[0].content.parts || [];
+        var img = null, texto = '';
+        partes.forEach(function (p) {
+          var d = p.inlineData || p.inline_data;
+          if (d && d.data) img = 'data:' + (d.mimeType || 'image/png') + ';base64,' + d.data;
+          if (p.text) texto += p.text;
+        });
+        if (!img) throw new Error('A IA respondeu sem imagem. Tente outra foto.');
+
+        $('antes').src = fotoData;
+        $('depois').src = img;
+        $('resultado').style.display = 'grid';
+        aviso('✅ Gerado com o modelo ' + MODELOS[i] + '. (Lembre: é uma simulação ilustrativa.)', 'ok');
+        this.disabled = false;
+        return;
+      } catch (e) {
+        ultimoErro = e;
+        if (e.status === 400 || e.status === 401 || e.status === 403) break; // não adianta trocar de modelo
+      }
+    }
+
+    this.disabled = false;
+    aviso('❌ ' + (ultimoErro && ultimoErro.message || 'Falha ao chamar a IA.'), 'erro');
+  });
+})();
+</script>
+</body>
+</html>
