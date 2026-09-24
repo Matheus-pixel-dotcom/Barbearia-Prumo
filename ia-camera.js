@@ -318,6 +318,10 @@ async function captureAndAnalyze() {
       userPhoto.src = imageData;
       userPhoto.classList.remove('hidden');
     }
+
+    // Avisa o fluxo da IA (ia-gemini.js) que uma foto foi capturada,
+    // para ela analisar o rosto e sugerir o corte na hora.
+    window.dispatchEvent(new CustomEvent('relo:foto', { detail: { foto: imageData } }));
     
     const cameraBtn = document.getElementById('camera-btn');
     const resetBtn = document.getElementById('reset-btn');

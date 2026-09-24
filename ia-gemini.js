@@ -283,6 +283,122 @@
       });
   }
 
+  /* ---------------------------------------------------------------- */
+  /* Fluxo automático: foto nova → lê o rosto → escolhe o corte → gera  */
+  /* É o "resultado na hora" pra quando o cliente chega na barbearia.   */
+  /* ---------------------------------------------------------------- */
+
+  // Estima o volume NATURAL do cabelo da pessoa a partir do tipo de fio.
+  function volumeNaturalDe(tipo, densidade) {
+    var base = { liso: 1, ondulado: 2, cacheado: 3, crespo: 4 }[tipo] || 2;
+    if (densidade === 'alta') base += 1;
+    if (densidade === 'baixa') base -= 1;
+    return Math.min(4, Math.max(1, base));
+  }
+
+  var NOME_VOLUME = { 1: 'baixo', 2: 'médio', 3: 'alto', 4: 'muito alto' };
+
+  function falarNoChat(html) {
+    if (window.ReloChat && window.ReloChat.falar) window.ReloChat.falar(html);
+  }
+
+  function destacarEstilo(nome) {
+    document.querySelectorAll('[data-style-option]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-style-name') === nome);
+    });
+  }
+
+  // Escolhe o corte que mais combina com o rosto lido.
+  function corteSugerido(analise) {
+    if (analise.recomendacoes && analise.recomendacoes.length) {
+      var r = analise.recomendacoes[0];
+      return { nome: r.nome, tipo: r.tipo || '', motivo: r.motivo || '' };
+    }
+    // Sem recomendação da IA: tabela local por formato de rosto.
+    var porRosto = {
+      'Oval': 'Executive Contour',
+      'Redondo': 'Mid Fade Moderno',
+      'Quadrado': 'Buzz Cut com Degradê',
+      'Alongado': 'Executive Contour',
+      'Triangular': 'Mid Fade Moderno',
+      'Diamante': 'Mid Fade Moderno'
+    };
+    return { nome: porRosto[analise.shapeName] || 'Corte Style Relo', tipo: '', motivo: '' };
+  }
+
+  function fluxoAutomatico(foto) {
+    if (!foto || gerando) return;
+
+    // Só roda com a IA ligada; no modo demonstrativo deixa o fluxo manual.
+    if (!estado.ativo) return;
+
+    carregando(true, 'Relo IA lendo seu rosto e seu cabelo...');
+    aviso('Analisando seu rosto para escolher o corte que mais combina...', 'info');
+
+    ReloIA.analisar(foto)
+      .then(function (resultado) {
+        var a = resultado.analise || {};
+        var volNat = volumeNaturalDe(a.tipoCabelo, a.densidade);
+
+        // Guarda a leitura para o chat e para a simulação.
+        window.currentAnalysis = Object.assign({}, window.currentAnalysis, {
+          shapeName: a.formatoRosto || (window.currentAnalysis || {}).shapeName,
+          tipoCabelo: a.tipoCabelo || null,
+          densidade: a.densidade || null,
+          barba: a.barba || null,
+          volumeNatural: NOME_VOLUME[volNat],
+          recomendacoes: a.recomendacoes || []
+        });
+
+        // Ajusta o controle de volume pro volume natural do cabelo dele.
+        if (window.ReloChat && window.ReloChat.setVol) window.ReloChat.setVol(volNat);
+
+        var corte = corteSugerido(window.currentAnalysis);
+
+        // Anuncia no chat: formato do rosto + cabelo + volume lido + corte.
+        var pedacos = [];
+        if (a.formatoRosto) pedacos.push('rosto <strong>' + a.formatoRosto + '</strong>');
+        if (a.tipoCabelo) {
+          pedacos.push(
+            'cabelo <strong>' + a.tipoCabelo + '</strong>' +
+            ' (densidade ' + (a.densidade || 'média') + ')'
+          );
+        }
+        pedacos.push('volume natural do seu cabelo: <strong>' + NOME_VOLUME[volNat] + '</strong>');
+
+        falarNoChat(
+          '📊 Li sua foto! ' + pedacos.join(', ') + '.<br>' +
+          'O corte que mais combina com você é o <strong>' + corte.nome + '</strong>' +
+          (corte.motivo ? ' — ' + corte.motivo : '') +
+          '. Já estou gerando a prévia na hora! 👇'
+        );
+
+        destacarEstilo(corte.nome);
+
+        // Gera a prévia imediatamente, sem o cliente precisar clicar.
+        return ReloIA.simular({
+          fotoBase64: foto,
+          estilo: corte.nome,
+          tipo: corte.tipo,
+          volume: volNat,
+          rosto: window.currentAnalysis.shapeName,
+          proporcao: '3:4'
+        }).then(function (sim) {
+          exibirResultado(sim, corte.nome, corte.tipo);
+        });
+      })
+      .catch(function (erro) {
+        aviso(
+          'Não consegui fazer a análise automática: ' + erro.message +
+          ' Sem problema — escolha um estilo ao lado que eu gero a prévia.',
+          'erro'
+        );
+      })
+      .finally(function () {
+        carregando(false);
+      });
+  }
+
   function baixarImagem() {
     if (!ultimaImagem || !ultimaImagem.dataUrl) return;
     var extensao = /png/i.test(ultimaImagem.mimeType) ? 'png' : 'jpg';
@@ -337,6 +453,12 @@
       });
       aplicar();
     }
+
+    // Fluxo automático: chegou foto nova → lê o rosto e gera o corte na hora.
+    window.addEventListener('relo:foto', function (evento) {
+      var foto = evento.detail && evento.detail.foto;
+      if (foto) fluxoAutomatico(foto);
+    });
 
     // Ao trocar de foto, esconde o resultado antigo.
     var reset = $('reset-btn');

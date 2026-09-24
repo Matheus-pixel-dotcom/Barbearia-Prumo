@@ -73,9 +73,13 @@ function initTryOn() {
     instructionText?.classList.add('hidden');
     resetBtn?.classList.remove('hidden');
     cameraBtn?.style.setProperty('display', 'none');
-    
+
     // Garantir que o modo câmera esteja fechado
     if (typeof stopCamera === 'function') stopCamera();
+
+    // Avisa o fluxo da IA (ia-gemini.js) que chegou uma foto nova,
+    // para ela analisar e sugerir o corte na hora.
+    window.dispatchEvent(new CustomEvent('relo:foto', { detail: { foto: src } }));
   };
 
   dropArea.addEventListener('click', (e) => {
