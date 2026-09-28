@@ -324,7 +324,7 @@ p {
   font-variant-numeric: tabular-nums;
 }
 
-.stat span {
+.stat > span {
   color: var(--muted);
   font-size: 0.82rem;
 }
