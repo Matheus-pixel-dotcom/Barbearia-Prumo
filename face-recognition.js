@@ -236,8 +236,67 @@ function analyzeFeatures(detection) {
     confidence: confidence
   });
 
+  // Guarda a leitura do rosto para a IA (Nano Banana) usar como contexto.
+  // Mesmo formato do window.currentAnalysis criado em ia-camera.js.
+  window.currentAnalysis = {
+    faceShape: faceShape,
+    shapeName: nomeDoFormato(faceShape),
+    symmetry: symmetry,
+    foreheadRatio: foreheadRatio,
+    confidence: confidence
+  };
+
   // Gerar recomendações
   generateRecommendations(faceShape);
+}
+
+// Traduz a chave interna para o nome exibido (usado pela IA).
+function nomeDoFormato(faceShape) {
+  const nomes = {
+    oval: 'Oval',
+    round: 'Redondo',
+    square: 'Quadrado',
+    oblong: 'Alongado',
+    heart: 'Triangular',
+    diamond: 'Diamante'
+  };
+  return nomes[faceShape] || 'Oval';
+}
+
+/*
+ * Exporta o quadro atual da câmera como foto (data URL JPEG) e avisa o resto
+ * da página pelo evento 'rostoCapturado'. É esse evento que o ia-gemini.js
+ * escuta para gerar a prévia do corte com o Nano Banana.
+ */
+function capturarFotoAtual() {
+  if (!video || !video.srcObject || !canvas) return null;
+
+  const largura = video.videoWidth || 640;
+  const altura = video.videoHeight || 480;
+  canvas.width = largura;
+  canvas.height = altura;
+
+  const ctx = canvas.getContext('2d');
+  // Espelha a imagem, já que a câmera frontal aparece invertida na tela.
+  ctx.save();
+  ctx.translate(largura, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0, largura, altura);
+  ctx.restore();
+
+  const foto = canvas.toDataURL('image/jpeg', 0.92);
+
+  document.dispatchEvent(
+    new CustomEvent('rostoCapturado', {
+      detail: {
+        foto: foto,
+        analise: window.currentAnalysis || null
+      }
+    })
+  );
+
+  updateStatus('Foto capturada! Escolha um estilo para ver a prévia com IA.', 'success');
+  return foto;
 }
 
 // Calcular formato do rosto
@@ -350,6 +409,10 @@ function clearAnalysis() {
   document.getElementById('metrics-card').classList.add('hidden');
   document.getElementById('recommendations-card').classList.add('hidden');
   document.getElementById('action-card').classList.add('hidden');
+  // Esconde também a prévia gerada pela IA (Nano Banana).
+  document.getElementById('previa-ia')?.classList.add('hidden');
+  const previaImg = document.getElementById('previa-img');
+  if (previaImg) previaImg.classList.add('hidden');
 }
 
 // Atualizar status
@@ -402,10 +465,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Botão capturar
   document.getElementById('capture-btn').addEventListener('click', () => {
-    if (currentDetection) {
-      selectRecommendation(
-        styleRecommendations['oval'][0] // Usar recomendação padrão
-      );
+    // Captura o quadro e publica a foto para a IA (ia-gemini.js) gerar a prévia.
+    const foto = capturarFotoAtual();
+
+    const formato = (window.currentAnalysis && window.currentAnalysis.faceShape) || 'oval';
+    const recomendacoes = styleRecommendations[formato] || styleRecommendations['oval'];
+    selectRecommendation(recomendacoes[0]);
+
+    if (foto) {
+      document.getElementById('previa-ia')?.classList.remove('hidden');
     }
   });
 

@@ -1,5 +1,16 @@
 # Implementação de IA e Banco de Dados - Style Relo Barber
 
+## 🍌 Nano Banana — IA de imagem do Google (destaque)
+
+A mais recente camada de IA é o **Nano Banana** (modelo de geração/edição de imagem da
+família Gemini). Ele gera uma prévia realista do corte escolhido na própria foto do
+cliente. A integração é feita por `nano-banana.js` (servidor, guarda a chave) e
+`ia-gemini.js` (navegador, exibe o resultado), com rotas `/api/ia/*`.
+
+> Documentação completa de ativação, segurança, rotas e testes: **`NANO_BANANA.md`**.
+
+---
+
 ## 📋 Resumo das Mudanças
 
 Este documento descreve a implementação de **reconhecimento facial em tempo real** e **integração com banco de dados Supabase** para o projeto Barbearia Prumo.
