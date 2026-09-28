@@ -169,6 +169,36 @@ A chave não é enviada para nenhum outro lugar.
 
 ---
 
+## 🖥️ Estúdio Nano Banana (página própria)
+
+A IA agora tem uma casa dentro do site: **`nano-banana.html`** (menu "🍌 Estúdio
+Nano Banana"). O estúdio funciona em dois modos, sozinho:
+
+- **Servidor com chave configurada** → gera direto pela chave do servidor (o
+  visitante não precisa de nada);
+- **Servidor sem chave** → mostra um campo para colar a chave no próprio
+  navegador (igual à antiga página de teste).
+
+Ele faz o fluxo completo na hora: lê o rosto, escolhe o corte que combina,
+aplica o volume natural do cabelo e mostra antes/depois com botão de baixar
+e de agendar pelo WhatsApp.
+
+## 🔧 Painel admin → aba "Nano Banana (IA)"
+
+Em `admin.html`, a nova aba **🍌 Nano Banana (IA)** deixa o administrador:
+
+- ver **status, modelo, chave (mascarada) e uso da última hora**;
+- **salvar uma nova chave** — grava em `data/ia-config.json` (fora do git,
+  nunca servida na web) e ativa na hora, sem reiniciar;
+- **ajustar o limite de gerações/hora** ao vivo.
+
+Rotas: `GET /api/admin/ia` e `POST /api/admin/ia` (só com token de admin;
+a resposta nunca devolve a chave inteira).
+
+> A antiga página `ferramentas/teste-nano-banana.html` agora redireciona para o Estúdio.
+
+---
+
 ## ❓ Problemas comuns
 
 | Sintoma | Causa provável | Solução |

@@ -281,10 +281,43 @@
       color: #86efac;
       border: 1px solid rgba(34, 197, 94, 0.35);
     }
+    /* ---- visual profissional (v2) ---- */
+    .btn-danger { background: rgba(239,68,68,.14); color: var(--danger); border: 1px solid rgba(239,68,68,.45); }
+    .btn-danger:hover { background: rgba(239,68,68,.28); opacity: 1; }
+    .btn-sm { padding: 6px 12px; font-size: 12.5px; border-radius: 7px; }
+    .search-input {
+      padding: 10px 14px; background: var(--bg); border: 1px solid var(--line);
+      color: var(--text); border-radius: 8px; min-width: 240px; font-size: 14px; box-sizing: border-box;
+    }
+    .search-input:focus { outline: none; border-color: var(--gold); }
+    .ia-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .ia-card { background: var(--surface-strong); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+    .ia-card .k { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .ia-card .v { font-size: 20px; font-weight: 700; color: var(--gold-2); line-height: 1.3; word-break: break-word; }
+    .ia-card .v.small { font-size: 14px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--line); color: var(--muted); }
+    .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .pill.on { color: var(--success); border-color: rgba(34,197,94,.45); background: rgba(34,197,94,.12); }
+    .pill.off { color: var(--danger); border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.1); }
+    table tbody tr { transition: background .15s; }
+    table tbody tr:hover td { background: rgba(255,255,255,.035); }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
+      background: var(--surface-strong); border: 1px solid var(--line); color: var(--text);
+      padding: 12px 20px; border-radius: 10px; z-index: 2000; box-shadow: 0 10px 34px rgba(0,0,0,.5);
+      font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.ok { border-color: rgba(34,197,94,.5); }
+    .toast.err { border-color: rgba(239,68,68,.55); }
+    #confirm-modal .modal-content { max-width: 430px; text-align: center; }
+    .help-note { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 6px 0 16px; }
+
     @media (max-width: 820px) {
       .admin-layout { flex-direction: column; }
       aside.sidebar { width: 100%; }
       main { padding: 20px; }
+      .search-input { min-width: 0; width: 100%; }
     }
   </style>
 </head>
@@ -304,6 +337,7 @@
           <a class="nav-link" onclick="switchTab('products', this)">📦 Estoque (Entrada/Saída)</a>
           <a class="nav-link" onclick="switchTab('maintenance', this)">🔧 Manutenção</a>
           <a class="nav-link" onclick="switchTab('expenses', this)">💸 Despesas</a>
+          <a class="nav-link" onclick="switchTab('ia', this)">🍌 Nano Banana (IA)</a>
         </div>
       </div>
       <div>
@@ -369,6 +403,10 @@
             <button class="btn btn-secondary" onclick="loadAdminData()">Atualizar</button>
             <button class="btn" onclick="openModal('cliente-modal')">+ Novo Cliente</button>
           </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
+          <input class="search-input" id="busca-clientes" type="search" placeholder="🔍 Buscar por nome ou e-mail…" oninput="filtrarClientes()">
+          <span id="clientes-contagem" style="color:var(--muted); font-size:13px;"></span>
         </div>
         <div class="table-scroll">
           <table>
@@ -465,6 +503,49 @@
               <tr><td colspan="5" style="text-align: center; color: var(--muted);">Nenhuma despesa registrada.</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- NANO BANANA (IA) TAB -->
+      <div id="tab-ia" class="section-panel">
+        <div class="panel-header">
+          <h2>🍌 Nano Banana — Central de IA</h2>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <span id="ia-pill" class="pill">verificando…</span>
+            <a class="btn btn-secondary btn-sm" href="nano-banana.html" target="_blank">Abrir Estúdio</a>
+            <button class="btn btn-secondary btn-sm" onclick="carregarIA()">Atualizar</button>
+          </div>
+        </div>
+
+        <div class="ia-grid">
+          <div class="ia-card"><div class="k">Status</div><div class="v" id="ia-status">—</div></div>
+          <div class="ia-card"><div class="k">Modelo</div><div class="v small" id="ia-modelo">—</div></div>
+          <div class="ia-card"><div class="k">Chave</div><div class="v small" id="ia-chave-mascara">—</div></div>
+          <div class="ia-card"><div class="k">Uso na última hora</div><div class="v"><span id="ia-uso">0</span> / <span id="ia-limite-atual">30</span></div></div>
+        </div>
+
+        <div class="sub-panel">
+          <h3>🔑 Chave da API</h3>
+          <p class="help-note">A chave fica guardada <strong>somente no servidor</strong> — nenhum navegador consegue vê-la ou baixá-la. Ao salvar, a IA passa a funcionar na hora no Estúdio Nano Banana e no Simulador, sem reiniciar nada.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div class="form-group" style="flex:1 1 280px; margin-bottom:0;">
+              <label>Nova chave (AIza… ou AQ…)</label>
+              <input type="password" id="ia-chave-input" autocomplete="off" placeholder="Cole a chave do Google AI Studio">
+            </div>
+            <button class="btn" onclick="salvarChaveIA()">Salvar chave</button>
+          </div>
+        </div>
+
+        <div class="sub-panel">
+          <h3>⚙️ Limite de gerações</h3>
+          <p class="help-note">Máximo de imagens geradas por hora por visitante — protege seu crédito da API contra abusos e loops.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div class="form-group" style="width:150px; margin-bottom:0;">
+              <label>Limite / hora</label>
+              <input type="number" id="ia-limite-input" min="1" max="500" value="30">
+            </div>
+            <button class="btn" onclick="salvarLimiteIA()">Salvar limite</button>
+          </div>
         </div>
       </div>
     </main>
@@ -580,6 +661,21 @@
       </form>
     </div>
   </div>
+
+  <!-- MODAL: confirmação profissional (substitui window.confirm/alert) -->
+  <div id="confirm-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-top: 0; color: var(--gold);" id="confirm-titulo">Confirmar</h3>
+      <p id="confirm-mensagem" style="color: var(--muted); line-height: 1.6;"></p>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 22px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirm-ok" onclick="executarConfirmacao()">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de feedback -->
+  <div id="toast" class="toast"></div>
 
   <!-- Login e banco de dados -->
   <script src="auth-hash.js?v=20260914" defer></script>

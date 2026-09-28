@@ -144,11 +144,59 @@ function contarTentativa(email, sucesso) {
 /*                                                                     */
 /* A API do Google é paga por imagem gerada. Este limite simples evita  */
 /* que alguém (ou um loop no navegador) queime o crédito da chave.      */
-/* Ajuste pelo .env: IA_LIMITE_POR_HORA                                 */
+/* O limite pode ser ajustado ao vivo pelo painel admin.                */
 /* ------------------------------------------------------------------ */
 const IA_JANELA_MS = 60 * 60 * 1000;
-const IA_LIMITE_POR_HORA = Number(process.env.IA_LIMITE_POR_HORA || 30);
+const IA_CONFIG_FILE = path.join(RAIZ, 'data', 'ia-config.json');
 const usoIA = new Map(); // ip -> [timestamps]
+
+// Configuração da IA salva pelo painel admin (fica em data/, fora do git).
+function lerConfigIa() {
+  try {
+    return JSON.parse(fs.readFileSync(IA_CONFIG_FILE, 'utf8'));
+  } catch (erro) {
+    return {};
+  }
+}
+function salvarConfigIa(cfg) {
+  try {
+    fs.mkdirSync(path.dirname(IA_CONFIG_FILE), { recursive: true });
+    fs.writeFileSync(IA_CONFIG_FILE, JSON.stringify(cfg, null, 2));
+  } catch (erro) {
+    console.warn('[ia] Não consegui salvar a config da IA:', erro.message);
+  }
+}
+
+// Se a chave/limite foi salva pelo painel (e não existe .env real), aplica.
+(function aplicarConfigIa() {
+  const cfg = lerConfigIa();
+  if (!process.env.GEMINI_API_KEY && cfg.chave) process.env.GEMINI_API_KEY = cfg.chave;
+  if (!process.env.IA_LIMITE_POR_HORA && cfg.limitePorHora) {
+    process.env.IA_LIMITE_POR_HORA = String(cfg.limitePorHora);
+  }
+})();
+
+function limiteIaPorHora() {
+  const n = Number(process.env.IA_LIMITE_POR_HORA || lerConfigIa().limitePorHora || 30);
+  return Number.isFinite(n) && n > 0 ? n : 30;
+}
+
+// Nunca devolve a chave inteira para o navegador.
+function mascaraChave(chave) {
+  if (!chave) return null;
+  if (chave.length <= 10) return chave.slice(0, 2) + '••••';
+  return chave.slice(0, 6) + '••••••••' + chave.slice(-4);
+}
+
+// Total de chamadas de IA na última hora (para o painel admin).
+function usoIaUltimaHora() {
+  const agora = Date.now();
+  let total = 0;
+  usoIA.forEach((marcas) => {
+    total += marcas.filter((m) => agora - m < IA_JANELA_MS).length;
+  });
+  return total;
+}
 
 function ipDaRequisicao(req) {
   const encaminhado = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
@@ -157,14 +205,15 @@ function ipDaRequisicao(req) {
 
 function conferirCotaIA(req, res, custo = 1) {
   const agora = Date.now();
+  const limite = limiteIaPorHora();
   const ip = ipDaRequisicao(req);
   const historico = (usoIA.get(ip) || []).filter((marca) => agora - marca < IA_JANELA_MS);
 
-  if (historico.length + custo > IA_LIMITE_POR_HORA) {
+  if (historico.length + custo > limite) {
     usoIA.set(ip, historico);
     json(res, 429, {
       ok: false,
-      erro: `Limite de ${IA_LIMITE_POR_HORA} gerações por hora atingido. Aguarde um pouco e tente de novo.`
+      erro: `Limite de ${limite} gerações por hora atingido. Aguarde um pouco e tente de novo.`
     });
     return false;
   }
@@ -383,6 +432,62 @@ async function tratarApi(req, res, url) {
   }
 
   /* ---------------------------------------------------------------- */
+  /* Admin da IA — o painel configura o Nano Banana sem tocar em arquivo */
+  /* ---------------------------------------------------------------- */
+
+  // GET /api/admin/ia — status, limite e uso (só admin; nunca devolve a chave)
+  if (rota === '/api/admin/ia' && req.method === 'GET') {
+    const sessao = exigeAdmin(req, banco, res);
+    if (!sessao) return undefined;
+    const status = nanoBanana.statusPublico();
+    return json(res, 200, {
+      ok: true,
+      ativo: status.ativo,
+      modelo: status.modelo,
+      modeloChat: status.modeloChat,
+      chaveConfigurada: Boolean(process.env.GEMINI_API_KEY),
+      chaveMascara: mascaraChave(process.env.GEMINI_API_KEY),
+      limitePorHora: limiteIaPorHora(),
+      usoUltimaHora: usoIaUltimaHora()
+    });
+  }
+
+  // POST /api/admin/ia — salva chave e/ou limite (só admin; grava em data/)
+  if (rota === '/api/admin/ia' && req.method === 'POST') {
+    const sessao = exigeAdmin(req, banco, res);
+    if (!sessao) return undefined;
+    const corpo = await lerCorpo(req);
+    const cfg = lerConfigIa();
+
+    if (corpo.chave !== undefined) {
+      const chave = String(corpo.chave || '').trim();
+      if (chave) {
+        process.env.GEMINI_API_KEY = chave;
+        cfg.chave = chave;
+      }
+    }
+    if (corpo.limitePorHora !== undefined) {
+      const n = Number(corpo.limitePorHora);
+      if (Number.isFinite(n) && n > 0 && n <= 500) {
+        process.env.IA_LIMITE_POR_HORA = String(n);
+        cfg.limitePorHora = n;
+      }
+    }
+    salvarConfigIa(cfg);
+
+    const status = nanoBanana.statusPublico();
+    return json(res, 200, {
+      ok: true,
+      ativo: status.ativo,
+      modelo: status.modelo,
+      chaveConfigurada: Boolean(process.env.GEMINI_API_KEY),
+      chaveMascara: mascaraChave(process.env.GEMINI_API_KEY),
+      limitePorHora: limiteIaPorHora(),
+      usoUltimaHora: usoIaUltimaHora()
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
   /* Rotas da IA — Nano Banana (Gemini Image)                          */
   /* A chave fica só aqui no servidor; o navegador nunca vê.           */
   /* ---------------------------------------------------------------- */
@@ -557,7 +662,7 @@ servidor.listen(PORTA, HOST, () => {
   if (criados > 0) console.log(`  ${criados} conta(s) de administrador criada(s) agora.`);
   if (nanoBanana.ativo()) {
     console.log(`  IA:      Nano Banana ATIVO (${nanoBanana.statusPublico().modelo})`);
-    console.log(`           Limite: ${IA_LIMITE_POR_HORA} gerações/hora por visitante`);
+    console.log(`           Limite: ${limiteIaPorHora()} gerações/hora por visitante`);
   } else {
     console.log('  IA:      Nano Banana em modo demonstrativo (sem GEMINI_API_KEY)');
     console.log('           Para ligar: copie .env.example para .env e cole sua chave.');
