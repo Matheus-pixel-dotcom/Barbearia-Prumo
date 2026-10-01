@@ -375,13 +375,11 @@
       clients: 'Banco de Clientes & Logins',
       products: 'Controle de Estoque (Entrada/Saída)',
       maintenance: 'Gestão de Manutenção',
-      expenses: 'Controle de Despesas',
-      ia: 'Nano Banana — Central de IA'
+      expenses: 'Controle de Despesas'
     };
     definir('page-title', titulos[nome] || 'Painel Administrativo');
 
     if (nome === 'clients') carregarUsuarios();
-    if (nome === 'ia') carregarIA();
   }
   global.switchTab = switchTab;
 
@@ -479,89 +477,6 @@
   }
   global.excluirDespesa = excluirDespesa;
 
-  /* --------------------------- Nano Banana (IA) --------------------------- */
-  function chamarIaAdmin(corpo) {
-    const tok = (global.ReloAuth && global.ReloAuth.token) || '';
-    const opts = { method: corpo ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' } };
-    if (tok) opts.headers.Authorization = 'Bearer ' + tok;
-    if (corpo) opts.body = JSON.stringify(corpo);
-    return fetch('api/admin/ia', opts)
-      .then((r) => r.json().then((j) => ({ status: r.status, ok: r.ok, dados: j })))
-      .catch(() => ({ status: 0, ok: false, dados: { erro: 'Servidor indisponível.' } }));
-  }
-
-  async function carregarIA() {
-    const resposta = await chamarIaAdmin();
-    const dados = resposta.dados || {};
-    const pill = document.getElementById('ia-pill');
-
-    if (!resposta.ok) {
-      definir('ia-status', dados.erro || 'Erro ao carregar');
-      if (pill) {
-        pill.className = 'pill off';
-        pill.textContent = 'sem conexão';
-      }
-      return;
-    }
-
-    if (pill) {
-      pill.className = 'pill ' + (dados.ativo ? 'on' : 'off');
-      pill.textContent = dados.ativo ? 'IA ativa' : 'IA desligada';
-    }
-    definir('ia-status', dados.ativo ? 'Ativa' : 'Desligada');
-    definir('ia-modelo', dados.ativo ? dados.modelo : dados.chaveConfigurada ? dados.modelo : 'sem chave');
-    definir('ia-chave-mascara', dados.chaveMascara || 'nenhuma configurada');
-    definir('ia-uso', dados.usoUltimaHora);
-    definir('ia-limite-atual', dados.limitePorHora);
-
-    const campoLimite = document.getElementById('ia-limite-input');
-    if (campoLimite && !campoLimite.value) campoLimite.value = dados.limitePorHora;
-  }
-  global.carregarIA = carregarIA;
-
-  async function salvarChaveIA() {
-    const campo = document.getElementById('ia-chave-input');
-    const chave = String((campo && campo.value) || '').trim();
-    if (!chave) {
-      toast('Cole uma chave válida antes de salvar.', 'err');
-      return;
-    }
-    confirmar(
-      'Salvar chave da IA',
-      'A chave será guardada no servidor e o Nano Banana será ativado na hora. Continuar?',
-      'Salvar chave',
-      async () => {
-        const resposta = await chamarIaAdmin({ chave });
-        const dados = resposta.dados || {};
-        if (!resposta.ok) {
-          toast(dados.erro || 'Não foi possível salvar a chave.', 'err');
-          return;
-        }
-        if (campo) campo.value = '';
-        toast('Chave salva! Nano Banana ' + (dados.ativo ? 'ativo' : 'inativo') + '.', 'ok');
-        carregarIA();
-      }
-    );
-  }
-  global.salvarChaveIA = salvarChaveIA;
-
-  async function salvarLimiteIA() {
-    const limitePorHora = Number((document.getElementById('ia-limite-input') || {}).value);
-    if (!Number.isFinite(limitePorHora) || limitePorHora < 1 || limitePorHora > 500) {
-      toast('Informe um limite válido (entre 1 e 500).', 'err');
-      return;
-    }
-    const resposta = await chamarIaAdmin({ limitePorHora });
-    const dados = resposta.dados || {};
-    if (!resposta.ok) {
-      toast(dados.erro || 'Não foi possível salvar o limite.', 'err');
-      return;
-    }
-    toast('Limite atualizado para ' + dados.limitePorHora + ' gerações/hora.', 'ok');
-    carregarIA();
-  }
-  global.salvarLimiteIA = salvarLimiteIA;
-
   global.salvarCliente = salvarCliente;
   global.excluirUsuario = excluirUsuario;
 
@@ -583,7 +498,6 @@
     if (liberadoAgora) {
       await carregarUsuarios();
       carregarOperacional();
-      carregarIA();
       return;
     }
 
@@ -595,8 +509,7 @@
         await verificarAcesso();
         await carregarUsuarios();
         carregarOperacional();
-        carregarIA();
-        return;
+          return;
       }
       // Cliente comum: mantém o painel fechado e explica o motivo.
       const layout = document.querySelector('.admin-layout');

@@ -319,9 +319,9 @@ async function captureAndAnalyze() {
       userPhoto.classList.remove('hidden');
     }
 
-    // Avisa o fluxo da IA (ia-gemini.js) que uma foto foi capturada,
-    // para ela analisar o rosto e sugerir o corte na hora.
-    window.dispatchEvent(new CustomEvent('relo:foto', { detail: { foto: imageData } }));
+    // Avisa a página (ia-tryon.js) que chegou uma foto nova, para limpar o
+    // resultado anterior antes de mostrar a nova análise.
+    window.dispatchEvent(new CustomEvent('relo:nova-foto', { detail: { foto: imageData } }));
     
     const cameraBtn = document.getElementById('camera-btn');
     const resetBtn = document.getElementById('reset-btn');
@@ -363,6 +363,11 @@ function analyzeDetection(detection) {
     analysis: recommendation.analysis,
     recommendedStyles: recommendation.styles
   };
+
+  // Publica a análise para a página (ia-tryon.js) preencher o card
+  // "Combinação encontrada", a análise facial e o botão do WhatsApp.
+  // Antes a análise ficava só no console e o cliente não via nada.
+  window.dispatchEvent(new CustomEvent('relo:analise', { detail: window.currentAnalysis }));
 
   console.log('Análise completa gerada:', window.currentAnalysis);
 }
@@ -417,7 +422,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const finalCard = document.getElementById('final-card');
       if (styleSelection) styleSelection.classList.remove('hidden');
       if (finalCard) finalCard.classList.add('hidden');
-      
+
+      // Limpa também o aviso do simulador e a seleção de estilo anterior.
+      const avisoSimulador = document.getElementById('ia-aviso');
+      if (avisoSimulador) avisoSimulador.classList.add('hidden');
+      document.querySelectorAll('.style-option').forEach((botao) => botao.classList.remove('is-active'));
+
       currentDetection = null;
       window.currentAnalysis = null;
     });

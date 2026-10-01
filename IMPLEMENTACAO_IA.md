@@ -1,13 +1,19 @@
 # Implementação de IA e Banco de Dados - Style Relo Barber
 
-## 🍌 Nano Banana — IA de imagem do Google (destaque)
+## 🧠 Como a IA do simulador funciona hoje
 
-A mais recente camada de IA é o **Nano Banana** (modelo de geração/edição de imagem da
-família Gemini). Ele gera uma prévia realista do corte escolhido na própria foto do
-cliente. A integração é feita por `nano-banana.js` (servidor, guarda a chave) e
-`ia-gemini.js` (navegador, exibe o resultado), com rotas `/api/ia/*`.
+O "Experimente com IA" roda **100% no navegador**, sem chave de API e sem serviços externos:
 
-> Documentação completa de ativação, segurança, rotas e testes: **`NANO_BANANA.md`**.
+1. `ia-camera.js` abre a câmera e detecta o rosto com o **face-api.js** (landmarks).
+2. `face-recognition.js`/`ia-camera.js` calculam o **formato do rosto**, a simetria e a
+   proporção da testa, e publicam a leitura em `window.currentAnalysis`.
+3. `ia-tryon.js` cruza essa leitura com o **estilo** e o **volume** escolhidos, monta o card
+   "Combinação encontrada" e deixa o botão do WhatsApp pronto com o corte escolhido.
+4. `chat-ia.js` responde as dúvidas do cliente com regras locais (preços, barba, cabelo
+   cacheado, entradas, manutenção, agendamento...) — o chat nunca fica mudo.
+
+> Esta é a versão "modo demonstrativo". A tentativa de gerar uma prévia realista com a IA de
+> imagem do Google (Nano Banana / Gemini) foi removida do projeto por não ter dado certo.
 
 ---
 

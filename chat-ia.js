@@ -66,7 +66,9 @@
     return opcoes[n];
   }
 
-  // O que a IA leu do cabelo da pessoa (análise do Nano Banana).
+  // Leitura do cabelo do cliente: só existe quando a análise facial da
+  // câmera devolve esses campos (hoje a análise é a do face-api, então na
+  // prática isto fica vazio e as respostas se apoiam no formato do rosto).
   function cabeloDele() {
     var a = analise();
     if (!a || !a.tipoCabelo) return null;
@@ -76,14 +78,6 @@
       volumeNatural: a.volumeNatural,
       barba: a.barba
     };
-  }
-
-  function fraseCabelo() {
-    var c = cabeloDele();
-    if (!c) return '';
-    return ' (Lembrete: li aqui que o cabelo dele é ' + c.tipo +
-      ', densidade ' + (c.densidade || 'média') +
-      ', volume natural ' + (c.volumeNatural || 'médio') + '.)';
   }
 
   function add(texto, quem) {
@@ -281,90 +275,16 @@
   }
 
   /* ---------------------------------------------------------------- */
-  /* Relo IA com modelo real (Nano Banana / Gemini) + fallback local    */
+  /* Relo IA — respostas locais (sem API externa, sempre funcionam)      */
   /* ---------------------------------------------------------------- */
-
-  var historico = []; // [{ papel: 'user'|'model', texto }]
-
-  // Deixa passar só formatação simples; qualquer outra tag vira texto puro.
-  // A resposta vem de um modelo de IA, então não pode entrar HTML cru na página.
-  function sanitizar(html) {
-    var texto = String(html || '');
-    // Links: só http/https, sem javascript: nem data:
-    texto = texto.replace(/<a\s+([^>]*)>/gi, function (inteiro, atributos) {
-      var href = /href\s*=\s*("([^"]*)"|'([^']*)')/i.exec(atributos);
-      var url = href ? (href[2] || href[3] || '') : '';
-      if (!/^https?:\/\//i.test(url.trim())) return '';
-      return '<a href="' + url.trim() + '" target="_blank" rel="noopener noreferrer">';
-    });
-    texto = texto.replace(/<\/a>/gi, '</a>');
-    texto = texto.replace(/<(\/?)(strong|em|b|i|br)\s*\/?>/gi, '<$1$2>');
-    texto = texto.replace(/<[^>]+>/g, function (tag) {
-      return /^<\/?(strong|em|b|i|br|a)\b/i.test(tag) ? tag : '';
-    });
-    return texto;
-  }
-
-  function lembrar(papel, texto) {
-    historico.push({ papel: papel, texto: texto });
-    if (historico.length > 8) historico.splice(0, historico.length - 8);
-  }
-
-  function contextoAtual() {
-    var v = VOLUMES[vol];
-    var forma = shapeName();
-    var c = cabeloDele();
-    var pedacos = [
-      'volume escolhido no simulador: ' + v.nome.toLowerCase() + ' (' + v.desc + ')'
-    ];
-    if (c) {
-      pedacos.push(
-        'cabelo atual do cliente lido pela IA: tipo ' + c.tipo +
-        ', densidade ' + (c.densidade || 'média') +
-        ', volume natural ' + (c.volumeNatural || 'médio') +
-        (c.barba ? ', barba ' + c.barba : '')
-      );
-    } else {
-      pedacos.push('cabelo do cliente ainda não lido pela IA');
-    }
-    pedacos.push(forma ? 'formato de rosto lido: ' + forma : 'rosto ainda não analisado');
-    pedacos.push('página: simulador de visagismo do site da barbearia');
-    return pedacos.join('; ');
-  }
 
   function enviar(msg) {
     msg = String(msg || '').trim().slice(0, MAX_CHARS);
     if (!msg) return;
     add(msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), 'user');
-    lembrar('user', msg);
 
     digitando(function () {
-      var iaDisponivel = window.ReloIA && window.ReloIA.status;
-
-      if (!iaDisponivel) {
-        var respostaLocal = responder(msg);
-        lembrar('model', respostaLocal.replace(/<[^>]+>/g, ''));
-        add(respostaLocal, 'ia');
-        return;
-      }
-
-      window.ReloIA.status()
-        .then(function (st) {
-          if (!st.ativo) throw new Error('modo demonstrativo');
-          return window.ReloIA.chat(msg, historico.slice(0, -1), contextoAtual());
-        })
-        .then(function (resultado) {
-          var resposta = sanitizar(resultado.resposta);
-          lembrar('model', resposta.replace(/<[^>]+>/g, ''));
-          add(resposta, 'ia');
-        })
-        .catch(function () {
-          // Sem chave, sem servidor ou erro da API: responde com as regras locais,
-          // exatamente como o site sempre fez. O chat nunca fica mudo.
-          var fallback = responder(msg);
-          lembrar('model', fallback.replace(/<[^>]+>/g, ''));
-          add(fallback, 'ia');
-        });
+      add(responder(msg), 'ia');
     });
   }
 
@@ -400,8 +320,8 @@
 
     add('Fala! Sou a <strong>Relo IA</strong>, consultora de corte da Style Relo Barber. Escolha o <strong>volume</strong> que você quer no topo aí em cima, ou me pergunte qualquer coisa sobre o seu corte.', 'ia');
 
-    // Gancho para outros módulos (ia-gemini.js) falarem no chat:
-    // ex.: o fluxo automático anuncia a leitura do rosto e o corte sugerido.
+    // Gancho para outros módulos da página (ia-tryon.js) falarem no chat:
+    // ex.: anunciar a leitura do rosto e o estilo escolhido pelo cliente.
     window.ReloChat = {
       falar: function (html) { add(String(html || ''), 'ia'); },
       setVol: setVol,
