@@ -1,37 +1,34 @@
 # Atualizações do Projeto - Style Relo Barber
 
-## 🍌 18 de setembro de 2026 — Nano Banana (IA de imagem do Google)
+## ↩️ 1º de outubro de 2026 — Volta do "Experimente com IA" ao modo antigo
 
-### Novos arquivos
-- `nano-banana.js` — módulo do servidor que chama a API Gemini Image (Nano Banana).
-  Guarda a chave, monta os prompts de barbearia, faz fallback entre modelos e trata
-  erros/bloqueios. Sem dependências externas (usa o `fetch` nativo do Node).
-- `ia-gemini.js` — cliente no navegador que chama as rotas `/api/ia/*`, exibe a prévia
-  e religa os botões de estilo do simulador (antes não tinham nenhuma função).
-- `.env.example` — modelo comentado para ativar a IA. O `.env` real fica fora do Git.
-- `NANO_BANANA.md` — guia de ativação (2 minutos), rotas, segurança e custos.
+A integração com a IA de imagem (Nano Banana / Gemini) **não deu certo na prática** e foi
+removida do projeto. A página "Experimente com IA" voltou a funcionar como antes — só que
+sem os bugs que ela tinha.
 
-### Rotas de API adicionadas
-- `GET /api/ia/status` — informa se a IA está ativa (não gasta cota).
-- `POST /api/ia/simular` — gera a prévia do corte na foto do cliente.
-- `POST /api/ia/analisar` — leitura facial (formato, simetria, tipo de cabelo).
-- `POST /api/ia/chat` — Relo IA por modelo de texto real, com fallback local.
+### O que foi removido
+- `nano-banana.js`, `nano-banana.html`, `ia-gemini.js`, `NANO_BANANA.md`,
+  `ferramentas/teste-nano-banana.html` e `.env.example`.
+- As rotas `/api/ia/*` e `/api/admin/ia` do servidor, a aba "🍌 Nano Banana (IA)" do painel
+  admin e o bloco de prévia do Nano Banana na página `face-recognition.html`.
+- O link "🍌 Estúdio Nano Banana" do menu e os estilos CSS da prévia gerada por IA.
 
-### Melhorias e proteções
-- **Chave só no servidor**: o navegador nunca vê a `GEMINI_API_KEY`; o servidor passa a
-  bloquear o download de qualquer arquivo `.env` (retorna 404).
-- **Cota por visitante** (`IA_LIMITE_POR_HORA`) para proteger o crédito da API.
-- **Validação antes da cota**: foto inválida ou pedido vazio retorna `400` sem gastar geração.
-- **Fallback de modelo** automático entre as versões do Gemini Image.
-- **Simulador**: prévia com comparação antes/depois, download da imagem e WhatsApp
-  já preenchido com o corte escolhido.
-- **Câmera IA**: após capturar, tocar numa recomendação gera a prévia do corte.
-- **Chat**: usa modelo real quando a IA está ligada; caso contrário responde com as
-  regras locais (o chat nunca fica mudo).
+### Bugs corrigidos no simulador
+- **Botões de estilo não faziam nada.** Agora o estilo clicado fica marcado e monta o
+  resultado com o volume escolhido (arquivo novo `ia-tryon.js`).
+- **O card "Combinação encontrada" nunca aparecia.** Agora ele abre com o corte, a análise
+  facial e o botão do WhatsApp já preenchido com o corte e o volume.
+- **A análise da câmera ficava só no console.** Agora o resultado aparece na hora para o
+  cliente, com aviso de "análise concluída".
+- **Capturar na página `face-recognition.html` não dizia nada** quando nenhum rosto tinha
+  sido lido. Agora recomenda o estilo do formato detectado (oval como reserva) e avisa.
 
-### Nada foi quebrado
-Todas as rotas antigas (`/api/auth/*`, `/api/admin/*`, `/api/health`) e páginas
-continuam funcionando. Sem a chave, o site roda em modo demonstrativo idêntico ao anterior.
+### O que continua funcionando
+Login, cadastro, banco de clientes, painel admin (com busca de clientes e exclusão com
+confirmação), estoque, despesas, feedback, câmera com análise facial (face-api.js) e o chat
+da Relo IA — que segue respondendo localmente, sem depender de nenhuma chave de API.
+
+O simulador é **100% demonstrativo**: nenhuma imagem é enviada para fora do navegador.
 
 ---
 
