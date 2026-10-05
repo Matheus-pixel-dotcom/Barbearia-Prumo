@@ -1,5 +1,70 @@
 # Atualizações do Projeto - Style Relo Barber
 
+## 🏆 5 de outubro de 2026 — Painel admin premium + cadastro indo direto para o banco
+
+### Cadastro do cliente → banco de dados (automático, sem importar nada)
+- Todo cadastro feito no site (página **Criar conta** ou a caixinha de login) entra
+  **na hora** no banco do servidor (`data/db.json`), que é o banco que o painel admin lê.
+- Em seguida, em segundo plano, o servidor manda uma **cópia para o Supabase**
+  (tabela `clientes`) — o "banco de dados da nuvem" da barbearia. O cadastro do cliente
+  nunca fica preso num único computador.
+- **Se a internet cair, não se perde nada**: o cadastro entra numa fila (`sync.fila` no
+  banco) e o servidor tenta de novo sozinho a cada 3 minutos, com espera crescente.
+  O painel admin mostra a fila, o erro de cada item e o botão **Reenviar fila**.
+- Site aberto **sem servidor** (duplo clique no HTML / hospedagem estática): agora o
+  próprio navegador manda o cadastro para o Supabase (`sync-supabase.js`) e guarda a fila
+  no navegador, tentando o reenvio a cada visita.
+- Chave/URL/tabela configuráveis por `.env` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+  `SUPABASE_TABELA`, `SUPABASE_ATIVO`) **ou** pela aba **Banco de Dados** do painel — sem
+  tocar no código. A chave nunca é devolvida inteira para o navegador (máscara).
+- **A senha não vai para a nuvem**: só nome, e-mail, perfil, origem, datas e nº de acessos.
+- Arquivo novo: `ferramentas/supabase-tabela-clientes.sql` (cria a tabela + policies; o
+  painel tem o botão "Copiar SQL da tabela").
+
+### Painel admin premium (`admin.html` / `admin.js`)
+- Visual novo: preto profundo + ouro, sidebar com ícones em SVG, cartões de vidro,
+  foco acessível, animações discretas (`prefers-reduced-motion` respeitado) e layout
+  responsivo com menu sanfonado no celular.
+- **Dashboard com dados de verdade**: cartões de KPI (clientes, acessos 24h, retorno em
+  30 dias, valor em estoque, despesas do mês, status da nuvem) com variação da semana,
+  sparkline, gráfico de área (cadastros em 14 dias), gráfico de barras (acessos),
+  rosca de origem dos cadastros, fluxo de atividade recente e lista "precisa de atenção".
+  Gráficos são SVG desenhados no próprio `admin.js` — **sem CDN, sem biblioteca**.
+- **Banco de Clientes**: busca por nome/e-mail/ID, filtro por perfil, filtro por status da
+  nuvem, ordenação, paginação, **ficha do cliente** (dados + histórico de acessos dele) e
+  **Exportar CSV** (abre direto no Excel em português).
+- **Estoque, Manutenção e Despesas saem do `localStorage` e vão para o banco do servidor**:
+  todos os admins passam a ver o mesmo número. Adicionado estoque mínimo (alerta de falta),
+  histórico de entrada/saída por produto, custo/responsável na manutenção e despesas por
+  categoria. Os dados antigos do navegador continuam funcionando (formato antigo é lido e
+  atualizado no novo padrão automaticamente).
+- **Aba Banco de Dados**: estado do banco local e da nuvem, contadores (enviados, na fila,
+  falhas), fila com o erro de cada cadastro, botões **Testar conexão**, **Reenviar fila** e
+  o formulário de configuração (ligar/desligar, URL, tabela, chave).
+- Modais de verdade (abrem e fecham com Esc/clique fora), confirmação com HTML formatado e
+  avisos no canto da tela (toast) em vez de `alert()`.
+
+### Banco e API
+- `db.js` → banco na versão 3 com `produtos`, `manutencoes`, `despesas`, `sync` (fila +
+  estatísticas), `transacionar()` (escrita serializada) e `calcularMetricas()`.
+- Rotas novas (só admin): `GET /api/admin/metricas`, `GET /api/admin/usuarios/:id`,
+  `GET|POST /api/admin/estoque`, `POST /api/admin/estoque/mov`, `DELETE /api/admin/estoque/:id`,
+  `GET|POST /api/admin/manutencao`, `DELETE /api/admin/manutencao/:id`,
+  `GET|POST /api/admin/despesas`, `DELETE /api/admin/despesas/:id`,
+  `GET|POST /api/admin/supabase`, `POST /api/admin/supabase/teste`, `POST /api/admin/supabase/reenviar`.
+- `GET /api/health` agora informa o estado do espelho (`espelho.ativo/tabela/pendentes`).
+- Toda rota nova exige token de admin (cliente recebe `403`, visitante `401`) e `data/`
+  continua bloqueada para download pelo navegador.
+- Testes: 59 verificações ponta a ponta passando (cadastro → painel, métricas, estoque,
+  despesas, nuvem, segurança, senhas só em hash, arquivos protegidos).
+
+### Nada foi quebrado
+As rotas antigas (`/api/auth/*`, `/api/admin/usuarios`, `/api/admin/ia`, `/api/ia/*`,
+`/api/health`) e todas as páginas continuam funcionando. Quem abrir o site sem servidor
+usa o banco do navegador como antes — só que agora com o espelho na nuvem por cima.
+
+---
+
 ## 🍌 18 de setembro de 2026 — Nano Banana (IA de imagem do Google)
 
 ### Novos arquivos

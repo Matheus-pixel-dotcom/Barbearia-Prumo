@@ -88,6 +88,59 @@ visitante recebe `401`).
 
 ---
 
+## 4.5 Cadastro → banco de dados, automático (e o espelho na nuvem)
+
+É o caminho que um cadastro percorre, sem ninguém precisar mover nada:
+
+```
+cliente cria a conta (signup.html ou a caixinha de login)
+        │
+        ▼
+1) POST /api/auth/registrar  → grava em data/db.json  (APARECE NO PAINEL NA HORA)
+        │
+        ▼
+2) servidor envia cópia → Supabase, tabela "clientes"   (ReloSync / sync-supabase.js)
+        │
+        ├── deu certo  → sync.estado = "ok"  (badge verde no painel)
+        └── falhou     → sync.estado = "erro" + cadastro entra na fila (db.sync.fila)
+                          o servidor tenta sozinho a cada 3 min (espera crescente)
+                          e o painel tem "Reenviar fila" para forçar agora
+```
+
+| Situação | O que acontece |
+| --- | --- |
+| Site com `npm run serve` | Cadastro no `data/db.json` + cópia no Supabase. Painel admin sempre mostra o cliente, sincronizado ou não. |
+| Site aberto sem servidor | Cadastro no banco do navegador **+ tentativa direta no Supabase pelo navegador**; se falhar, fica na fila do navegador e é reenviado na próxima visita. |
+| Supabase fora do ar / tabela sem SQL | Nada quebra: o cadastro continua no banco do site e fica "na fila" no painel, com o erro escrito. |
+| `SUPABASE_ATIVO=0` | Espelhamento desligado; cadastro fica só no `data/db.json`. |
+
+**O que vai para a nuvem:** `id_cliente`, `nome`, `email`, `perfil`, `origem`, `criado_em`,
+`ultimo_login`, `total_logins`. **A senha não vai** — nem em texto puro, nem com hash.
+
+### Ligar em outro projeto Supabase
+
+1. Rode `ferramentas/supabase-tabela-clientes.sql` no SQL Editor do projeto (cria a tabela com
+   `email` UNIQUE e as policies de INSERT/SELECT).
+2. No `.env` do servidor (ou na aba **Banco de Dados** do painel admin): `SUPABASE_URL`,
+   `SUPABASE_ANON_KEY`, `SUPABASE_TABELA`. O `.env` tem prioridade sobre o que for salvo pelo painel.
+3. `npm run serve` → o console mostra `Nuvem: Supabase ativo → tabela "clientes"`.
+4. Confirme no painel: **Banco de Dados → Testar conexão** (deve dizer OK).
+
+### Rotas novas do painel (todas exigem token de admin)
+
+| Rota | Para que |
+| --- | --- |
+| `GET /api/admin/metricas` | KPIs e séries de 14 dias do dashboard (calculados no servidor) |
+| `GET /api/admin/usuarios/:id` | ficha do cliente + histórico de acessos dele |
+| `GET \| POST /api/admin/estoque`, `POST /api/admin/estoque/mov`, `DELETE /api/admin/estoque/:id` | estoque compartilhado + entrada/saída |
+| `GET \| POST /api/admin/manutencao`, `DELETE /api/admin/manutencao/:id` | ordens de manutenção (status pendente → andamento → concluído) |
+| `GET \| POST /api/admin/despesas`, `DELETE /api/admin/despesas/:id` | despesas do mês, por categoria |
+| `GET \| POST /api/admin/supabase` | status/config do espelho (a chave volta mascarada) |
+| `POST /api/admin/supabase/teste` | testa conexão e a tabela |
+| `POST /api/admin/supabase/reenviar` | força o reenvio da fila (ignora a espera do backoff) |
+
+---
+
 ## 5. Acesso especial de administrador
 
 Estes e-mails abrem o painel **Admin** (já vêm cadastrados no banco, com as senhas que foram
@@ -134,8 +187,17 @@ Para trocar a senha de um admin, gere o hash novo e substitua o `senhaHash` daqu
     quantidade de acessos, além do **histórico de logins**. O admin pode **cadastrar um
     cliente** manualmente (+ Novo Cliente) e **excluir** cadastros de clientes (as contas de
     administrador da lista oficial são protegidas contra exclusão);
-  * **Estoque (Entrada/Saída)**, **Manutenção** e **Despesas** — como antes, salvos no
-    navegador usado pelo admin.
+  * **Estoque (Entrada/Saída)**, **Manutenção** e **Despesas** — agora gravados no **banco do
+    servidor** (`data/db.json`), então todos os administradores veem o mesmo dado. Cada produto
+    tem estoque mínimo (alerta de falta) e histórico de movimentações. Sem servidor, o painel cai
+    no `localStorage` deste navegador e continua funcionando;
+  * **Banco de Dados** — como o cadastro chega no banco, status do Supabase (enviados, fila,
+    falhas), configuração do espelho (ligar/desligar, URL, tabela, chave), teste de conexão,
+    reenvio da fila e o SQL para criar a tabela;
+  * Visual premium: cartões de KPI com variação da semana, gráfico de área (cadastros/14 dias),
+    barras (acessos), rosca (origem dos cadastros), fluxo de atividade, alertas de "precisa de
+    atenção", busca + filtro + ordenação + paginação na tabela de clientes, ficha do cliente,
+    exportar CSV e avisos (toast) no lugar de `alert()`.
 
 ---
 
@@ -166,7 +228,7 @@ Para trocar a senha de um admin, gere o hash novo e substitua o `senhaHash` daqu
 ## 8. Testes rápidos
 
 ```bash
-# servidor no ar?
+# servidor no ar? (mostra o estado do espelho na nuvem)
 curl http://localhost:8000/api/health
 
 # login de um administrador
@@ -180,6 +242,14 @@ curl -X POST http://localhost:8000/api/auth/registrar \
   -d '{"nome":"Cliente Novo","email":"cliente@teste.com","senha":"minhasenha"}'
 ```
 
-Todos os fluxos (login de admin, login de cliente, senha errada, cadastro de cliente, bloqueio
-do painel para não-admin, modo local sem servidor) foram validados em testes automatizados
-com navegador simulado — 25 verificações, todas passando.
+```bash
+# estoque / despesas / manutenção agora são do servidor (não do navegador)
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/admin/metricas
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/admin/supabase
+curl -X POST -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/admin/supabase/reenviar
+```
+
+Todos os fluxos (login de admin, login de cliente, senha errada, cadastro de cliente aparecendo
+no painel, espelho na nuvem com fila de reenvio, estoque/manutenção/despesas, bloqueio do painel
+para não-admin, modo local sem servidor, senha só em hash e `data/` inacessível pelo navegador)
+foram validados — 59 verificações ponta a ponta, todas passando.
