@@ -55,8 +55,21 @@
 - `GET /api/health` agora informa o estado do espelho (`espelho.ativo/tabela/pendentes`).
 - Toda rota nova exige token de admin (cliente recebe `403`, visitante `401`) e `data/`
   continua bloqueada para download pelo navegador.
-- Testes: 59 verificações ponta a ponta passando (cadastro → painel, métricas, estoque,
-  despesas, nuvem, segurança, senhas só em hash, arquivos protegidos).
+- Testes: `npm test` roda 88 verificações ponta a ponta contra um servidor descartável
+  (cadastro → painel, métricas, estoque, despesas, nuvem/fila, re-espelho no login,
+  segurança, senhas só em hash, arquivos protegidos). `npm run test:render` faz o
+  `admin.js` inteiro rodar num DOM falso — se o painel quebrar no render, o teste quebra.
+
+### Ajustes finais do mesmo dia (3 detalhes que faltavam)
+- **Re-espelho no login**: se a linha do cliente no Supabase estiver velha (último envio há
+  mais de 24 h) ou com falha, o `POST /api/auth/login` reagenda o reenvio — assim
+  `ultimo_login` e `total_logins` não ficam congelados na data do cadastro.
+- **Selo "atualizado há X minutos"** no topo do painel + **auto-refresh da aba aberta** a cada
+  minuto (antes só o dashboard se atualizava). Quem deixa a aba de estoque ou a dos clientes
+  aberta na tela vê os números mudarem sozinhos — sem F5.
+- `ferramentas/teste-painel.js` e `ferramentas/teste-render-admin.js` entraram no repo (com
+  `npm test`, `npm run test:nuvem`, `npm run test:render`, `npm run test:painel`) para a
+  checagem não depender de arquivo solto fora do projeto.
 
 ### Nada foi quebrado
 As rotas antigas (`/api/auth/*`, `/api/admin/usuarios`, `/api/admin/ia`, `/api/ia/*`,

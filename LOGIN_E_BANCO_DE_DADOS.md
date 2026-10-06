@@ -252,4 +252,19 @@ curl -X POST -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/admin/s
 Todos os fluxos (login de admin, login de cliente, senha errada, cadastro de cliente aparecendo
 no painel, espelho na nuvem com fila de reenvio, estoque/manutenção/despesas, bloqueio do painel
 para não-admin, modo local sem servidor, senha só em hash e `data/` inacessível pelo navegador)
-foram validados — 59 verificações ponta a ponta, todas passando.
+foram validados — 88 verificações ponta a ponta, todas passando.
+
+---
+
+## Como testar sem abrir o navegador
+
+```bash
+npm test               # sobe um servidor Node num diretório descartável e roda as 88 verificações
+npm run test:nuvem     # idem, mas exige que a linha do cadastro chegue no Supabase de verdade
+npm run test:render    # roda o admin.js num DOM falso (pega quebra de render, sem servidor)
+npm run test:painel    # mesmo DOM falso, apontado para o servidor na porta 8000
+```
+
+`npm test` usa `SUPABASE_URL` inválida de propósito, para provar que o cadastro continua
+seguro no `data/db.json` e entra na fila quando a nuvem falha. Ele nunca toca no seu
+projeto real; para isso existe o `test:nuvem`.

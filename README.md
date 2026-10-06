@@ -39,6 +39,15 @@ Depois abra **http://localhost:8000/index.html**
   **estoque, manutenção e despesas agora no banco do servidor** (compartilhados entre os admins),
   aba **Banco de Dados** com o status do espelho na nuvem e aba da IA.
 
+### Testes (sem instalar nada)
+
+```bash
+npm test              # sobe um servidor descartável e checa o banco, as rotas e a segurança (88 verificações)
+npm run test:nuvem    # idem, mas exige que a linha do cadastro chegue de fato no seu Supabase
+npm run test:render   # roda o admin.js inteiro num DOM falso: quebrando o painel, quebra o teste
+npm run test:painel   # idem, mas contra o servidor de pé (usa o login da semente em localhost:8000)
+```
+
 ## Documentação
 
 | Arquivo | Conteúdo |

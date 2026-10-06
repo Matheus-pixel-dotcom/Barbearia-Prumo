@@ -524,6 +524,7 @@
       pill.className = 'pill ' + (estado.emModoLocal ? 'warn' : 'on');
       pill.textContent = estado.emModoLocal ? 'banco local do navegador' : 'banco do servidor';
     }
+    renderizarAtualizado();
     if (servidor) {
       const resposta = await api('health');
       const dados = resposta.dados || {};
@@ -1501,6 +1502,35 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
     carregarIA();
   }
 
+  /* ============================ "atualizado há X" ============================ */
+  let ultimaAtualizacao = 0;
+  function marcarAtualizado() {
+    ultimaAtualizacao = Date.now();
+    renderizarAtualizado();
+  }
+  async function renderizarSeloBanco() {
+    const pill = id('pill-banco');
+    if (!pill || estado.emModoLocal) return; // no modo local o selo já diz a verdade
+    const resposta = await api('health');
+    if (!resposta.dados) return;
+    const dados = resposta.dados;
+    pill.className = 'pill on';
+    pill.textContent = 'banco do servidor · ' + (dados.usuarios || 0) + ' conta(s)';
+  }
+
+  function renderizarAtualizado() {
+    const el = id('pill-atualizado');
+    if (!el) return;
+    if (!ultimaAtualizacao) {
+      el.className = 'pill';
+      el.textContent = 'sincronizando…';
+      return;
+    }
+    const segundos = Math.round((Date.now() - ultimaAtualizacao) / 1000);
+    el.className = 'pill ' + (segundos < 120 ? 'on' : segundos < 420 ? 'warn' : 'off');
+    el.textContent = 'atualizado ' + tempoRelativo(new Date(ultimaAtualizacao).toISOString());
+  }
+
   /* ============================ navegação ============================ */
   const TITULOS = {
     dashboard: ['Visão Geral do Negócio', 'Cadastros, acessos e operação em tempo real'],
@@ -1618,10 +1648,12 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
 
   async function carregarTudo() {
     if (!estado.liberado && !(await verificarAcesso())) return;
+    renderizarAtualizado();
     await carregarUsuarios();
     await Promise.all([carregarEstoque(), carregarManutencao(), carregarDespesas()]);
     await carregarMetricas();
     await carregarSync();
+    marcarAtualizado();
   }
 
   /* ============================ eventos ============================ */
@@ -1890,10 +1922,27 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
     }
     ligarEventos();
     await carregarTudo();
-    // atualiza os números do dashboard sem recarregar a página
+    // o painel se mantém vivo: de minuto em minuto atualiza o dashboard, os
+    // cadastros abertos na tela e o carimbo de "atualizado há X"
     if (global.ReloAdminTimer) clearInterval(global.ReloAdminTimer);
-    global.ReloAdminTimer = setInterval(() => {
-      if (!document.hidden && id('tab-dashboard').classList.contains('active')) carregarMetricas();
+    global.ReloAdminTimer = setInterval(async () => {
+      renderizarAtualizado();
+      if (document.hidden) return;
+      const abaAtual = (document.querySelector('.section-panel.active') || {}).id;
+      if (abaAtual === 'tab-dashboard') {
+        await carregarMetricas();
+      } else if (abaAtual === 'tab-clients') {
+        await carregarUsuarios();
+      } else if (abaAtual === 'tab-products') {
+        await carregarEstoque();
+      } else if (abaAtual === 'tab-expenses') {
+        await carregarDespesas();
+      } else if (abaAtual === 'tab-maintenance') {
+        await carregarManutencao();
+      } else if (abaAtual === 'tab-banco') {
+        await carregarSync();
+      }
+      if (abaAtual !== 'tab-ia') renderizarSeloBanco();
     }, 60000);
   });
 

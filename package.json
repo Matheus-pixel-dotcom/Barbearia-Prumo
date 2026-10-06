@@ -4,6 +4,10 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "serve": "node server.js",
+    "test": "node ferramentas/teste-painel.js",
+    "test:nuvem": "SUPABASE_LIVE=1 node ferramentas/teste-painel.js",
+    "test:render": "node ferramentas/teste-render-admin.js",
+    "test:painel": "node ferramentas/teste-render-admin.js servidor",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",

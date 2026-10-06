@@ -304,6 +304,17 @@ function statusSupabasePublico(cfg) {
 
 let espelhando = false;
 
+// A linha no Supabase não pode virar um retrato velho do cliente: se nunca subiu
+// ou se já passou de um dia, o login reenvia (ultimoLogin e totalLogins atualizam).
+const REESPELHO_DEPOIS_MS = 24 * 60 * 60 * 1000;
+
+function precisaEspelhar(usuario) {
+  const sync = usuario && usuario.sync;
+  if (!sync || sync.estado !== 'ok') return true;
+  const em = sync.em ? new Date(sync.em).getTime() : 0;
+  return !em || Date.now() - em > REESPELHO_DEPOIS_MS;
+}
+
 // Disparado depois que a resposta do cadastro já saiu: nunca atrasa o cliente.
 function espelharCliente(usuario) {
   const cfg = configSupabase();
@@ -428,6 +439,9 @@ async function tratarApi(req, res, url) {
       origem: 'servidor'
     });
     db.salvar(banco);
+    if (usuario.perfil !== 'admin' && configSupabase().ativo && precisaEspelhar(usuario)) {
+      espelharCliente(usuario); // mantém a nuvem com o último acesso em dia
+    }
     return json(res, 200, { ok: true, token, usuario: db.usuarioPublico(usuario) });
   }
 
