@@ -515,6 +515,7 @@
     if (layout) layout.style.display = 'flex';
 
     definir('nome-usuario', usuario.nome || 'Administrador');
+    renderizarChipUsuario(usuario);
     definir('email-usuario', usuario.email);
     const avatar = id('avatar-usuario');
     if (avatar) avatar.textContent = iniciais(usuario.nome, usuario.email);
@@ -595,6 +596,91 @@
     renderizarGraficos(m);
     renderizarAtividade(m.atividade || []);
     renderizarAlertas(alertas);
+    renderizarResumoDia(m);
+  }
+
+  /*
+   * "Hoje na barbearia": uma linha que responde "preciso fazer alguma coisa agora?"
+   * sem ter que abrir aba por aba. Cada bolinha leva direto na tela do assunto.
+   */
+  function renderizarResumoDia(m) {
+    const alvo = id('resumo-itens');
+    if (!alvo) return;
+    const numero = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+    const abaixo = ((m.estoque && m.estoque.abaixoDoMinimo) || []).length;
+    const fila = numero(m.sincronizacao && m.sincronizacao.pendentes) || 0;
+    const emAberto = numero(m.despesasPendentes) || 0;
+    const itens = [];
+
+    const hoje = numero(m.novosHoje);
+    itens.push({
+      html: '<b>' + (hoje === null ? '—' : hoje) + '</b> ' + (hoje === 1 ? 'cadastro novo hoje' : 'cadastros hoje'),
+      aba: 'clients',
+      classe: hoje > 0 ? '' : 'neutro'
+    });
+    const acessos = numero(m.acessosHoje);
+    itens.push({
+      html: '<b>' + (acessos === null ? '—' : acessos) + '</b> ' + (acessos === 1 ? 'acesso hoje' : 'acessos hoje'),
+      aba: 'clients',
+      classe: 'neutro'
+    });
+    if (abaixo > 0) {
+      itens.push({
+        html: '<b>' + abaixo + '</b> ' + (abaixo === 1 ? 'produto abaixo do mínimo' : 'produtos abaixo do mínimo'),
+        aba: 'products',
+        classe: abaixo > 2 ? 'critico' : 'alerta'
+      });
+    }
+    if ((m.manutencoesAbertas || 0) > 0) {
+      itens.push({
+        html: '<b>' + m.manutencoesAbertas + '</b> ' + (m.manutencoesAbertas === 1 ? 'manutenção aberta' : 'manutenções abertas'),
+        aba: 'maintenance',
+        classe: 'alerta'
+      });
+    }
+    itens.push({
+      html: '<b>' + moeda(m.despesas && m.despesas.doMes) + '</b> em despesas do mês' + (emAberto ? ' · ' + emAberto + ' em aberto' : ''),
+      aba: 'expenses',
+      classe: emAberto ? 'alerta' : 'neutro'
+    });
+    if (estado.emModoLocal) {
+      itens.push({ html: 'banco local do navegador', aba: 'banco', classe: 'alerta' });
+    } else if (fila > 0) {
+      itens.push({
+        html: '<b>' + fila + '</b> ' + (fila === 1 ? 'cadastro aguardando a nuvem' : 'cadastros aguardando a nuvem'),
+        aba: 'banco',
+        classe: 'critico'
+      });
+    } else {
+      itens.push({ html: 'nuvem em dia', aba: 'banco', classe: 'neutro' });
+    }
+
+    alvo.innerHTML = itens.map((item) => {
+      const classe = 'resumo-item' + (item.classe ? ' ' + item.classe : '');
+      const conteudo = item.classe === 'neutro' ? item.html : item.html;
+      return item.classe === 'neutro'
+        ? '<span class="' + classe + '">' + conteudo + '</span>'
+        : '<button type="button" class="' + classe + '" data-aba="' + item.aba + '">' + conteudo + '</button>';
+    }).join('');
+  }
+
+  /* chip com quem está logado, no cabeçalho (na tela pequena a sidebar fica escondida) */
+  function renderizarChipUsuario(usuario) {
+    if (!usuario) return;
+    definir('chip-nome', String(usuario.nome || '').split(' ')[0] || 'Administrador');
+    definir('chip-email', usuario.email || '—');
+    definir('chip-perfil', usuario.perfil === 'admin' ? 'administrador' : 'perfil ' + (usuario.perfil || '—'));
+    const avatar = id('chip-avatar');
+    if (avatar) avatar.textContent = iniciais(usuario.nome, usuario.email);
+  }
+
+  function alternarChipPop(forcar) {
+    const botao = id('chip-usuario');
+    const pop = id('chip-pop');
+    if (!botao || !pop) return;
+    const abrir = forcar === undefined ? pop.hidden : forcar;
+    pop.hidden = !abrir;
+    botao.setAttribute('aria-expanded', abrir ? 'true' : 'false');
   }
 
   function alertasDoSistema(m) {
@@ -1385,13 +1471,29 @@
       chave: id('sync-chave').value.trim()
     };
     if (!corpo.chave) delete corpo.chave;
+    // quem colou o bloco inteiro não precisa separar URL de chave na mão
+    const grudar = id('sync-grudar') ? String(id('sync-grudar').value || '').trim() : '';
+    if (grudar) {
+      corpo.grudar = grudar;
+      if (!corpo.url) delete corpo.url; // senão o campo vazio apagaria a URL achada
+      if (!corpo.tabela) delete corpo.tabela;
+    }
     const resposta = await api('admin/supabase', corpo);
     if (resposta.erro) return toast(resposta.erro, 'err');
     if (resposta.ausente) {
       return toast('Sem servidor no ar, a configuração da nuvem não pode ser gravada pelo painel: rode "npm run serve" (ou ajuste window.RELO_SUPABASE na página).', 'err');
     }
     if (id('sync-chave')) id('sync-chave').value = '';
+    if (id('sync-grudar')) id('sync-grudar').value = '';
     const teste = resposta.dados && resposta.dados.teste;
+    const detectado = resposta.dados && resposta.dados.detectado;
+    if (detectado) {
+      const partes = [];
+      if (detectado.url) partes.push('URL ' + detectado.url.replace(/^https?:\/\//, ''));
+      if (detectado.temChave) partes.push('chave ' + (detectado.tipoChave || 'achada'));
+      toast('Lido do bloco: ' + (partes.join(' · ') || 'nada reconhecido'), 'ok');
+      if (detectado.aviso) toast(detectado.aviso, 'err');
+    }
     toast('Configuração salva' + (teste && teste.ok ? ' — conexão OK.' : teste ? ': ' + (teste.erro || '') : '.'), teste && !teste.ok ? 'err' : 'ok');
     await carregarSync();
     await carregarMetricas();
@@ -1681,6 +1783,54 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
       botao.disabled = false;
       botao.textContent = 'Atualizar';
       toast('Dados atualizados.', 'ok');
+    });
+    // chip do usuário: abre na seta, fecha no Esc, no clique fora ou ao escolher
+    const chip = id('chip-usuario');
+    if (chip) {
+      chip.addEventListener('click', (evento) => {
+        evento.preventDefault();
+        evento.stopPropagation();
+        alternarChipPop();
+      });
+    }
+    document.addEventListener('click', (evento) => {
+      const pop = id('chip-pop');
+      if (!pop || pop.hidden) return;
+      if (evento.target.closest && evento.target.closest('.chip-wrap')) return;
+      alternarChipPop(false);
+    });
+    const sairChip = id('chip-sair');
+    if (sairChip) {
+      sairChip.addEventListener('click', async () => {
+        await ReloAuth.sair();
+        global.location.href = 'index.html';
+      });
+    }
+    const irBanco = id('chip-banco');
+    if (irBanco) {
+      irBanco.addEventListener('click', (evento) => {
+        evento.preventDefault();
+        alternarChipPop(false);
+        mudarAba('banco');
+        global.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    // qualquer [data-aba] no painel troca de aba (cartões de KPI e resumo do dia)
+    document.addEventListener('click', (evento) => {
+      const atalho = evento.target && evento.target.closest ? evento.target.closest('[data-aba]') : null;
+      if (!atalho || (atalho.id && atalho.id === 'chip-banco')) return;
+      alternarChipPop(false);
+      mudarAba(atalho.dataset.aba);
+    });
+
+    // os cartões de KPI levam para a tela do assunto (Enter/Espaço também)
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key !== 'Enter' && evento.key !== ' ') return;
+      const cartao = evento.target && evento.target.closest ? evento.target.closest('.stat-card[data-aba]') : null;
+      if (!cartao) return;
+      evento.preventDefault();
+      mudarAba(cartao.dataset.aba);
     });
     id('link-sair').addEventListener('click', async (evento) => {
       evento.preventDefault();

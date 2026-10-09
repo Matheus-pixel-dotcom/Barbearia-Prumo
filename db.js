@@ -410,6 +410,9 @@ function calcularMetricas(banco) {
   let novos30 = 0;
   let ativos30 = 0;
   const origens = {};
+  const hoje = chaveDoDia(new Date().toISOString());
+  let novosHoje = 0;
+  let acessosHoje = 0;
 
   (banco.usuarios || []).forEach((u) => {
     const ehCliente = u.perfil !== 'admin';
@@ -420,6 +423,7 @@ function calcularMetricas(banco) {
       if (ehCliente) {
         const chave = chaveDoDia(u.criadoEm);
         if (mapaCadastros.has(chave)) mapaCadastros.set(chave, mapaCadastros.get(chave) + 1);
+        if (chave === hoje) novosHoje += 1; // "hoje" no calendário, não nas últimas 24h
         if (agora - criado <= 7 * 864e5) novos7 += 1;
         if (agora - criado <= 30 * 864e5) novos30 += 1;
       }
@@ -442,6 +446,7 @@ function calcularMetricas(banco) {
     const chave = chaveDoDia(l.quando);
     if (chave && mapaAcessos.has(chave) && l.sucesso !== false) {
       mapaAcessos.set(chave, mapaAcessos.get(chave) + 1);
+      if (chave === hoje) acessosHoje += 1;
     }
   });
 
@@ -458,6 +463,7 @@ function calcularMetricas(banco) {
   const valorEstoque = estoque.reduce((soma, p) => soma + p.quantidade * p.preco, 0);
   const abaixoDoMinimo = estoque.filter((p) => p.minimo > 0 && p.quantidade <= p.minimo);
   const manutencoesAbertas = (banco.manutencoes || []).filter((m) => m.status !== 'Concluído').length;
+  const despesasPendentes = (banco.despesas || []).filter((d) => !d.pago).length;
 
   return {
     ok: true,
@@ -467,6 +473,9 @@ function calcularMetricas(banco) {
     novos7,
     novos30,
     ativos30,
+    novosHoje,
+    acessosHoje,
+    despesasPendentes,
     taxaRetorno: clientes.length ? Math.round((ativos30 / clientes.length) * 100) : 0,
     acessos24,
     falhas24,

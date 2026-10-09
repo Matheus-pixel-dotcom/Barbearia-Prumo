@@ -39,13 +39,17 @@ Depois abra **http://localhost:8000/index.html**
 * **Admin (premium)** — painel exclusivo para os e-mails de administrador de `admin-accounts.js`:
   dashboard com KPIs e gráficos, banco de clientes com busca/filtro/paginação/ficha/CSV,
   **estoque, manutenção e despesas agora no banco do servidor** (compartilhados entre os admins),
-  aba **Banco de Dados** com o status do espelho na nuvem e aba da IA.
+  aba **Banco de Dados** com o status do espelho na nuvem e aba da IA. Faixa **"Hoje na
+  barbearia"** (cadastros e acessos do dia, estoque abaixo do mínimo, despesas em aberto, fila da
+  nuvem), cartões de KPI que abrem a tela do assunto com um clique e o chip de quem está logado
+  no cabeçalho. Para ligar o Supabase, basta **colar o bloco inteiro** que o painel dele mostra —
+  a URL e a chave são separadas sozinhas.
 
 ### Testes (sem instalar nada)
 
 ```bash
 npm run demo          # dados de vitrine (18 clientes, estoque, despesas) para o painel abrir com número
-npm test              # sobe um servidor descartável e checa o banco, as rotas e a segurança (88 verificações)
+npm test              # sobe um servidor descartável e checa o banco, as rotas e a segurança (95 verificações)
 npm run test:nuvem    # idem, mas exige que a linha do cadastro chegue de fato no seu Supabase
 npm run test:render   # roda o admin.js inteiro num DOM falso: quebrando o painel, quebra o teste
 npm run test:painel   # idem, mas contra o servidor de pé (usa o login da semente em localhost:8000)

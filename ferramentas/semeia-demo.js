@@ -19,7 +19,11 @@ const AGORA = Date.now();
 
 function iso(diasAtras, hora) {
   const d = new Date(AGORA - diasAtras * DIA);
-  d.setHours(hora === undefined ? 10 : hora, (diasAtras * 7) % 60, 0, 0);
+  const agora = new Date();
+  // nunca joga a hora para o futuro: se estamos às 9h, um cadastro "às 14h de hoje" não existe
+  const limite = diasAtras === 0 ? agora.getHours() : 21;
+  const escolhida = hora === undefined ? 10 : Math.min(Math.max(7, hora), Math.max(7, limite));
+  d.setHours(escolhida, (diasAtras * 7) % 60, 0, 0);
   return d.toISOString();
 }
 
@@ -86,7 +90,8 @@ db.transacionar((atual) => {
   CLIENTES.forEach(([nome, alias, origem], i) => {
     const email = alias + '@exemplo.com';
     if (db.acharUsuario(atual, email)) return;
-    const criadoHa = 33 - i * 2;
+    // os três primeiros entram "hoje", para o resumo do painel ter o que mostrar
+    const criadoHa = i < 3 ? 0 : 33 - (i - 3) * 2;
     const usuario = db.novoUsuario(atual, { nome, email, senha: 'Senha123!', origem });
     usuario.criadoEm = iso(criadoHa, 9 + (i % 8));
     const visitas = 1 + (i % 5);

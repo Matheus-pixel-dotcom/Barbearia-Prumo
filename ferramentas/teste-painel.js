@@ -211,6 +211,37 @@ async function esperarServidor(noServidor) {
     conferir('nome de tabela inválido é sanitizado', (await chamar('/api/admin/supabase', { body: { tabela: 'client; drop' } })).j.tabela === 'clientdrop');
     await chamar('/api/admin/supabase', { body: { tabela: VIVO ? process.env.SUPABASE_TABELA || 'clientes' : 'clientes' } });
 
+    // "colar o bloco inteiro": o painel do Supabase mostra URL e chave em lugares
+    // diferentes, então a gente aceita o texto cru e separa as partes sozinho
+    if (!VIVO) {
+      const payload = Buffer.from(JSON.stringify({ role: 'anon', ref: 'testeprojeto' })).toString('base64url');
+      const chaveFake = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + payload + '.assinatura_de_teste_0123456789';
+      const colar = await chamar('/api/admin/supabase', { body: { grudar: 'minha chave: ' + chaveFake + ' , e pronto' } });
+      conferir('colar só a chave (com texto em volta) funciona', colar.status === 200 && colar.j.detectado && colar.j.detectado.temChave === true && colar.j.detectado.tipoChave === 'anon', JSON.stringify(colar.j).slice(0, 160));
+      const vazou = JSON.stringify(colar.j);
+      conferir('a chave colada não volta inteira para o navegador', !/eyJhbGciOi/.test(vazou) && Boolean(colar.j.chaveMascara), vazou.slice(0, 140));
+
+      const urlAntes = (await chamar('/api/admin/supabase')).j.urlMascara;
+      const camposVazios = await chamar('/api/admin/supabase', { body: { grudar: chaveFake, url: '', tabela: '' } });
+      conferir('campo URL vazio não apaga a URL quando se cola o bloco', camposVazios.status === 200 && camposVazios.j.urlMascara === urlAntes, JSON.stringify(camposVazios.j).slice(0, 140));
+
+      const outroProjeto = await chamar('/api/admin/supabase', { body: { grudar: 'https://outroprojeto1234.supabase.co' } });
+      conferir('URL de outro projeto é barrada quando o .env fixa a nossa', outroProjeto.status === 409, JSON.stringify(outroProjeto.j).slice(0, 120));
+
+      const lixo = await chamar('/api/admin/supabase', { body: { grudar: 'meu supabase é aquele de sempre' } });
+      conferir('texto sem URL nem chave explica o que falta', lixo.status === 400 && /achei/.test(lixo.j.erro || ''), JSON.stringify(lixo.j).slice(0, 120));
+
+      const publishable = await chamar('/api/admin/supabase', { body: { grudar: 'sb_publishable_AAAAAAAAAAAAAAAAAAAAAA-BBBBBBBBBBB' } });
+      conferir('entende a chave nova (sb_publishable_…)', publishable.status === 200 && publishable.j.detectado.tipoChave === 'publishable', JSON.stringify(publishable.j.detectado));
+
+      const serviceRole = await chamar('/api/admin/supabase', {
+        body: {
+          grudar: 'eyJhbGciOiJIUzI1NiJ9.' + Buffer.from(JSON.stringify({ role: 'service_role', ref: 'testeprojeto' })).toString('base64url') + '.assinatura_de_teste_0123456789'
+        }
+      });
+      conferir('avisa quando a chave colada é a service_role', serviceRole.status === 200 && /service_role/.test(String(serviceRole.j.detectado.aviso)), JSON.stringify(serviceRole.j.detectado));
+    }
+
     console.log('\n=== 5. atualizar o cadastro na nuvem quando o cliente volta ===');
     await chamar('/api/auth/login', { auth: false, body: { email: 'lucas@ex.com', senha: 'cabelo123' } });
     await new Promise((resolver) => setTimeout(resolver, 1000));

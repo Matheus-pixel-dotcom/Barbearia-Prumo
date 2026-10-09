@@ -1,5 +1,40 @@
 # Atualizações do Projeto - Style Relo Barber
 
+## 🛠️ 9 de outubro de 2026 (tarde) — Painel por dentro + configurar o Supabase colando
+
+### O que o admin vê ao abrir o painel
+- **Faixa "Hoje na barbearia"**, logo acima dos gráficos: quantos cadastros e acessos entraram
+  **hoje** (no calendário, não "últimas 24 h"), quantos produtos estão abaixo do mínimo,
+  manutenções abertas, o total de despesas do mês com o que ainda está em aberto e se sobrou
+  cadastro na fila da nuvem. Cada bolinha é um botão: clicar nela **abre a tela do assunto**.
+- **Cartões de KPI clicáveis**: levam para a aba correspondente (Enter/Espaço também funcionam,
+  e há `aria-label`), com hover mais vivo — elevação, sombra e filete dourado no topo.
+- **Chip do admin logado no cabeçalho** (avatar com as iniciais + primeiro nome). Na tela
+  pequena a sidebar fica escondida, e o nome sumia junto; agora ele está sempre no topo. Ao
+  clicar: e-mail da conta, atalho para o status do banco e **Sair da conta**.
+- Números novos vêm do servidor: `calcularMetricas()` passou a devolver `novosHoje`,
+  `acessosHoje` e `despesasPendentes` (o painel em modo local calcula os equivalentes no navegador).
+
+### Configurar o espelho ficou "colar e salvar"
+- Na aba **Banco de Dados** há um campo novo: **cole o bloco inteiro** que o painel do Supabase
+  mostra (URL, chave, rótulos, aspas, vírgulas — tanto faz). O servidor separa as partes:
+  - acha `https://xxxx.supabase.co` e o ref mesmo sem o `https://`;
+  - aceita a chave **anon**, a **publishable** nova (`sb_publishable_…`) e o **JWT**;
+  - lê o payload do JWT para dizer o tipo da chave e **avisa se for a `service_role`**
+    (funciona, mas a anon/publishable já basta para o espelho);
+  - se não achar nada, responde 400 explicando o que falta, em português.
+- URL de **outro** projeto é barrada com 409 se a `SUPABASE_URL` do `.env` fixa qual é o
+  projeto (para o painel nunca desviar o espelho para outro lugar sem querer).
+- Campo URL **em branco** ao salvar com bloco colado não apaga a URL atual.
+- A chave continua gravada só no servidor (`data/supabase-config.json`, gitignored) e o
+  navegador nunca a recebe inteira — só a máscara.
+
+### Vitrine
+- `npm run demo` agora cria 3 cadastros **de hoje** (com hora limitada ao horário atual, para
+  nunca inventar futuro) — é o que a faixa "Hoje na barbearia" mostra.
+
+---
+
 ## ✂️ 9 de outubro de 2026 — Menu igual em toda página + pílula do Admin
 
 ### O item "🍌 Estúdio Nano Banana" saiu do menu

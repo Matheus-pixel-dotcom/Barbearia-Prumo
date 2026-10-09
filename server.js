@@ -315,6 +315,51 @@ function precisaEspelhar(usuario) {
   return !em || Date.now() - em > REESPELHO_DEPOIS_MS;
 }
 
+/*
+ * "Colar o bloco inteiro": o painel do Supabase mostra URL e chave em lugares
+ * diferentes e a gente aceita o texto cru que o admin copiou de lá (com rótulos,
+ * aspas, vírgulas, o que for) e acha as duas partes sozinho.
+ */
+function extrairSupabase(texto) {
+  const bruto = String(texto || '');
+  const achado = [
+    /https?:\/\/([a-z0-9]+)\.supabase\.co/gi, // https://xyz.supabase.co
+    /https?:\/\/([a-z0-9]+)\.supabase\.com\/rest\/v1\/([a-z0-9_-]+)/gi, // Data API new URL
+    /https?:\/\/([a-z0-9]+)\.supabase\.(?:co|com)/gi // ref em texto solto
+  ];
+  let url = null;
+  let ref = null;
+  for (const rx of achado) {
+    const m = bruto.match(rx);
+    if (m && m[0]) {
+      url = m[0].replace(/\/rest\/v1\/.*$/, '').replace(/\/+$/, '');
+      break;
+    }
+  }
+  const mRef = bruto.match(/\b([a-z0-9]{8,24})\.supabase\.(?:co|com)/i);
+  if (!url && mRef) url = 'https://' + mRef[1] + '.supabase.co';
+  if (url) {
+    const mHost = url.match(/https?:\/\/([a-z0-9]+)\.supabase/i);
+    if (mHost) ref = mHost[1];
+  }
+  // chave: JWT (anon/service role antigo) ou o formato novo "sb_publishable_…"
+  const jwt = bruto.match(/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{8,}/);
+  const publica = bruto.match(/sb_publishable_[A-Za-z0-9_-]{16,}/);
+  const chave = (publica && publica[0]) || (jwt && jwt[0]) || null;
+  let tipoChave = null;
+  if (publica) tipoChave = 'publishable';
+  else if (jwt) {
+    // o payload do JWT da Supabase diz para que serve a chave
+    try {
+      const payload = JSON.parse(Buffer.from(jwt[0].split('.')[1], 'base64').toString('utf8'));
+      tipoChave = payload && payload.role ? String(payload.role) : 'jwt';
+    } catch (e) {
+      tipoChave = 'jwt';
+    }
+  }
+  return { url, chave, tipoChave, ref };
+}
+
 // Disparado depois que a resposta do cadastro já saiu: nunca atrasa o cliente.
 function espelharCliente(usuario) {
   const cfg = configSupabase();
@@ -842,8 +887,32 @@ async function tratarApi(req, res, url) {
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const cfg = lerConfigSupabase();
-    if (corpo.url !== undefined) cfg.url = String(corpo.url || '').trim().replace(/\/+$/, '');
-    if (corpo.tabela !== undefined) cfg.tabela = String(corpo.tabela || 'clientes').trim();
+    let detectado = null;
+    if (corpo.grudar !== undefined) {
+      const extraido = extrairSupabase(corpo.grudar);
+      if (!extraido.url && !extraido.chave) {
+        return json(res, 400, {
+          ok: false,
+          erro: 'Não achei nem a URL nem a chave nesse texto. Cole algo como https://xxxx.supabase.co e a chave anon (ou sb_publishable_…).'
+        });
+      }
+      if (extraido.url) cfg.url = extraido.url;
+      if (extraido.chave) cfg.chave = extraido.chave;
+      if (cfg.tabela === undefined || cfg.tabela === '') cfg.tabela = 'clientes';
+      detectado = {
+        url: extraido.url || null,
+        ref: extraido.ref || null,
+        tipoChave: extraido.tipoChave || null,
+        temChave: Boolean(extraido.chave),
+        aviso: extraido.tipoChave === 'service_role'
+          ? 'A chave colada é a service_role (acesso total ao projeto). Funciona, mas para o espelho a anon / publishable já basta.'
+          : null
+      };
+    }
+    // com bloco colado, campo em branco significa "não mexi aqui", não "apaga"
+    const ignoreVazio = corpo.grudar !== undefined;
+    if (corpo.url !== undefined && (String(corpo.url).trim() || !ignoreVazio)) cfg.url = String(corpo.url || '').trim().replace(/\/+$/, '');
+    if (corpo.tabela !== undefined && (String(corpo.tabela).trim() || !ignoreVazio)) cfg.tabela = String(corpo.tabela || 'clientes').trim();
     if (corpo.ativo !== undefined) cfg.ativo = Boolean(corpo.ativo);
     if (corpo.chave) cfg.chave = String(corpo.chave).trim(); // em branco = mantém a atual
     if (process.env.SUPABASE_URL && cfg.url && cfg.url !== process.env.SUPABASE_URL) {
@@ -852,10 +921,11 @@ async function tratarApi(req, res, url) {
         erro: 'A URL vem do arquivo .env do servidor (SUPABASE_URL). Edite o .env para apontar para outro projeto.'
       });
     }
+    if (cfg.ativo === undefined) cfg.ativo = true;
     salvarConfigSupabase(cfg);
     const atual = configSupabase();
     const teste = atual.ativo ? await ReloSync.testar(atual) : { ok: false, erro: 'espelhamento desligado' };
-    return json(res, 200, Object.assign(statusSupabasePublico(atual), { teste }));
+    return json(res, 200, Object.assign(statusSupabasePublico(atual), { teste, detectado }));
   }
 
   // POST /api/admin/supabase/teste — confere conexão e a tabela

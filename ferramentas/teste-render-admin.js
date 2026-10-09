@@ -115,6 +115,7 @@ const document = {
   querySelector: (s) => document.body.querySelector(s),
   querySelectorAll: (s) => document.body.querySelectorAll(s),
   addEventListener: (t, f) => { (document._l = document._l || {}); (document._l[t] = document._l[t] || []).push(f); },
+  dispatch(t, ev) { ((this._l || {})[t] || []).forEach((f) => f(ev)); },
   visibilityState: 'visible',
   documentElement: new El('html'),
   title: '',
@@ -128,7 +129,8 @@ for (const id of ['layout', 'sidebar', 'btn-menu', 'btn-menu-fechar', 'main', 'r
   'atividade-list', 'alertas-list', 'produtos-alerta',
   'clients-table-body', 'products-table-body', 'maintenance-table-body', 'expenses-table-body',
   'clientes-contagem', 'sync-estado', 'sync-fila', 'sync-fila-total', 'nav-badge-sync', 'nav-badge-alertas',
-  'ficha-corpo', 'toast-stack', 'aba-ia-resposta', 'busca-clientes', 'filtro-status', 'filtro-origem',
+  'ficha-corpo', 'resumo-dia', 'resumo-itens', 'chip-nome', 'chip-email', 'chip-perfil',
+  'chip-avatar', 'chip-pop', 'chip-usuario', 'chip-sair', 'chip-banco', 'toast-stack', 'aba-ia-resposta', 'busca-clientes', 'filtro-status', 'filtro-origem',
   'filtro-cidade', 'filtro-campo', 'filtro-valor', 'btn-exportar-csv', 'btn-reenviar-fila']) {
   criar('div', id);
 }
@@ -259,7 +261,8 @@ const espera = (ms) => new Promise((r) => setTimeoutNativo(r, ms));
   const todosOsIds = ['pill-banco', 'pill-sync', 'pill-atualizado', 'stat-clients', 'stat-logins',
     'stat-produtos-valor', 'stat-expenses', 'stat-sync', 'chart-cadastros', 'chart-acessos', 'chart-origens',
     'atividade-list', 'alertas-list', 'clients-table-body', 'products-table-body', 'maintenance-table-body',
-    'expenses-table-body', 'sync-estado', 'sync-fila', 'nav-badge-sync', 'nav-badge-alertas', 'acesso-painel'];
+    'expenses-table-body', 'sync-estado', 'sync-fila', 'nav-badge-sync', 'nav-badge-alertas', 'acesso-painel',
+    'resumo-itens', 'chip-nome', 'chip-email', 'pill-atualizado'];
   const most = (i) => {
     const el = todos.get(i);
     if (!el) return '(sem elemento)';
@@ -353,6 +356,34 @@ const espera = (ms) => new Promise((r) => setTimeoutNativo(r, ms));
     const sobraD = await (await apiAdmin('/api/admin/despesas')).json();
     conferir('o teste não deixa lixo no banco', !(sobra.produtos || []).some((x) => x.nome === 'Pincelo Teste') && !(sobraD.despesas || []).some((x) => x.descricao === 'Internet fibra'));
 
+    // resumo do dia + chip do admin no cabeçalho
+    const resumo = most('resumo-itens');
+    conferir('faixa "hoje na barbearia" monta com números', /cadastro/.test(resumo) && /<b>/.test(resumo), resumo);
+    conferir('chip do cabeçalho mostra a conta logada', /@/.test(most('chip-email')), most('chip-email'));
+    const avatar = document.getElementById('chip-avatar');
+    conferir('avatar do chip traz as iniciais', /^[A-Z]{1,2}$/.test((avatar._text || '').trim()), JSON.stringify(avatar._text));
+    const popover = document.getElementById('chip-pop');
+    popover.hidden = true; // no HTML ele nasce com o atributo hidden
+    document.getElementById('chip-usuario').dispatch('click');
+    conferir('chip abre o menu do usuário', popover.hidden === false);
+    document.getElementById('chip-usuario').dispatch('click');
+    conferir('o menu do chip fecha ao clicar de novo', popover.hidden === true);
+    // clicar fora fecha (o ouvinte fica no document)
+    popover.hidden = false;
+    const fora = new El('div');
+    document.dispatch('click', { preventDefault() {}, stopPropagation() {}, target: { closest: () => null } });
+    conferir('clique fora fecha o menu do chip', popover.hidden === true);
+
+    // clicar num cartão de KPI (ou numa bolinha do resumo) troca de aba
+    const cartao = new El('div');
+    cartao.setAttribute('data-aba', 'clients');
+    document.dispatch('click', {
+      preventDefault() {}, stopPropagation() {},
+      target: { closest: (sel) => (sel === '[data-aba]' ? cartao : null) }
+    });
+    await espera(200);
+    conferir('clique no cartão de KPI abre a aba do assunto', /Banco de Clientes/.test(most('page-title')), most('page-title'));
+
     // recarregar tudo (é o que o auto-refresh de 1 minuto faz)
     await Admin.carregarTudo();
     await espera(250);
@@ -361,6 +392,10 @@ const espera = (ms) => new Promise((r) => setTimeoutNativo(r, ms));
     const bloqueio = document.getElementById('acesso-painel');
     conferir('sem servidor o painel pede login em vez de quebrar', !!(bloqueio && bloqueio._html), JSON.stringify(bloqueio && bloqueio._html).slice(0, 120));
     conferir('o seletor de aba continua vivo sem backend', (() => { Admin.mudarAba('clients'); return true; })());
+    // em modo local o painel monta as métricas a partir do navegador: a faixa do dia
+    // e os cartões precisam sobreviver a um banco sem nenhum dado
+    await Admin.carregarTudo();
+    conferir('faixa do dia e cartões sobrevivem ao banco vazio', true);
   }
 
   escreve('');

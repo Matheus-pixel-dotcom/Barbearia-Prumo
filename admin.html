@@ -6,7 +6,7 @@
   <meta name="description" content="Painel administrativo premium do Style Relo Barber: banco de clientes, cadastros em tempo real, espelho na nuvem, estoque, manutenção e despesas.">
   <meta name="robots" content="noindex, nofollow">
   <title>Painel Administrativo · Style Relo Barber</title>
-  <link rel="stylesheet" href="style.css?v=20261009">
+  <link rel="stylesheet" href="style.css?v=20261010">
   <style>
     /* =====================================================================
        STYLE RELO · PAINEL PREMIUM
@@ -145,6 +145,73 @@
     .head-tools { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
     #btn-menu-mobile { display: none; }
 
+    /* --------------------------- chip do admin no cabeçalho --------------------------- */
+    .chip-wrap { position: relative; }
+    .chip-usuario {
+      display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+      padding: 4px 11px 4px 5px; border-radius: 999px; font: inherit;
+      border: 1px solid var(--line-strong); color: var(--text);
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.13), rgba(255, 255, 255, 0.03));
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .chip-usuario:hover { border-color: rgba(212, 175, 55, 0.5); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42); }
+    .chip-usuario:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+    .chip-avatar {
+      width: 27px; height: 27px; flex: none; border-radius: 50%; display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: #0b0b10;
+      font-size: 11px; font-weight: 900; letter-spacing: 0.02em;
+    }
+    .chip-nome { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+    .chip-nome strong { font-size: 12.5px; font-weight: 800; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-nome small { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.09em; }
+    .chip-seta { width: 13px; height: 13px; color: var(--muted); transition: transform .2s; }
+    .chip-usuario[aria-expanded="true"] .chip-seta { transform: rotate(180deg); }
+    .chip-pop {
+      position: absolute; right: 0; top: calc(100% + 9px); z-index: 40; width: 254px;
+      display: flex; flex-direction: column; gap: 2px; padding: 10px;
+      border: 1px solid var(--line-strong); border-radius: 16px;
+      background: var(--surface-strong); box-shadow: 0 26px 60px rgba(0, 0, 0, 0.66);
+    }
+    .chip-pop p { margin: 2px 6px 9px; font-size: 11.5px; color: var(--muted); word-break: break-all; }
+    .chip-pop a, .chip-pop button {
+      display: block; width: 100%; text-align: left; padding: 9px 10px; border-radius: 10px;
+      border: 0; background: transparent; color: var(--text); font: inherit; font-size: 12.5px;
+      font-weight: 600; cursor: pointer; text-decoration: none;
+    }
+    .chip-pop a:hover, .chip-pop button:hover { background: rgba(212, 175, 55, 0.12); color: var(--gold-2); }
+    .chip-pop button { color: var(--danger); }
+    .chip-pop button:hover { background: rgba(255, 107, 107, 0.12); color: var(--danger); }
+
+    /* ------------------------------ resumo do dia ------------------------------ */
+    .resumo-dia {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      margin: -6px 0 20px; padding: 12px 15px; border-radius: var(--radius);
+      border: 1px solid var(--line); border-left: 2px solid rgba(212, 175, 55, 0.55);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+    }
+    .resumo-titulo {
+      display: inline-flex; align-items: center; gap: 7px; flex: none;
+      font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    }
+    .resumo-titulo svg { width: 14px; height: 14px; color: var(--gold); }
+    .resumo-itens { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+    .resumo-item {
+      display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font: inherit;
+      padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--text);
+      border: 1px solid var(--line); background: rgba(255, 255, 255, 0.035); transition: border-color .18s, color .18s;
+    }
+    .resumo-item:hover { border-color: rgba(212, 175, 55, 0.5); color: var(--gold-2); }
+    .resumo-item:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+    .resumo-item b { font-weight: 900; }
+    .resumo-item.alerta { color: var(--warn); border-color: rgba(251, 191, 36, 0.36); background: rgba(251, 191, 36, 0.08); }
+    .resumo-item.critico { color: var(--danger); border-color: rgba(255, 107, 107, 0.36); background: rgba(255, 107, 107, 0.08); }
+    .resumo-item.neutro { cursor: default; color: var(--muted); }
+    @media (max-width: 900px) {
+      .chip-nome { display: none; }
+      .chip-usuario { padding: 4px; }
+      .chip-seta { display: none; }
+    }
+
     /* ------------------------------ cartões ------------------------------ */
     .pill {
       display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px;
@@ -193,7 +260,18 @@
       box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
       transition: border-color .2s, transform .2s;
     }
-    .stat-card:hover { border-color: rgba(212, 175, 55, 0.35); transform: translateY(-2px); }
+    .stat-card:hover, .stat-card:focus-visible {
+      border-color: rgba(212, 175, 55, 0.42); transform: translateY(-3px);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .stat-card[data-aba] { cursor: pointer; }
+    .stat-card::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0; transition: opacity .22s ease;
+    }
+    .stat-card:hover::before, .stat-card:focus-visible::before { opacity: .9; }
+    .stat-card:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 3px; }
     .stat-card::after {
       content: ''; position: absolute; right: -26px; top: -26px; width: 92px; height: 92px;
       border-radius: 50%; background: radial-gradient(circle, rgba(212, 175, 55, 0.18), transparent 68%);
@@ -552,6 +630,22 @@
           <div class="head-sub" id="page-sub">Verificando acesso ao banco de dados…</div>
         </div>
         <div class="head-tools">
+          <div class="chip-wrap">
+            <button class="chip-usuario" id="chip-usuario" type="button" aria-haspopup="true" aria-expanded="false" title="Conta conectada ao painel">
+              <span class="chip-avatar" id="chip-avatar">?</span>
+              <span class="chip-nome">
+                <strong id="chip-nome">—</strong>
+                <small id="chip-perfil">administrador</small>
+              </span>
+              <svg class="chip-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="chip-pop" id="chip-pop" hidden>
+              <p id="chip-email">—</p>
+              <a href="dashboard.html">Minha área do cliente</a>
+              <a href="admin.html#tab-banco" id="chip-banco">Status do banco de dados</a>
+              <button type="button" id="chip-sair">Sair da conta</button>
+            </div>
+          </div>
           <span id="pill-banco" class="pill">conectando…</span>
           <span id="pill-sync" class="pill">nuvem: —</span>
           <span id="pill-atualizado" class="pill" title="Os dados do painel se atualizam sozinhos a cada minuto">sincronizando…</span>
@@ -562,37 +656,42 @@
       <!-- ============================ DASHBOARD ============================ -->
       <div id="tab-dashboard" class="section-panel active">
         <div class="stats-grid">
-          <div class="stat-card">
+          <div class="stat-card" data-aba="clients" role="button" tabindex="0" aria-label="Abrir o banco de clientes">
             <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M16 11a3 3 0 1 0-1.5-5.6M21 20a5.5 5.5 0 0 0-4-5.3"/></svg>Clientes no banco</h3>
             <p class="stat-value" id="stat-clients">--<small id="stat-clients-total"></small></p>
             <div class="stat-foot"><span class="delta flat" id="stat-clients-delta">—</span> nos últimos 7 dias</div>
             <svg class="spark" id="spark-clientes" viewBox="0 0 120 30" preserveAspectRatio="none" aria-hidden="true"></svg>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-aba="clients" role="button" tabindex="0" aria-label="Abrir o histórico de acessos">
             <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="8.5"/></svg>Acessos em 24h</h3>
             <p class="stat-value" id="stat-logins">--</p>
             <div class="stat-foot"><span id="stat-logins-falhas">—</span></div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-aba="clients" role="button" tabindex="0" aria-label="Ver clientes reativados">
             <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19V9m5 10V6m5 13v-7m5 7V4"/><path d="M2 21h20"/></svg>Retorno dos clientes</h3>
             <p class="stat-value" id="stat-reativados">--<small> em 30d</small></p>
             <div class="stat-foot"><span class="delta up" id="stat-taxa-retorno">0%</span> entraram no último mês</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-aba="products" role="button" tabindex="0" aria-label="Abrir o estoque">
             <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 12V7H4v10h16v-5z"/><path d="M20 12h2.5A2.5 2.5 0 0 1 20 14.5"/></svg>Valor em estoque</h3>
             <p class="stat-value" id="stat-produtos-valor">R$ 0,00</p>
             <div class="stat-foot"><span id="stat-produtos"><strong>0</strong> itens</span> · <span id="stat-produtos-unidades">0 unidades</span></div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-aba="expenses" role="button" tabindex="0" aria-label="Abrir as despesas">
             <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v18M7 8h7a2.5 2.5 0 0 0 0-5H7m0 10h8"/></svg>Despesas do mês</h3>
             <p class="stat-value" id="stat-expenses">R$ 0,00</p>
             <div class="stat-foot"><span id="stat-manutencoes">0 manutenções abertas</span></div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-aba="maintenance" role="button" tabindex="0" aria-label="Abrir a manutenção">
             <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></svg>Nuvem (Supabase)</h3>
             <p class="stat-value" id="stat-sync">--<small id="stat-sync-total"></small></p>
             <div class="stat-foot"><span id="stat-sync-foot">verificando…</span></div>
           </div>
+        </div>
+
+        <div class="resumo-dia" id="resumo-dia">
+          <span class="resumo-titulo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M12 7v5l3.2 2"/><circle cx="12" cy="12" r="8.4"/></svg>Hoje na barbearia</span>
+          <div class="resumo-itens" id="resumo-itens" role="status" aria-live="polite">consultando o banco…</div>
         </div>
 
         <div class="grid-2">
@@ -804,7 +903,7 @@
         </div>
       </div>
 
-      <!-- ============================ BANCO / NUVM ============================ -->
+      <!-- ============================ BANCO / NUVEM ============================ -->
       <div id="tab-banco" class="section-panel">
         <div class="panel-header">
           <h2>Banco de Dados da Barbearia</h2>
@@ -836,6 +935,15 @@
           <div class="card">
             <div class="card-title">Configuração do espelho (Supabase)</div>
             <form id="form-sync">
+              <div class="form-group">
+                <label for="sync-grudar">Colar o bloco inteiro do Supabase <span class="badge gold">recomendado</span></label>
+                <textarea id="sync-grudar" rows="3" spellcheck="false" placeholder="https://abcdefgh.supabase.co&#10;sb_publishable_… (ou a chave anon)&#10;pode colar com rótulos, aspas e vírgulas que a gente separa"></textarea>
+                <div class="muted" style="font-size:11.5px;margin-top:6px">
+                  Salve com este campo preenchido: a URL e a chave são extraídas e gravadas no servidor
+                  (<code>data/supabase-config.json</code>, nunca vai para o GitHub). Encontra também a
+                  chave <em>service_role</em>, mas avisa se for ela.
+                </div>
+              </div>
               <label class="switch" style="margin-bottom:14px">
                 <input type="checkbox" id="sync-ativo" checked>
                 <span class="trilho"></span>
@@ -850,7 +958,7 @@
                 <input type="text" id="sync-tabela" placeholder="clientes" maxlength="50">
               </div>
               <div class="form-group">
-                <label for="sync-chave">Chave (anon / service role) — opcional</label>
+                <label for="sync-chave">Chave (anon, publishable ou service role) — opcional</label>
                 <input type="password" id="sync-chave" placeholder="deixe em branco para manter a atual" autocomplete="off">
                 <div class="muted" style="font-size:11.5px;margin-top:6px" id="sync-chave-atual">—</div>
               </div>
@@ -1065,11 +1173,11 @@
   <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 
   <!-- Login e banco de dados -->
-  <script src="auth-hash.js?v=20261009" defer></script>
-  <script src="admin-accounts.js?v=20261009" defer></script>
-  <script src="auth-core.js?v=20261009" defer></script>
-  <script src="sync-supabase.js?v=20261009" defer></script>
-  <script src="login-modal.js?v=20261009" defer></script>
-  <script src="admin.js?v=20261009" defer></script>
+  <script src="auth-hash.js?v=20261010" defer></script>
+  <script src="admin-accounts.js?v=20261010" defer></script>
+  <script src="auth-core.js?v=20261010" defer></script>
+  <script src="sync-supabase.js?v=20261010" defer></script>
+  <script src="login-modal.js?v=20261010" defer></script>
+  <script src="admin.js?v=20261010" defer></script>
 </body>
 </html>

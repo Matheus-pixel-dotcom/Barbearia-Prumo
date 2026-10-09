@@ -252,14 +252,40 @@ curl -X POST -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/admin/s
 Todos os fluxos (login de admin, login de cliente, senha errada, cadastro de cliente aparecendo
 no painel, espelho na nuvem com fila de reenvio, estoque/manutenção/despesas, bloqueio do painel
 para não-admin, modo local sem servidor, senha só em hash e `data/` inacessível pelo navegador)
-foram validados — 88 verificações ponta a ponta, todas passando.
+foram validados — 95 verificações ponta a ponta, todas passando.
+
+---
+
+## Colando o Supabase no painel (jeito rápido)
+
+Na aba **Banco de Dados** do painel existe o campo **"Colar o bloco inteiro do Supabase"**.
+Cole lá o que você copiou do projeto — pode vir com rótulo, aspa e vírgula, por exemplo:
+
+```
+Project URL: https://abcdefgh.supabase.co
+api key: sb_publishable_Xyz…  (ou a anon key JWT que começa com eyJ…)
+```
+
+Ao **Salvar**, o servidor separa a URL e a chave sozinho, grava em `data/supabase-config.json`
+(gitignored — a chave nunca vai para o GitHub e nunca volta inteira para o navegador) e testa a
+conexão na hora. Regras que ele segue:
+
+- aceita `anon`, `sb_publishable_…` e o JWT antigo; se a chave for a `service_role`, o painel
+  avisa que ela tem acesso total (funciona, mas não é necessária);
+- se a URL vier de `SUPABASE_URL` no `.env`, o painel **não** deixa apontar para outro projeto
+  (responde 409) — para o espelho nunca mudar de endereço por engano;
+- se não houver URL nem chave no texto, a resposta explica o que falta.
+
+Depois de salvar, todo cadastro novo entra na lista de clientes do painel (`data/db.json`) e vai
+para a tabela `clientes` do Supabase em segundo plano; se a nuvem falhar, fica na fila e o
+servidor tenta de novo sozinho.
 
 ---
 
 ## Como testar sem abrir o navegador
 
 ```bash
-npm test               # sobe um servidor Node num diretório descartável e roda as 88 verificações
+npm test               # sobe um servidor Node num diretório descartável e roda as 95 verificações
 npm run test:nuvem     # idem, mas exige que a linha do cadastro chegue no Supabase de verdade
 npm run test:render    # roda o admin.js num DOM falso (pega quebra de render, sem servidor)
 npm run test:painel    # mesmo DOM falso, apontado para o servidor na porta 8000
