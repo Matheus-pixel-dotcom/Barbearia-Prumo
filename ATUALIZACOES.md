@@ -1,5 +1,35 @@
 # Atualizações do Projeto - Style Relo Barber
 
+## ✂️ 9 de outubro de 2026 — Menu igual em toda página + pílula do Admin
+
+### O item "🍌 Estúdio Nano Banana" saiu do menu
+- Ele só existia em 3 páginas (`index.html`, `ia-tryon.html`, `nano-banana.html`), então o
+  cabeçalho mudava de tamanho de uma página para a outra. Agora **nenhuma** página mostra o
+  item no menu — as 12 páginas têm exatamente a mesma navegação.
+- A página do estúdio continua no ar (`nano-banana.html`) e chega nela por onde faz sentido:
+  pelo botão **"Ver o corte na sua foto (Estúdio)"** na tela de resultado do
+  **Experimente com IA** e pelo **"Abrir Estúdio"** da aba de IA do painel admin.
+
+### "Admin" no menu deixou de ser um texto dourado solto
+- Antes: `<a style="color: var(--gold)">Admin</a>` (e faltava em `nano-banana.html`).
+- Agora: pílula dourada com ícone de cadeado (`.nav-admin`), no mesmo vocabulário do botão
+  de login — contorno dourado por fora, e **fechada em ouro quando você entra com uma conta
+  de administrador** (o `login-modal.js` já marcava o link; agora isso aparece na tela).
+- `:focus-visible` com anel dourado no menu inteiro (antes o destaque de teclado era o do
+  navegador), e o item da página atual ganhou um filete, para não depender só da cor.
+- `?v=` de CSS e JS bumped para `20261009` em todas as páginas, para ninguém ficar com o
+  cabeçalho velho na cache.
+
+### Vitrine de dados de demonstração (era script solto, agora é comando)
+- `ferramentas/semeia-demo.js` + **`npm run demo`**: 18 clientes de exemplo (e-mails em
+  `@exemplo.com`), 5 produtos (dois abaixo do mínimo, de propósito, para o alerta de falta
+  aparecer), 3 ordens de manutenção e 5 despesas, com cadastros e acessos espalhados nos
+  últimos 33 dias — assim os KPIs, os gráficos e a variação semanal do painel abrem com
+  número de verdade. Idempotente: rodar de novo não duplica nada e só escreve em
+  `data/db.json` (gitignored).
+
+---
+
 ## 🏆 5 de outubro de 2026 — Painel admin premium + cadastro indo direto para o banco
 
 ### Cadastro do cliente → banco de dados (automático, sem importar nada)

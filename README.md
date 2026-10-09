@@ -28,6 +28,8 @@ Depois abra **http://localhost:8000/index.html**
   foto, escolhe um estilo e a IA gera na hora uma prévia realista do corte nele.
   A chave fica protegida no servidor (`.env`) e sem ela o site segue em modo
   demonstrativo. Veja `NANO_BANANA.md`.
+* **Menu** — o mesmo em todas as páginas; o item **Admin** é uma pílula dourada que fecha em
+  ouro quando você entra com uma conta de administrador.
 * **Equipe** — quem é quem na barbearia, com a função de cada profissional (inclui o Marcos na gerência de vendas de produtos).
 * **Feedback** — avaliações dos barbeiros.
 * **Login / Criar conta** — caixinha de login que abre em todas as páginas. Quem se cadastra
@@ -42,6 +44,7 @@ Depois abra **http://localhost:8000/index.html**
 ### Testes (sem instalar nada)
 
 ```bash
+npm run demo          # dados de vitrine (18 clientes, estoque, despesas) para o painel abrir com número
 npm test              # sobe um servidor descartável e checa o banco, as rotas e a segurança (88 verificações)
 npm run test:nuvem    # idem, mas exige que a linha do cadastro chegue de fato no seu Supabase
 npm run test:render   # roda o admin.js inteiro num DOM falso: quebrando o painel, quebra o teste
