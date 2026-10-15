@@ -27,6 +27,7 @@
     sessoes: 'relo_db_sessoes_v2',
     logins: 'relo_db_logins_v2',
     sessao: 'relo_sessao_v2',
+    sync: 'relo_db_sync_v1',
     visitou: 'relo_login_mostrado'
   };
 
@@ -109,6 +110,7 @@
     },
     publico(u) {
       if (!u) return null;
+      const sync = u.sync && typeof u.sync === 'object' ? u.sync : null;
       return {
         id: u.id,
         nome: u.nome,
@@ -118,7 +120,10 @@
         origem: u.origem || 'cadastro',
         criadoEm: u.criadoEm || null,
         ultimoLogin: u.ultimoLogin || null,
-        totalLogins: u.totalLogins || 0
+        totalLogins: u.totalLogins || 0,
+        sincronizacao: sync
+          ? { estado: sync.estado === 'ok' || sync.estado === 'erro' ? sync.estado : 'pendente', em: sync.em || null, erro: sync.erro || null }
+          : { estado: 'pendente', em: null, erro: null }
       };
     },
     novoId(prefixo, email) {
@@ -136,6 +141,134 @@
       banco.logins = banco.logins.slice(0, 300);
     }
   };
+
+
+  /* ------------------------- espelho na nuvem (Supabase) -------------------------
+   * Com servidor, quem sobe a cópia para o Supabase é o server.js.
+   * Sem servidor (site aberto pelo arquivo / hospedagem estática), quem faz isso é o
+   * próprio navegador: o cadastro é salvo no banco local e enviado ao Supabase na hora.
+   * Se a rede falhar, o cadastro entra numa fila no navegador e é reenviado na próxima
+   * visita — assim o cliente nunca fica fora do "nosso banco de dados".
+   */
+  function filaNuvem() {
+    const fila = lerJson(CHAVES.sync, []);
+    return Array.isArray(fila) ? fila : [];
+  }
+
+  function salvarFilaNuvem(fila) {
+    gravarJson(CHAVES.sync, (fila || []).slice(0, 80));
+  }
+
+  function entrarNaFila(email, erro) {
+    const alvo = String(email || '').toLowerCase();
+    if (!alvo) return;
+    const fila = filaNuvem().filter((i) => String(i.email || '').toLowerCase() !== alvo);
+    fila.unshift({ email: alvo, erro: erro || null, tentativas: 0, desde: new Date().toISOString() });
+    salvarFilaNuvem(fila);
+  }
+
+  function sairDaFila(email) {
+    const alvo = String(email || '').toLowerCase();
+    salvarFilaNuvem(filaNuvem().filter((i) => String(i.email || '').toLowerCase() !== alvo));
+  }
+
+  function registrarSyncLocal(email, resultado) {
+    const banco = BancoLocal.abrir();
+    const alvo = BancoLocal.achar(banco, email);
+    const info =
+      resultado && resultado.ok
+        ? { estado: 'ok', em: new Date().toISOString() }
+        : { estado: 'erro', em: new Date().toISOString(), erro: (resultado && resultado.erro) || 'falha no envio' };
+    if (alvo) {
+      alvo.sync = info;
+      BancoLocal.salvar(banco);
+    }
+    if (info.estado === 'ok') sairDaFila(email);
+    else entrarNaFila(email, info.erro);
+    return info;
+  }
+
+  function enviarCadastroParaNuvem(usuario) {
+    const Sync = global.ReloSync;
+    if (!Sync) {
+      registrarSyncLocal(usuario.email, { ok: false, erro: 'módulo sync-supabase.js não carregado' });
+      return Promise.resolve({ ok: false });
+    }
+    let cfg = null;
+    try {
+      cfg = Sync.configNavegador();
+    } catch (erro) {
+      registrarSyncLocal(usuario.email, { ok: false, erro: 'configuração do espelho ilegível: ' + erro.message });
+      return Promise.resolve({ ok: false });
+    }
+    if (!cfg.ativo) {
+      const banco = BancoLocal.abrir();
+      const alvo = BancoLocal.achar(banco, usuario.email);
+      if (alvo) {
+        alvo.sync = { estado: 'pendente', em: new Date().toISOString(), erro: 'espelhamento desligado' };
+        BancoLocal.salvar(banco);
+      }
+      return Promise.resolve({ ok: false, erro: 'desligado' });
+    }
+    return Sync.enviar(BancoLocal.publico(usuario), cfg)
+      .then((resultado) => {
+        registrarSyncLocal(usuario.email, resultado);
+        return resultado;
+      })
+      .catch((erro) => {
+        registrarSyncLocal(usuario.email, { ok: false, erro: erro && erro.message });
+        return { ok: false };
+      });
+  }
+
+  async function reenviarFilaNuvem() {
+    const fila = filaNuvem();
+    if (!fila.length) return { ok: true, processados: 0 };
+    const banco = BancoLocal.abrir();
+    let processados = 0;
+    for (const item of fila) {
+      const usuario = BancoLocal.achar(banco, item.email);
+      if (!usuario) {
+        sairDaFila(item.email);
+        continue;
+      }
+      const resultado = await enviarCadastroParaNuvem(usuario);
+      processados += 1;
+      void resultado;
+    }
+    return { ok: true, processados };
+  }
+
+  function estadoSincronizacao() {
+    const Sync = global.ReloSync;
+    let cfg = null;
+    try {
+      cfg = Sync ? Sync.configNavegador() : null;
+    } catch (erro) {
+      cfg = null;
+    }
+    const banco = BancoLocal.abrir();
+    const clientes = banco.usuarios.filter((u) => u.perfil !== 'admin');
+    const fila = filaNuvem();
+    return {
+      ok: true,
+      modo: 'navegador',
+      origem: 'site sem servidor (localStorage + Supabase direto)',
+      ativo: Boolean(cfg && cfg.ativo),
+      urlMascara: cfg && cfg.url ? String(cfg.url).replace(/^https?:\/\//, '') : null,
+      tabela: (cfg && cfg.tabela) || 'clientes',
+      chaveMascara: Sync && cfg ? Sync.mascaraChave(cfg.chave) : null,
+      bancoLocal: { arquivo: 'localStorage deste navegador', usuarios: banco.usuarios.length, clientes: clientes.length },
+      pendentes: fila.length,
+      fila: fila.slice(0, 20),
+      enviado: clientes.filter((u) => u.sync && u.sync.estado === 'ok').length,
+      falha: clientes.filter((u) => u.sync && u.sync.estado === 'erro').length,
+      totalClientes: clientes.length,
+      clientesSync: clientes.filter((u) => u.sync && u.sync.estado === 'ok').length,
+      ultimoErro: fila.length ? fila[0].erro : null,
+      ultimoEnvio: null
+    };
+  }
 
   /* ------------------------- comunicação com a API ------------------------- */
   async function chamarApi(caminho, opcoes) {
@@ -217,6 +350,13 @@
         }
       }
       if (!usuario) limparSessao();
+    }
+
+    // No modo local, a fila de cadastros que não subiram é reenvitada em segundo plano.
+    if (modo === 'local' && filaNuvem().length) {
+      global.setTimeout(() => {
+        reenviarFilaNuvem().catch(() => {});
+      }, 2500);
     }
 
     avisar();
@@ -343,6 +483,8 @@
     });
     BancoLocal.salvar(banco);
     guardarSessao(BancoLocal.publico(novo), novoToken, 'local');
+    // sem servidor, o próprio navegador manda a cópia para o banco na nuvem
+    enviarCadastroParaNuvem(novo);
     return { ok: true, usuario, modo };
   }
 
@@ -420,6 +562,7 @@
     };
     banco.usuarios.push(novo);
     BancoLocal.salvar(banco);
+    enviarCadastroParaNuvem(novo);
     return { ok: true, usuario: BancoLocal.publico(novo) };
   }
 
@@ -483,6 +626,8 @@
     removerUsuario,
     ehAdmin,
     aoMudar,
+    estadoSincronizacao,
+    reenviarFilaNuvem,
     jaMostrouLoginNestaAba,
     marcarLoginMostrado,
     get usuario() {

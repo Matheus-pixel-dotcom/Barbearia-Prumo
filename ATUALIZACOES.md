@@ -1,5 +1,148 @@
 # Atualizações do Projeto - Style Relo Barber
 
+## 🛠️ 9 de outubro de 2026 (tarde) — Painel por dentro + configurar o Supabase colando
+
+### O que o admin vê ao abrir o painel
+- **Faixa "Hoje na barbearia"**, logo acima dos gráficos: quantos cadastros e acessos entraram
+  **hoje** (no calendário, não "últimas 24 h"), quantos produtos estão abaixo do mínimo,
+  manutenções abertas, o total de despesas do mês com o que ainda está em aberto e se sobrou
+  cadastro na fila da nuvem. Cada bolinha é um botão: clicar nela **abre a tela do assunto**.
+- **Cartões de KPI clicáveis**: levam para a aba correspondente (Enter/Espaço também funcionam,
+  e há `aria-label`), com hover mais vivo — elevação, sombra e filete dourado no topo.
+- **Chip do admin logado no cabeçalho** (avatar com as iniciais + primeiro nome). Na tela
+  pequena a sidebar fica escondida, e o nome sumia junto; agora ele está sempre no topo. Ao
+  clicar: e-mail da conta, atalho para o status do banco e **Sair da conta**.
+- Números novos vêm do servidor: `calcularMetricas()` passou a devolver `novosHoje`,
+  `acessosHoje` e `despesasPendentes` (o painel em modo local calcula os equivalentes no navegador).
+
+### Configurar o espelho ficou "colar e salvar"
+- Na aba **Banco de Dados** há um campo novo: **cole o bloco inteiro** que o painel do Supabase
+  mostra (URL, chave, rótulos, aspas, vírgulas — tanto faz). O servidor separa as partes:
+  - acha `https://xxxx.supabase.co` e o ref mesmo sem o `https://`;
+  - aceita a chave **anon**, a **publishable** nova (`sb_publishable_…`) e o **JWT**;
+  - lê o payload do JWT para dizer o tipo da chave e **avisa se for a `service_role`**
+    (funciona, mas a anon/publishable já basta para o espelho);
+  - se não achar nada, responde 400 explicando o que falta, em português.
+- URL de **outro** projeto é barrada com 409 se a `SUPABASE_URL` do `.env` fixa qual é o
+  projeto (para o painel nunca desviar o espelho para outro lugar sem querer).
+- Campo URL **em branco** ao salvar com bloco colado não apaga a URL atual.
+- A chave continua gravada só no servidor (`data/supabase-config.json`, gitignored) e o
+  navegador nunca a recebe inteira — só a máscara.
+
+### Vitrine
+- `npm run demo` agora cria 3 cadastros **de hoje** (com hora limitada ao horário atual, para
+  nunca inventar futuro) — é o que a faixa "Hoje na barbearia" mostra.
+
+---
+
+## ✂️ 9 de outubro de 2026 — Menu igual em toda página + pílula do Admin
+
+### O item "🍌 Estúdio Nano Banana" saiu do menu
+- Ele só existia em 3 páginas (`index.html`, `ia-tryon.html`, `nano-banana.html`), então o
+  cabeçalho mudava de tamanho de uma página para a outra. Agora **nenhuma** página mostra o
+  item no menu — as 12 páginas têm exatamente a mesma navegação.
+- A página do estúdio continua no ar (`nano-banana.html`) e chega nela por onde faz sentido:
+  pelo botão **"Ver o corte na sua foto (Estúdio)"** na tela de resultado do
+  **Experimente com IA** e pelo **"Abrir Estúdio"** da aba de IA do painel admin.
+
+### "Admin" no menu deixou de ser um texto dourado solto
+- Antes: `<a style="color: var(--gold)">Admin</a>` (e faltava em `nano-banana.html`).
+- Agora: pílula dourada com ícone de cadeado (`.nav-admin`), no mesmo vocabulário do botão
+  de login — contorno dourado por fora, e **fechada em ouro quando você entra com uma conta
+  de administrador** (o `login-modal.js` já marcava o link; agora isso aparece na tela).
+- `:focus-visible` com anel dourado no menu inteiro (antes o destaque de teclado era o do
+  navegador), e o item da página atual ganhou um filete, para não depender só da cor.
+- `?v=` de CSS e JS bumped para `20261009` em todas as páginas, para ninguém ficar com o
+  cabeçalho velho na cache.
+
+### Vitrine de dados de demonstração (era script solto, agora é comando)
+- `ferramentas/semeia-demo.js` + **`npm run demo`**: 18 clientes de exemplo (e-mails em
+  `@exemplo.com`), 5 produtos (dois abaixo do mínimo, de propósito, para o alerta de falta
+  aparecer), 3 ordens de manutenção e 5 despesas, com cadastros e acessos espalhados nos
+  últimos 33 dias — assim os KPIs, os gráficos e a variação semanal do painel abrem com
+  número de verdade. Idempotente: rodar de novo não duplica nada e só escreve em
+  `data/db.json` (gitignored).
+
+---
+
+## 🏆 5 de outubro de 2026 — Painel admin premium + cadastro indo direto para o banco
+
+### Cadastro do cliente → banco de dados (automático, sem importar nada)
+- Todo cadastro feito no site (página **Criar conta** ou a caixinha de login) entra
+  **na hora** no banco do servidor (`data/db.json`), que é o banco que o painel admin lê.
+- Em seguida, em segundo plano, o servidor manda uma **cópia para o Supabase**
+  (tabela `clientes`) — o "banco de dados da nuvem" da barbearia. O cadastro do cliente
+  nunca fica preso num único computador.
+- **Se a internet cair, não se perde nada**: o cadastro entra numa fila (`sync.fila` no
+  banco) e o servidor tenta de novo sozinho a cada 3 minutos, com espera crescente.
+  O painel admin mostra a fila, o erro de cada item e o botão **Reenviar fila**.
+- Site aberto **sem servidor** (duplo clique no HTML / hospedagem estática): agora o
+  próprio navegador manda o cadastro para o Supabase (`sync-supabase.js`) e guarda a fila
+  no navegador, tentando o reenvio a cada visita.
+- Chave/URL/tabela configuráveis por `.env` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+  `SUPABASE_TABELA`, `SUPABASE_ATIVO`) **ou** pela aba **Banco de Dados** do painel — sem
+  tocar no código. A chave nunca é devolvida inteira para o navegador (máscara).
+- **A senha não vai para a nuvem**: só nome, e-mail, perfil, origem, datas e nº de acessos.
+- Arquivo novo: `ferramentas/supabase-tabela-clientes.sql` (cria a tabela + policies; o
+  painel tem o botão "Copiar SQL da tabela").
+
+### Painel admin premium (`admin.html` / `admin.js`)
+- Visual novo: preto profundo + ouro, sidebar com ícones em SVG, cartões de vidro,
+  foco acessível, animações discretas (`prefers-reduced-motion` respeitado) e layout
+  responsivo com menu sanfonado no celular.
+- **Dashboard com dados de verdade**: cartões de KPI (clientes, acessos 24h, retorno em
+  30 dias, valor em estoque, despesas do mês, status da nuvem) com variação da semana,
+  sparkline, gráfico de área (cadastros em 14 dias), gráfico de barras (acessos),
+  rosca de origem dos cadastros, fluxo de atividade recente e lista "precisa de atenção".
+  Gráficos são SVG desenhados no próprio `admin.js` — **sem CDN, sem biblioteca**.
+- **Banco de Clientes**: busca por nome/e-mail/ID, filtro por perfil, filtro por status da
+  nuvem, ordenação, paginação, **ficha do cliente** (dados + histórico de acessos dele) e
+  **Exportar CSV** (abre direto no Excel em português).
+- **Estoque, Manutenção e Despesas saem do `localStorage` e vão para o banco do servidor**:
+  todos os admins passam a ver o mesmo número. Adicionado estoque mínimo (alerta de falta),
+  histórico de entrada/saída por produto, custo/responsável na manutenção e despesas por
+  categoria. Os dados antigos do navegador continuam funcionando (formato antigo é lido e
+  atualizado no novo padrão automaticamente).
+- **Aba Banco de Dados**: estado do banco local e da nuvem, contadores (enviados, na fila,
+  falhas), fila com o erro de cada cadastro, botões **Testar conexão**, **Reenviar fila** e
+  o formulário de configuração (ligar/desligar, URL, tabela, chave).
+- Modais de verdade (abrem e fecham com Esc/clique fora), confirmação com HTML formatado e
+  avisos no canto da tela (toast) em vez de `alert()`.
+
+### Banco e API
+- `db.js` → banco na versão 3 com `produtos`, `manutencoes`, `despesas`, `sync` (fila +
+  estatísticas), `transacionar()` (escrita serializada) e `calcularMetricas()`.
+- Rotas novas (só admin): `GET /api/admin/metricas`, `GET /api/admin/usuarios/:id`,
+  `GET|POST /api/admin/estoque`, `POST /api/admin/estoque/mov`, `DELETE /api/admin/estoque/:id`,
+  `GET|POST /api/admin/manutencao`, `DELETE /api/admin/manutencao/:id`,
+  `GET|POST /api/admin/despesas`, `DELETE /api/admin/despesas/:id`,
+  `GET|POST /api/admin/supabase`, `POST /api/admin/supabase/teste`, `POST /api/admin/supabase/reenviar`.
+- `GET /api/health` agora informa o estado do espelho (`espelho.ativo/tabela/pendentes`).
+- Toda rota nova exige token de admin (cliente recebe `403`, visitante `401`) e `data/`
+  continua bloqueada para download pelo navegador.
+- Testes: `npm test` roda 88 verificações ponta a ponta contra um servidor descartável
+  (cadastro → painel, métricas, estoque, despesas, nuvem/fila, re-espelho no login,
+  segurança, senhas só em hash, arquivos protegidos). `npm run test:render` faz o
+  `admin.js` inteiro rodar num DOM falso — se o painel quebrar no render, o teste quebra.
+
+### Ajustes finais do mesmo dia (3 detalhes que faltavam)
+- **Re-espelho no login**: se a linha do cliente no Supabase estiver velha (último envio há
+  mais de 24 h) ou com falha, o `POST /api/auth/login` reagenda o reenvio — assim
+  `ultimo_login` e `total_logins` não ficam congelados na data do cadastro.
+- **Selo "atualizado há X minutos"** no topo do painel + **auto-refresh da aba aberta** a cada
+  minuto (antes só o dashboard se atualizava). Quem deixa a aba de estoque ou a dos clientes
+  aberta na tela vê os números mudarem sozinhos — sem F5.
+- `ferramentas/teste-painel.js` e `ferramentas/teste-render-admin.js` entraram no repo (com
+  `npm test`, `npm run test:nuvem`, `npm run test:render`, `npm run test:painel`) para a
+  checagem não depender de arquivo solto fora do projeto.
+
+### Nada foi quebrado
+As rotas antigas (`/api/auth/*`, `/api/admin/usuarios`, `/api/admin/ia`, `/api/ia/*`,
+`/api/health`) e todas as páginas continuam funcionando. Quem abrir o site sem servidor
+usa o banco do navegador como antes — só que agora com o espelho na nuvem por cima.
+
+---
+
 ## 🍌 18 de setembro de 2026 — Nano Banana (IA de imagem do Google)
 
 ### Novos arquivos
