@@ -23,6 +23,11 @@
   quem não é admin e selos por nível na lista de clientes (ouro/azul/verde).
 - `npm run demo` agora cria também a conta **supervisor@exemplo.com / Senha123!** para
   mostrar a hierarquia na apresentação.
+- **Equipe do projeto na semente:** 6 administradores (R. Gabriel, Evelyn Coller, Matheus
+  Moura, Marcos Rossa, Professor e Victor Camargo Pereira) e 2 supervisores — **Wevergton
+  Sousa** e **Michel Lima**, os barbeiros da equipe, que entram no painel para operar o dia a
+  dia. O boot **alinha o perfil de quem já está no banco** com o `admin-accounts.js`; se
+  alguém for promovido/rebaixado **pelo painel**, essa decisão prevalece (marca `perfilManual`).
 - Documento novo: **`HIERARQUIA_DE_ACESSO.md`** (matriz gerada do código com `npm run matriz`).
 - Testes novos: **`ferramentas/teste-hierarquia.js`** — 65 verificações rota por rota
   (`npm run test:acessos`), já dentro do `npm test`.

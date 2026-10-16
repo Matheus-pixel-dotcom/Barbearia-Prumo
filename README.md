@@ -44,7 +44,7 @@ Depois abra **http://localhost:8000/index.html**
 * **Admin (premium)** — painel para a equipe (administrador e supervisor):
   dashboard com KPIs e gráficos, banco de clientes com busca/filtro/paginação/ficha/CSV,
   **estoque, manutenção e despesas agora no banco do servidor** (compartilhados entre os admins),
-  aba **Banco de Dados** com o status do espelho na nuvem e aba da IA. Faixa **"Hoje na
+  aba **Banco de Dados** com o status do espelho na nuvem. Faixa **"Hoje na
   barbearia"** (cadastros e acessos do dia, estoque abaixo do mínimo, despesas em aberto, fila da
   nuvem), cartões de KPI que abrem a tela do assunto com um clique e o chip de quem está logado
   no cabeçalho. Para ligar o Supabase, basta **colar o bloco inteiro** que o painel dele mostra —
@@ -71,7 +71,7 @@ npm run matriz        # imprime a matriz de permissões atualizada (vem do códi
 | `IMPLEMENTACAO_IA.md` | Recursos de IA (câmera/visagismo) |
 | `HIERARQUIA_DE_ACESSO.md` | Administrador x supervisor x usuário: matriz de permissões, rotas e como promover alguém |
 | `RELATORIO_FINAL.md` | Relatório geral das entregas |
-| `TCC/` | Documento do TCC, diagrama de caso de uso, casos de uso passo a passo e Daily Scrum |
+| `TCC/` | Material do TCC: **casos de uso passo a passo** (`casos-de-uso.md`), **diagrama de caso de uso** em A4 paisagem (`diagrama-caso-de-uso.html`, imprimir em PDF com Ctrl+P) e **Daily Scrum / quem é quem** (`daily-scrum.html` e `Daily-Scrum-TCC.docx`) |
 | `novos_precos.md` | Tabela de preços e planos (inclui o Dia do Noivo) |
 
 ## Estrutura principal
@@ -80,7 +80,8 @@ npm run matriz        # imprime a matriz de permissões atualizada (vem do códi
 server.js            servidor do site + API (/api/auth/*, /api/admin/*)
 db.js                banco de dados em data/db.json
 auth-hash.js         SHA-256 com sal (usado no navegador e no servidor)
-admin-accounts.js    lista oficial da equipe (somente hashes) — quem é admin/supervisor
+admin-accounts.js    lista oficial da equipe (somente hashes): 6 administradores e
+                     2 supervisores (Wevergton Sousa e Michel Lima, os barbeiros)
 permissoes.js        hierarquia de acesso: a matriz do que cada perfil pode fazer
 auth-core.js         ReloAuth: login, cadastro, sessão (servidor ou modo local)
                      + perfis de acesso (cliente, supervisor, administrador)
@@ -93,5 +94,6 @@ admin.html / admin.js   painel administrativo
 dashboard.html       área do cliente
 ferramentas/gerar-senha.js   gerador de hash para novos admins
 ferramentas/teste-hierarquia.js   65 verificações da hierarquia de acesso
-TCC/                 documento do TCC, diagrama de caso de uso e Daily Scrum
+ferramentas/gerar-daily-scrum.js  gera TCC/Daily-Scrum-TCC.docx (precisa de `npm i docx --no-save`)
+TCC/                 casos de uso, diagrama de caso de uso (A4) e Daily Scrum do projeto
 ```

@@ -913,11 +913,12 @@
     if (estado.pagina > totalPaginas - 1) estado.pagina = totalPaginas - 1;
     const visiveis = lista.slice(estado.pagina * LINHAS_PAGINA, estado.pagina * LINHAS_PAGINA + LINHAS_PAGINA);
 
+    const pluralContas = (n) => n + (n === 1 ? ' conta' : ' contas');
     definir(
       'clientes-contagem',
       lista.length === estado.usuarios.length
-        ? estado.usuarios.length + ' conta' + (estado.usuarios.length === 1 ? '' : 's')
-        : lista.length + ' de ' + estado.usuarios.length + ' conta(s)'
+        ? pluralContas(estado.usuarios.length)
+        : lista.length + ' de ' + pluralContas(estado.usuarios.length)
     );
     definir('pager-info', lista.length ? 'página ' + (estado.pagina + 1) + ' de ' + totalPaginas : '');
     const anterior = id('pager-anterior');

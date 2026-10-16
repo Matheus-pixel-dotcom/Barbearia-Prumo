@@ -364,8 +364,8 @@ const FILA_SYNC_INTERVALO_MS = 3 * 60 * 1000;
 /* ------------------------------------------------------------------ */
 async function tratarApi(req, res, url) {
   const banco = db.carregar();
-  const criados = db.semearAdmins(banco);
-  if (criados > 0) db.salvar(banco);
+  const semeados = db.semearAdmins(banco);
+  if (semeados.criados > 0 || semeados.perfisAtualizados > 0) db.salvar(banco);
 
   const rota = url.pathname.replace(/\/+$/, '') || '/api';
 
@@ -380,6 +380,7 @@ async function tratarApi(req, res, url) {
       banco: path.relative(RAIZ, db.DB_FILE),
       usuarios: banco.usuarios.length,
       administradores: banco.usuarios.filter((u) => u.perfil === 'admin').length,
+      supervisores: banco.usuarios.filter((u) => u.perfil === 'supervisor').length,
       espelho: { ativo: cfg.ativo, tabela: cfg.tabela, pendentes: db.resumoSync(banco).pendentes },
       hora: new Date().toISOString()
     });
@@ -995,7 +996,7 @@ const servidor = http.createServer((req, res) => {
 
 servidor.listen(PORTA, HOST, () => {
   const banco = db.carregar();
-  const criados = db.semearAdmins(banco);
+  const semeados = db.semearAdmins(banco);
   db.salvar(banco);
   const cfg = configSupabase();
   const fila = db.resumoSync(banco);
@@ -1006,6 +1007,11 @@ servidor.listen(PORTA, HOST, () => {
   console.log(`  API:     http://localhost:${PORTA}/api/health`);
   console.log(`  Banco:   ${db.DB_FILE}`);
   console.log(`  Usuários cadastrados: ${banco.usuarios.length}`);
+  const admins = banco.usuarios.filter((u) => u.perfil === 'admin').length;
+  const supervisores = banco.usuarios.filter((u) => u.perfil === 'supervisor').length;
+  console.log(`  Hierarquia: ${admins} administrador(es), ${supervisores} supervisor(es) — papéis em HIERARQUIA_DE_ACESSO.md`);
+  if (semeados.criados) console.log(`  Semente:  ${semeados.criados} conta(s) da equipe criada(s) agora`);
+  if (semeados.perfisAtualizados) console.log(`  Semente:  ${semeados.perfisAtualizados} perfil(is) da equipe alinhado(s) ao admin-accounts.js`);
   if (banco.produtos.length || banco.manutencoes.length || banco.despesas.length) {
     console.log(
       `  Operação: ${banco.produtos.length} produto(s), ${banco.manutencoes.length} manutenção(ões), ${banco.despesas.length} despesa(s) no banco do servidor`
@@ -1018,7 +1024,6 @@ servidor.listen(PORTA, HOST, () => {
     console.log('  Nuvem:   espelhamento no Supabase DESLIGADO (cadastro fica só no data/db.json)');
     console.log('           Para ligar: SUPABASE_URL / SUPABASE_ANON_KEY no .env ou no painel admin.');
   }
-  if (criados > 0) console.log(`  ${criados} conta(s) de administrador criada(s) agora.`);
   console.log('======================================================');
 
   // Cron do espelho: se um cadastro não subiu (site fora do ar, tabela travada),

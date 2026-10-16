@@ -125,13 +125,34 @@ function acharUsuario(db, email) {
   );
 }
 
-// Cria as contas da equipe na primeira execução (ou se forem apagadas).
-// A semente (admin-accounts.js) diz quem é admin e quem é supervisor.
+// Cria as contas da equipe na primeira execução (ou se forem apagadas) e mantém
+// o perfil delas em dia com a semente (admin-accounts.js), que é a fonte da verdade
+// de quem é Administrador (nível 3) e quem é Supervisor (nível 2).
 function semearAdmins(db) {
   let criados = 0;
+  let perfisAtualizados = 0;
   sementeAdmins.contas.forEach((conta) => {
-    if (acharUsuario(db, conta.email)) return;
     const perfil = Permissoes.normalizar(conta.perfil || 'admin');
+    const existente = acharUsuario(db, conta.email);
+
+    if (existente) {
+      // Reconciliação da equipe: se o perfil mudou no arquivo da semente (ex.: um
+      // barbeiro que passou de administrador para supervisor), o banco acompanha na
+      // próxima vez que o servidor sobe. Quem foi promovido/rebaixado PELO PAINEL
+      // ganha a marca `perfilManual` e passa a mandar no lugar da semente.
+      if (
+        existente.origem === 'semente' &&
+        !existente.perfilManual &&
+        Permissoes.normalizar(existente.perfil) !== perfil
+      ) {
+        existente.perfil = perfil;
+        existente.perfilAtualizadoEm = new Date().toISOString();
+        db.sessoes = (db.sessoes || []).filter((s) => s.usuarioId !== existente.id);
+        perfisAtualizados += 1;
+      }
+      return;
+    }
+
     db.usuarios.push({
       id: (perfil === 'admin' ? 'adm_' : 'sup_') + ReloHash.sha256Hex(conta.email).slice(0, 10),
       nome: conta.nome,
@@ -148,7 +169,7 @@ function semearAdmins(db) {
     });
     criados += 1;
   });
-  return criados;
+  return { criados, perfisAtualizados };
 }
 
 function usuarioPublico(usuario) {
@@ -284,6 +305,8 @@ function definirPerfil(db, id, perfil, autor) {
   alvo.perfil = novo;
   alvo.perfilAlteradoEm = new Date().toISOString();
   alvo.perfilAlteradoPor = autor && autor.email ? autor.email : null;
+  // A troca feita pelo painel vence a semente na próxima reconciliação do boot.
+  alvo.perfilManual = true;
   // Quem troca de perfil perde as sessões abertas: entra de novo com o novo poder.
   db.sessoes = (db.sessoes || []).filter((s) => s.usuarioId !== alvo.id);
   return { ok: true, usuario: usuarioPublico(alvo), perfilAnterior: atual };

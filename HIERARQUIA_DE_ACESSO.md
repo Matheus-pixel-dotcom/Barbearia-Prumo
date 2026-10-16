@@ -62,13 +62,23 @@ conta (a pessoa entra de novo já com o poder novo).
 
 ## Quem já nasce com cada perfil
 
-- **Administradores:** a lista de `admin-accounts.js` (8 contas da equipe/curadoria do
-  projeto). O arquivo guarda apenas `sal + hash` — nunca a senha.
-- **Supervisores:** nenhum por padrão. Eles são criados **pelo painel**:
-  1. o admin abre **Banco de Clientes** → botão **Ficha** de qualquer pessoa;
-  2. na ficha, em **Perfil de acesso**, clica em **Tornar supervisor**;
-  3. a conta passa a abrir o painel na hora (e recebe o selo azul *Supervisor* na lista).
-  Também dá para nascer já supervisor: **+ Novo Cliente** → campo **Perfil de acesso** →
+A fonte da verdade é `admin-accounts.js`: cada conta traz o campo `perfil` e o arquivo guarda
+apenas `sal + hash` — nunca a senha.
+
+| Perfil na semente | Quantas contas | Quem |
+| --- | --- | --- |
+| **Administrador** (nível 3) | 6 | R. Gabriel, Evelyn Coller, Matheus Moura, Marcos Rossa, Professor e Victor Camargo Pereira |
+| **Supervisor** (nível 2) | 2 | Wevergton Sousa e Michel Lima (barbeiros da equipe: entram no painel para operar, sem os poderes de administrador) |
+
+> **Como o perfil da semente chega ao banco:** no boot (e a cada requisição), `db.semearAdmins()`
+> cria quem falta e **alinha o perfil de quem já existe** com o que está em `admin-accounts.js`.
+> A exceção é a troca feita **pelo painel**: ela marca a conta com `perfilManual` e passa a valer
+> sobre a semente — assim ninguém perde uma promoção decidida dentro do sistema.
+
+- **Novos supervisores pelo painel:** o admin abre **Banco de Clientes** → botão **Ficha** de
+  qualquer pessoa → em **Perfil de acesso**, clica em **Tornar supervisor**; a conta passa a abrir
+  o painel na hora (e recebe o selo azul *Supervisor* na lista).
+- **Conta nova já como supervisor:** **+ Novo Cliente** → campo **Perfil de acesso** →
   *Supervisor* (esse campo só aparece para o administrador).
 - **Demonstração pronta:** `npm run demo` cria a vitrine **e** uma conta de supervisor
   (`supervisor@exemplo.com` / `Senha123!`) para mostrar a hierarquia funcionando na banca.
