@@ -364,11 +364,9 @@
 
   <h3>Burndown do Product Backlog (itens entregues por sprint)</h3>
   <div class="burndown">
-    <svg viewBox="0 0 620 230" role="img" aria-label="Gráfico de burndown do backlog do projeto, de 38 itens restantes na Sprint 0 até 0 na Sprint 7">
-      <!-- eixos -->
+    <svg viewBox="0 0 620 232" role="img" aria-label="Burndown do backlog: 38 itens em aberto na Sprint 0, caindo até 0 na Sprint 7">
       <line x1="46" y1="170" x2="600" y2="170" stroke="#94a3b8" stroke-width="1"/>
       <line x1="46" y1="20" x2="46" y2="170" stroke="#94a3b8" stroke-width="1"/>
-      <!-- grades -->
       <g stroke="#e2e8f0" stroke-width="1">
         <line x1="46" y1="137.5" x2="600" y2="137.5"/>
         <line x1="46" y1="105" x2="600" y2="105"/>
@@ -379,38 +377,40 @@
         <text x="40" y="174">0</text>
         <text x="40" y="141">10</text>
         <text x="40" y="108">20</text>
-        <text x="40" y="75">30</text>
+        <text x="40" y="75.5">30</text>
         <text x="40" y="43">40</text>
       </g>
-      <!-- linha ideal (tracejada) -->
-      <polyline points="46,44.6 126,27 206,17.5 286,10 366,0 446,0 526,0 600,0"
+      <polyline points="46,46.5 125,62.8 204,79 283,95.3 363,111.5 442,127.8 521,144 600,170"
                 fill="none" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="6 4"/>
-      <!-- linha real -->
-      <polyline points="46,44.6 126,27 206,17.5 286,10 366,10 446,0 526,0 600,0"
+      <polyline points="46,46.5 125,72.5 204,88.8 283,101.8 363,114.8 442,144 521,160.3 600,170"
                 fill="none" stroke="#a9741a" stroke-width="2.4"/>
       <g fill="#a9741a">
-        <circle cx="46" cy="44.6" r="3.6"/><circle cx="126" cy="27" r="3.6"/><circle cx="206" cy="17.5" r="3.6"/>
-        <circle cx="286" cy="10" r="3.6"/><circle cx="366" cy="10" r="3.6"/><circle cx="446" cy="0" r="3.6"/>
-        <circle cx="526" cy="0" r="3.6"/><circle cx="600" cy="0" r="3.6"/>
+        <circle cx="46" cy="46.5" r="3.6"/><circle cx="125" cy="72.5" r="3.6"/><circle cx="204" cy="88.8" r="3.6"/>
+        <circle cx="283" cy="101.8" r="3.6"/><circle cx="363" cy="114.8" r="3.6"/><circle cx="442" cy="144" r="3.6"/>
+        <circle cx="521" cy="160.3" r="3.6"/><circle cx="600" cy="170" r="3.6"/>
       </g>
-      <!-- rótulos das sprints -->
       <g font-size="9.5" fill="#334155" text-anchor="middle">
-        <text x="46" y="188">S0</text><text x="126" y="188">S1</text><text x="206" y="188">S2</text>
-        <text x="286" y="188">S3</text><text x="366" y="188">S4</text><text x="446" y="188">S5</text>
-        <text x="526" y="188">S6</text><text x="600" y="188">S7</text>
+        <text x="46" y="188">S0</text><text x="125" y="188">S1</text><text x="204" y="188">S2</text>
+        <text x="283" y="188">S3</text><text x="363" y="188">S4</text><text x="442" y="188">S5</text>
+        <text x="521" y="188">S6</text><text x="600" y="188">S7</text>
       </g>
-      <text x="320" y="206" font-size="10" fill="#5b6672" text-anchor="middle">
-        linhas: “itens do backlog ainda em aberto” ao fim de cada sprint
-      </text>
-      <!-- anotação -->
-      <text x="366" y="24" font-size="10" fill="#b42318">S4 travou (IA de imagem cancelada)</text>
-      <text x="600" y="16" font-size="10" fill="#15803d" text-anchor="end">backlog do TCC zerado</text>
+      <text x="363" y="134" font-size="9.5" fill="#b42318" text-anchor="middle">S4: a IA de imagem travou o escopo</text>
+      <text x="600" y="30" font-size="9.5" fill="#15803d" text-anchor="end">em S7 o backlog do TCC zerou</text>
+      <g font-size="9.5" fill="#334155">
+        <line x1="46" y1="206" x2="76" y2="206" stroke="#a9741a" stroke-width="2.4"/>
+        <text x="82" y="209">itens em aberto ao fim de cada sprint (burndown real)</text>
+        <line x1="392" y1="206" x2="422" y2="206" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="6 4"/>
+        <text x="428" y="209">ritmo ideal</text>
+        <text x="46" y="226" fill="#5b6672">38 itens priorizados no Product Backlog · 8 sprints · 34 entregas publicadas no repositório</text>
+      </g>
     </svg>
   </div>
   <p class="legenda-figura">
-    <strong>Figura 2</strong> — Burndown do projeto: 38 itens priorizados no Product Backlog, 8 sprints e
-    as 34 entregas publicadas no repositório (contagem feita a partir de <code>git log</code> e do
-    histórico em <code>ATUALIZACOES.md</code>). Fonte: elaborado pelos autores (2026).
+    <strong>Figura 2</strong> — Burndown do projeto: a linha cheia mostra quantos itens continuavam em
+    aberto ao fim de cada sprint e a tracejada é o ritmo ideal. A queda para em S4 porque a IA de
+    imagem (Nano Banana) foi cancelada, e zera em S7, quando a hierarquia de acesso e os artefatos
+    do TCC entraram. Fonte: elaborado pelos autores (2026), a partir do histórico do repositório e
+    do <code>ATUALIZACOES.md</code>.
   </p>
 
   <h3>Definition of Done (o que cada cartão precisa para entrar em “Feito”)</h3>
