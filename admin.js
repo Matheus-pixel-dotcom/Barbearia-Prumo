@@ -1557,53 +1557,6 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
     }
   }
 
-  /* ============================ IA (Nano Banana) ============================ */
-  async function chamarIaAdmin(corpo) {
-    const resposta = await api('admin/ia', corpo);
-    if (resposta.dados) return { ok: true, dados: resposta.dados };
-    return { ok: false, dados: { erro: resposta.erro || 'Servidor indisponível.' } };
-  }
-  async function carregarIA() {
-    const resposta = await chamarIaAdmin();
-    const dados = resposta.dados || {};
-    const pill = id('ia-pill');
-    if (!resposta.ok) {
-      definir('ia-status', dados.erro || 'Erro ao carregar');
-      if (pill) { pill.className = 'pill off'; pill.textContent = 'sem conexão'; }
-      return;
-    }
-    if (pill) {
-      pill.className = 'pill ' + (dados.ativo ? 'on' : 'off');
-      pill.textContent = dados.ativo ? 'IA ativa' : 'IA desligada';
-    }
-    definir('ia-status', dados.ativo ? 'Ativa' : 'Desligada');
-    definir('ia-modelo', dados.ativo ? dados.modelo : dados.chaveConfigurada ? dados.modelo : 'sem chave');
-    definir('ia-chave-mascara', dados.chaveMascara || 'nenhuma configurada');
-    definir('ia-uso', dados.usoUltimaHora);
-    definir('ia-limite-atual', dados.limitePorHora);
-    const campoLimite = id('ia-limite-input');
-    if (campoLimite && !campoLimite.value) campoLimite.value = dados.limitePorHora;
-  }
-  async function salvarChaveIA() {
-    const chave = String(id('ia-chave-input').value || '').trim();
-    if (!chave) return toast('Cole uma chave válida antes de salvar.', 'err');
-    const resposta = await chamarIaAdmin({ chave });
-    if (!resposta.ok) return toast(resposta.dados.erro || 'Não foi possível salvar a chave.', 'err');
-    id('ia-chave-input').value = '';
-    toast('Chave salva! Nano Banana ' + (resposta.dados.ativo ? 'ativo' : 'inativo') + '.', 'ok');
-    carregarIA();
-  }
-  async function salvarLimiteIA() {
-    const limitePorHora = Number(id('ia-limite-input').value);
-    if (!Number.isFinite(limitePorHora) || limitePorHora < 1 || limitePorHora > 500) {
-      return toast('Informe um limite válido (entre 1 e 500).', 'err');
-    }
-    const resposta = await chamarIaAdmin({ limitePorHora });
-    if (!resposta.ok) return toast(resposta.dados.erro || 'Não foi possível salvar o limite.', 'err');
-    toast('Limite atualizado para ' + resposta.dados.limitePorHora + ' gerações/hora.', 'ok');
-    carregarIA();
-  }
-
   /* ============================ "atualizado há X" ============================ */
   let ultimaAtualizacao = 0;
   function marcarAtualizado() {
@@ -1640,8 +1593,7 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
     products: ['Controle de Estoque', 'Entrada e saída compartilhadas entre os administradores'],
     maintenance: ['Gestão de Manutenção', 'Equipamentos e serviços da barbearia'],
     expenses: ['Controle de Despesas', 'Custos do mês, por categoria'],
-    banco: ['Banco de Dados', 'data/db.json + espelho no Supabase'],
-    ia: ['Nano Banana — Central de IA', 'Chave, limites e uso do gerador de imagens']
+    banco: ['Banco de Dados', 'data/db.json + espelho no Supabase']
   };
 
   function mudarAba(nome) {
@@ -1660,7 +1612,6 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
     if (nome === 'maintenance') carregarManutencao();
     if (nome === 'expenses') carregarDespesas();
     if (nome === 'banco') carregarSync();
-    if (nome === 'ia') carregarIA();
   }
 
   async function carregarMetricas() {
@@ -2039,11 +1990,6 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
     id('btn-reenviar').addEventListener('click', reenviarFila);
     id('btn-recarregar-sync').addEventListener('click', carregarSync);
     id('btn-sql').addEventListener('click', copiarSQL);
-
-    // IA
-    id('btn-recarregar-ia').addEventListener('click', carregarIA);
-    id('btn-salvar-chave-ia').addEventListener('click', salvarChaveIA);
-    id('btn-salvar-limite-ia').addEventListener('click', salvarLimiteIA);
     id('btn-atividade-trocar').addEventListener('click', carregarMetricas);
   }
 
@@ -2092,7 +2038,7 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
       } else if (abaAtual === 'tab-banco') {
         await carregarSync();
       }
-      if (abaAtual !== 'tab-ia') renderizarSeloBanco();
+      renderizarSeloBanco();
     }, 60000);
   });
 

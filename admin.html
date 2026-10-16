@@ -6,7 +6,7 @@
   <meta name="description" content="Painel administrativo premium do Style Relo Barber: banco de clientes, cadastros em tempo real, espelho na nuvem, estoque, manutenção e despesas.">
   <meta name="robots" content="noindex, nofollow">
   <title>Painel Administrativo · Style Relo Barber</title>
-  <link rel="stylesheet" href="style.css?v=20261010">
+  <link rel="stylesheet" href="style.css?v=20261016">
   <style>
     /* =====================================================================
        STYLE RELO · PAINEL PREMIUM
@@ -594,10 +594,6 @@
             Banco de Dados
             <span class="nav-badge warn" id="nav-badge-sync" hidden>0</span>
           </a>
-          <a class="nav-link" data-tab="ia" href="#ia">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v3m0 12v3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M3 12h3m12 0h3M4.9 19.1 7 17m10-10 2.1-2.1"/><circle cx="12" cy="12" r="3.4"/></svg>
-            Nano Banana (IA)
-          </a>
         </nav>
       </div>
 
@@ -976,48 +972,6 @@
         </div>
       </div>
 
-      <!-- ================================ IA ================================ -->
-      <div id="tab-ia" class="section-panel">
-        <div class="panel-header">
-          <h2>Nano Banana — Central de IA</h2>
-          <div class="acoes">
-            <span id="ia-pill" class="pill">verificando…</span>
-            <a class="btn btn-secondary btn-sm" href="nano-banana.html" target="_blank" rel="noopener">Abrir Estúdio</a>
-            <button class="btn btn-secondary btn-sm" id="btn-recarregar-ia" type="button">Atualizar</button>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:18px">
-          <div class="card" style="padding:14px 16px"><div class="eyebrow">Status</div><div style="font-size:18px;font-weight:800;margin-top:6px" id="ia-status">—</div></div>
-          <div class="card" style="padding:14px 16px"><div class="eyebrow">Modelo</div><div style="font-size:13.5px;font-weight:700;margin-top:8px;word-break:break-word" id="ia-modelo">—</div></div>
-          <div class="card" style="padding:14px 16px"><div class="eyebrow">Chave</div><div style="font-size:13.5px;font-weight:700;margin-top:8px;word-break:break-word" id="ia-chave-mascara">—</div></div>
-          <div class="card" style="padding:14px 16px"><div class="eyebrow">Uso na última hora</div><div style="font-size:18px;font-weight:800;margin-top:6px"><span id="ia-uso">0</span> / <span id="ia-limite-atual">30</span></div></div>
-        </div>
-
-        <div class="sub-panel">
-          <h3>Chave da API</h3>
-          <p class="help-note">A chave fica guardada <strong>somente no servidor</strong> — nenhum navegador consegue vê-la ou baixá-la. Ao salvar, a IA funciona na hora no Estúdio e no Simulador, sem reiniciar nada.</p>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-            <div class="form-group" style="flex:1 1 280px; margin-bottom:0;">
-              <label for="ia-chave-input">Nova chave (AIza… ou AQ…)</label>
-              <input type="password" id="ia-chave-input" autocomplete="off" placeholder="Cole a chave do Google AI Studio">
-            </div>
-            <button class="btn" id="btn-salvar-chave-ia" type="button">Salvar chave</button>
-          </div>
-        </div>
-
-        <div class="sub-panel">
-          <h3>Limite de gerações</h3>
-          <p class="help-note">Máximo de imagens por hora, por visitante — protege o crédito da API contra abusos e loops.</p>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-            <div class="form-group" style="width:150px; margin-bottom:0;">
-              <label for="ia-limite-input">Limite / hora</label>
-              <input type="number" id="ia-limite-input" min="1" max="500" value="30">
-            </div>
-            <button class="btn" id="btn-salvar-limite-ia" type="button">Salvar limite</button>
-          </div>
-        </div>
-      </div>
     </main>
   </div>
 
@@ -1173,11 +1127,11 @@
   <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 
   <!-- Login e banco de dados -->
-  <script src="auth-hash.js?v=20261010" defer></script>
-  <script src="admin-accounts.js?v=20261010" defer></script>
-  <script src="auth-core.js?v=20261010" defer></script>
-  <script src="sync-supabase.js?v=20261010" defer></script>
-  <script src="login-modal.js?v=20261010" defer></script>
-  <script src="admin.js?v=20261010" defer></script>
+  <script src="auth-hash.js?v=20261016" defer></script>
+  <script src="admin-accounts.js?v=20261016" defer></script>
+  <script src="auth-core.js?v=20261016" defer></script>
+  <script src="sync-supabase.js?v=20261016" defer></script>
+  <script src="login-modal.js?v=20261016" defer></script>
+  <script src="admin.js?v=20261016" defer></script>
 </body>
 </html>
