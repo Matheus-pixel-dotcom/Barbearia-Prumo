@@ -78,6 +78,7 @@
   <!-- Login e banco de dados de clientes -->
   <script src="auth-hash.js?v=20261016" defer></script>
   <script src="admin-accounts.js?v=20261016" defer></script>
+  <script src="permissoes.js?v=20261016" defer></script>
   <script src="auth-core.js?v=20261016" defer></script>
   <script src="sync-supabase.js?v=20261016" defer></script>
   <script src="login-modal.js?v=20261016" defer></script>
@@ -153,22 +154,33 @@
       document.getElementById('user-status').textContent = 'Seu cadastro está salvo no banco de dados da barbearia.';
       document.getElementById('dado-nome').textContent = usuario.nome || '—';
       document.getElementById('dado-email').textContent = usuario.email;
-      document.getElementById('dado-perfil').textContent = usuario.perfil === 'admin' ? 'Administrador' : 'Cliente';
+      document.getElementById('dado-perfil').textContent =
+        window.ReloAuth.rotuloPerfil ? window.ReloAuth.rotuloPerfil(usuario) : usuario.perfil;
       document.getElementById('dado-ultimo').textContent = formatarDataHora(usuario.ultimoLogin);
       document.getElementById('dado-total').textContent = String(usuario.totalLogins || 1) + ' acesso(s)';
       document.getElementById('dado-banco').textContent =
         window.ReloAuth.modo === 'servidor' ? 'Servidor (compartilhado)' : 'Local do navegador';
 
-      const admin = window.ReloAuth.ehAdmin(usuario);
-      document.getElementById('btn-admin').style.display = admin ? 'inline-block' : 'none';
+      // Quem tem painel é a equipe (supervisor e administrador); o cliente não.
+      const equipe = window.ReloAuth.ehEquipe
+        ? window.ReloAuth.ehEquipe(usuario)
+        : window.ReloAuth.ehAdmin(usuario);
+      document.getElementById('btn-admin').style.display = equipe ? 'inline-block' : 'none';
       const cartaoAdmin = document.getElementById('cartao-admin');
       const textoAdmin = document.getElementById('cartao-admin-texto');
+      const admin = window.ReloAuth.ehAdmin(usuario);
+      const supervisor = window.ReloAuth.ehSupervisor ? window.ReloAuth.ehSupervisor(usuario) : false;
       if (admin) {
         cartaoAdmin.classList.remove('bloqueado');
-        textoAdmin.textContent = 'Gerencie o banco de clientes, logins, estoque, manutenção e despesas.';
+        textoAdmin.textContent =
+          'Administrador: banco de clientes, logins, estoque, manutenção, despesas, nuvem e permissões.';
+      } else if (supervisor) {
+        cartaoAdmin.classList.remove('bloqueado');
+        textoAdmin.textContent =
+          'Supervisor: acompanhe os números e cuide do estoque, da manutenção e das despesas do dia a dia.';
       } else {
         cartaoAdmin.classList.add('bloqueado');
-        textoAdmin.textContent = 'Exclusivo dos administradores. Sua conta é de cliente.';
+        textoAdmin.textContent = 'Exclusivo da equipe da barbearia (supervisor e administrador).';
       }
     }
 

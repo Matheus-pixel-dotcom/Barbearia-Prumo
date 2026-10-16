@@ -1,5 +1,50 @@
 # Atualizações do Projeto - Style Relo Barber
 
+## 🔐 16 de outubro de 2026 (Etapa 5) — Hierarquia de acesso + fim da IA de imagem + TCC
+
+### Hierarquia de acesso: Administrador, Supervisor e Usuário
+- **A matriz de permissões virou arquivo** (`permissoes.js`), usado pelos dois lados:
+  o servidor decide de verdade e o painel só esconde o que o perfil não alcança.
+- **Usuário (cliente)** continua no site: agenda, simula o corte, avalia e vê a própria área.
+- **Supervisor** (novo) entra no painel, vê os números e os clientes e **opera o dia a dia**
+  (estoque com entrada/saída, manutenção e despesas). Não exclui nada, não mexe na nuvem e
+  não define permissões.
+- **Administrador** faz tudo: exclusões, configuração do Supabase e a própria definição de
+  quem é supervisor ou administrador.
+- Toda rota `/api/admin/*` agora passa por `exigePermissao(...)`: quem não pode recebe
+  **403 com explicação em português** (ex.: *"O perfil Supervisor não pode reenviar a fila
+  de cadastros para a nuvem."*).
+- **Promover/rebaixar pelo painel**: na ficha de qualquer usuário há o bloco *Perfil de
+  acesso* (Tornar supervisor / Tornar administrador / Voltar para cliente) e o cadastro
+  `+ Novo Cliente` ganhou o campo *Perfil de acesso* — os dois só aparecem para o admin.
+- Trocar o perfil de alguém **derruba as sessões abertas** daquela conta; conta da equipe
+  criada pela semente não pode ser rebaixada nem excluída; ninguém muda o próprio perfil.
+- O painel mostra o perfil no chip do cabeçalho, uma faixa dourada explicando o alcance de
+  quem não é admin e selos por nível na lista de clientes (ouro/azul/verde).
+- `npm run demo` agora cria também a conta **supervisor@exemplo.com / Senha123!** para
+  mostrar a hierarquia na apresentação.
+- Documento novo: **`HIERARQUIA_DE_ACESSO.md`** (matriz gerada do código com `npm run matriz`).
+- Testes novos: **`ferramentas/teste-hierarquia.js`** — 65 verificações rota por rota
+  (`npm run test:acessos`), já dentro do `npm test`.
+
+### Fim do Nano Banana: o simulador voltou ao modo antigo, com os bugs corrigidos
+- Saiu do projeto a IA de imagem do Google (era a PR #6): `nano-banana.html`, `nano-banana.js`,
+  `ia-gemini.js`, `NANO_BANANA.md`, as rotas `/api/ia/*`, a cota em `data/ia-config.json`, a aba
+  do painel e os estilos do selo/comparador. A motivação está no `RELATORIO_FINAL.md`.
+- Entrou `ia-tryon.js`: clicar num estilo **monta o card "Combinação encontrada"** com o corte,
+  o volume e o botão do WhatsApp pronto (antes os botões não faziam nada). A leitura do rosto
+  pela câmera sai do console e aparece na tela (`relo:analise`), e trocar de foto limpa o
+  resultado anterior (`relo:nova-foto`).
+- `chat-ia.js` ficou 100% local: responde preços, barba, cachos, entradas, manutenção e
+  agendamento sem depender de chave de API.
+
+### Começo do TCC
+- Pasta **`TCC/`** com o documento do TCC, o **diagrama de caso de uso** em página A4 (para
+  imprimir e apresentar), os **casos de uso passo a passo** e o material de **Daily Scrum**
+  com o papel de cada integrante no projeto e na equipe Scrum.
+
+---
+
 ## 🛠️ 9 de outubro de 2026 (tarde) — Painel por dentro + configurar o Supabase colando
 
 ### O que o admin vê ao abrir o painel

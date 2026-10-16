@@ -40,6 +40,38 @@
     emModoLocal: false
   };
 
+  /* ============================ permissões ============================
+   * A tabela de quem pode o quê vive em permissoes.js — a mesma que o servidor
+   * usa para decidir. Aqui a gente só ESCONDE o que o perfil não pode fazer,
+   * para ninguém clicar num botão que ia dar 403.
+   */
+  function pode(acao) {
+    if (estado.permissoes && Object.prototype.hasOwnProperty.call(estado.permissoes, acao)) {
+      return Boolean(estado.permissoes[acao]);
+    }
+    const Perm = global.ReloPermissoes;
+    return Perm ? Perm.pode(estado.perfil, acao) : false;
+  }
+
+  function perfilRotulo() {
+    const Perm = global.ReloPermissoes;
+    return Perm ? Perm.rotulo(estado.perfil) : estado.perfil;
+  }
+
+  // Esconde todo elemento marcado com data-perm que o perfil não alcança.
+  function aplicarPermissoes() {
+    document.querySelectorAll('[data-perm]').forEach((el) => {
+      const liberado = pode(el.dataset.perm);
+      el.hidden = !liberado;
+      if (el.tagName === 'BUTTON' || el.tagName === 'A') el.disabled = !liberado;
+    });
+    // data-perm-so-sem: aparece só para quem NÃO tem a permissão citada
+    // (ex.: o supervisor vê o aviso "configurar a nuvem é só do administrador").
+    document.querySelectorAll('[data-perm-so-sem]').forEach((el) => {
+      el.hidden = pode(el.dataset.permSoSem);
+    });
+  }
+
   /* ============================ utilidades ============================ */
   function id(sel) {
     return document.getElementById(sel);
@@ -477,9 +509,27 @@
     if (global.ReloLoginModal) {
       global.ReloLoginModal.abrir({
         aba: 'entrar',
-        mensagem: 'Entre com um e-mail de administrador para abrir o painel da barbearia.'
+        mensagem: 'Entre com a sua conta da equipe (supervisor ou administrador) para abrir o painel da barbearia.'
       });
     }
+  }
+
+  // Faixa dourada no topo do painel: só aparece para quem NÃO é administrador.
+  function mostrarFaixaPerfil() {
+    const faixa = id('faixa-perfil');
+    if (!faixa) return;
+    if (pode('equipe.gerenciar') && pode('clientes.excluir')) {
+      faixa.hidden = true;
+      return;
+    }
+    const Perm = global.ReloPermissoes;
+    definir('faixa-perfil-titulo', 'Você está no perfil ' + perfilRotulo());
+    definir(
+      'faixa-perfil-texto',
+      (Perm ? Perm.resumo(estado.perfil) + ' ' : '') +
+        'As telas e botões que este perfil não alcança ficam escondidos — o servidor também confere cada pedido.'
+    );
+    faixa.hidden = false;
   }
 
   async function verificarAcesso() {
@@ -490,33 +540,41 @@
 
     if (!usuario) {
       telaBloqueio(
-        'Área restrita aos administradores',
-        'Faça login com um e-mail de administrador autorizado para abrir o painel.',
+        'Área restrita à equipe',
+        'Faça login com a sua conta de supervisor ou de administrador para abrir o painel.',
         true
       );
       setTimeout(abrirLoginAdmin, 400);
       return false;
     }
 
-    if (!ReloAuth.ehAdmin(usuario)) {
+    if (!ReloAuth.ehEquipe(usuario)) {
       telaBloqueio(
         'Sua conta é de cliente',
-        'A conta <strong>' + escapar(usuario.email) + '</strong> não tem permissão de administrador. ' +
-          'Apenas os e-mails da equipe cadastrados abrem esta aba.',
+        'A conta <strong>' + escapar(usuario.email) + '</strong> não tem acesso ao painel. ' +
+          'Aqui entram o <strong>supervisor</strong> e o <strong>administrador</strong> da barbearia.',
         false
       );
       return false;
     }
 
+    // Guarda o perfil e as permissões: é isso que decide o que aparece na tela.
+    estado.perfil = usuario.perfil || 'cliente';
+    estado.permissoes = usuario.permissoes || (global.ReloPermissoes ? global.ReloPermissoes.mapa(estado.perfil) : {});
     estado.liberado = true;
     const painel = id('acesso-painel');
     if (painel) painel.hidden = true;
     const layout = id('layout');
     if (layout) layout.style.display = 'flex';
 
-    definir('nome-usuario', usuario.nome || 'Administrador');
+    definir('nome-usuario', usuario.nome || 'Equipe');
     renderizarChipUsuario(usuario);
     definir('email-usuario', usuario.email);
+    definir('perfil-usuario', perfilRotulo());
+    const chipPerfil = id('chip-perfil');
+    if (chipPerfil) chipPerfil.textContent = perfilRotulo().toLowerCase();
+    aplicarPermissoes();
+    mostrarFaixaPerfil();
     const avatar = id('avatar-usuario');
     if (avatar) avatar.textContent = iniciais(usuario.nome, usuario.email);
 
@@ -882,12 +940,13 @@
 
     corpo.innerHTML = visiveis
       .map((u) => {
-        const ehAdmin = u.perfil === 'admin';
+        const perfil = u.perfil || 'cliente';
+        const equipe = perfil === 'admin' || perfil === 'supervisor';
         return (
           '<tr data-id="' + escapar(u.id) + '">' +
-          '<td><div class="cell-pessoa"><span class="avatar' + (ehAdmin ? '' : ' cliente') + '">' + escapar(iniciais(u.nome, u.email)) + '</span>' +
+          '<td><div class="cell-pessoa"><span class="avatar' + (equipe ? (perfil === 'admin' ? '' : ' supervisor') : ' cliente') + '">' + escapar(iniciais(u.nome, u.email)) + '</span>' +
           '<span><strong>' + escapar(u.nome || 'Sem nome') + '</strong><small><code>' + escapar(u.email) + '</code></small></span></div></td>' +
-          '<td><span class="relo-pill ' + (ehAdmin ? 'admin' : 'cliente') + '">' + (ehAdmin ? 'Admin' : 'Cliente') + '</span>' +
+          '<td><span class="relo-pill ' + (perfil === 'admin' ? 'admin' : perfil === 'supervisor' ? 'supervisor' : 'cliente') + '">' + escapar(u.perfilRotulo || perfil) + '</span>' +
           '<div style="margin-top:5px"><span class="badge neutral">' + escapar(rotuloOrigem(u.origem)) + '</span></div></td>' +
           '<td><span title="' + escapar(dataCurta(u.criadoEm)) + '">' + escapar(tempoRelativo(u.criadoEm)) + '</span></td>' +
           '<td>' +
@@ -900,7 +959,9 @@
           '<button class="btn btn-secondary btn-sm" data-acao="ficha" data-id="' + escapar(u.id) + '">Ficha</button> ' +
           (u.origem === 'semente'
             ? '<span class="muted" style="font-size:11.5px;margin-left:6px">protegida</span>'
-            : '<button class="btn btn-danger btn-sm" data-acao="excluir" data-id="' + escapar(u.id) + '">Excluir</button>') +
+            : pode('clientes.excluir')
+              ? '<button class="btn btn-danger btn-sm" data-acao="excluir" data-id="' + escapar(u.id) + '">Excluir</button>'
+              : '<span class="muted" style="font-size:11.5px;margin-left:6px">sem permissão de excluir</span>') +
           '</td></tr>'
         );
       })
@@ -952,13 +1013,14 @@
       '<div><h3 style="margin:0 0 4px">' + escapar(usuario.nome || 'Sem nome') + '</h3>' +
       '<code class="muted">' + escapar(usuario.email) + '</code></div></div>' +
       '<div class="ficha-grid">' +
-      campoFicha('Perfil', usuario.perfil === 'admin' ? 'Administrador' : 'Cliente') +
+      campoFicha('Perfil', usuario.perfilRotulo || perfilRotuloDe(usuario.perfil)) +
       campoFicha('Cadastro', dataCurta(usuario.criadoEm)) +
       campoFicha('Último acesso', usuario.ultimoLogin ? dataCurta(usuario.ultimoLogin) : 'nunca entrou') +
       campoFicha('Total de acessos', String(usuario.totalLogins || 0)) +
       campoFicha('Origem', rotuloOrigem(usuario.origem)) +
       campoFicha('ID interno', usuario.id) +
       '</div>' +
+      botoesDePerfil(usuario) +
       '<div style="margin-bottom:14px">' +
       (sync.estado === 'ok'
         ? '<span class="badge success">✓ na nuvem (' + escapar(dataCurta(sync.em)) + ')</span>'
@@ -980,6 +1042,65 @@
         : '<p class="muted" style="margin:0">Sem acessos registrados.</p>') +
       '</div>';
   }
+  function perfilRotuloDe(perfil) {
+    const Perm = global.ReloPermissoes;
+    return Perm ? Perm.rotulo(perfil) : perfil;
+  }
+
+  /*
+   * Ações de hierarquia que aparecem na ficha do usuário (só para quem gerencia
+   * a equipe). É por aqui que um cliente ou um barbeiro vira supervisor.
+   */
+  function botoesDePerfil(usuario) {
+    if (!pode('equipe.gerenciar')) return '';
+    if (usuario.origem === 'semente') {
+      return '<p class="muted" style="font-size:12px;margin:0 0 14px">Conta da equipe criada pela semente: o perfil dela pode subir, mas nunca cair.</p>';
+    }
+    const trocas = [
+      ['supervisor', 'Tornar supervisor', 'Abre o painel para operar estoque, manutenção e despesas (sem excluir e sem mexer na nuvem).'],
+      ['admin', 'Tornar administrador', 'Acesso total, igual ao seu.'],
+      ['cliente', 'Voltar para cliente', 'Deixa de abrir o painel e volta a usar só a área do cliente.']
+    ].filter((t) => t[0] !== (usuario.perfil || 'cliente'));
+
+    return (
+      '<div class="sub-panel" style="margin:0 0 14px;padding-top:14px"><h3>Perfil de acesso</h3>' +
+      '<p class="muted" style="font-size:12.5px;margin:0 0 10px">Quem entra hoje: <strong>' +
+      escapar(usuario.perfilRotulo || perfilRotuloDe(usuario.perfil)) + '</strong>. Trocar o perfil derruba as sessões abertas dessa conta — ela entra de novo com o novo poder.</p>' +
+      '<div class="acoes" style="display:flex;gap:8px;flex-wrap:wrap">' +
+      trocas
+        .map(
+          (t) =>
+            '<button class="btn ' + (t[0] === 'cliente' ? 'btn-secondary' : 'btn-primary') +
+            ' btn-sm" data-acao="mudar-perfil" data-id="' + escapar(usuario.id) + '" data-perfil="' + t[0] +
+            '" title="' + escapar(t[2]) + '">' + escapar(t[1]) + '</button>'
+        )
+        .join('') +
+      '</div></div>'
+    );
+  }
+
+  async function mudarPerfil(usuarioId, novoPerfil) {
+    if (!pode('equipe.gerenciar')) return toast('Só o administrador pode mudar perfis.', 'err');
+    const alvo = estado.usuarios.find((u) => u.id === usuarioId);
+    const nome = alvo ? alvo.nome || alvo.email : 'esta conta';
+    const rotuloNovo = perfilRotuloDe(novoPerfil);
+    confirmar(
+      'Mudar perfil para ' + rotuloNovo,
+      'A conta <strong>' + escapar(nome) + '</strong> passa a ser <strong>' + escapar(rotuloNovo) + '</strong>.',
+      'Confirmar',
+      async () => {
+        const resultado = await ReloAuth.definirPerfil(usuarioId, novoPerfil);
+        if (!resultado.ok) {
+          toast(resultado.erro || 'Não foi possível mudar o perfil.', 'err');
+          return;
+        }
+        toast(nome + ' agora é ' + rotuloNovo + '.', 'ok');
+        fecharModal('ficha-modal');
+        await carregarTudo();
+      }
+    );
+  }
+
   function campoFicha(rotulo, valor) {
     return '<div class="ficha-campo"><b>' + escapar(rotulo) + '</b><span>' + escapar(valor || '—') + '</span></div>';
   }
@@ -1007,11 +1128,14 @@
     evento.preventDefault();
     const aviso = id('cliente-modal-aviso');
     if (aviso) aviso.hidden = true;
-    const resultado = await ReloAuth.criarCliente({
+    const campoPerfil = id('cli-perfil');
+    const dadosNovo = {
       nome: id('cli-name').value,
       email: id('cli-email').value,
       senha: id('cli-senha').value
-    });
+    };
+    if (campoPerfil && pode('equipe.gerenciar')) dadosNovo.perfil = campoPerfil.value;
+    const resultado = await ReloAuth.criarCliente(dadosNovo);
     if (!resultado.ok) {
       if (aviso) {
         aviso.textContent = resultado.erro;
@@ -1020,8 +1144,14 @@
       return;
     }
     fecharModal('cliente-modal');
+    const perfilNovo = dadosNovo.perfil || 'cliente';
     id('cliente-form').reset();
-    toast('Cliente cadastrado e salvo no banco de dados.', 'ok');
+    toast(
+      perfilNovo === 'cliente'
+        ? 'Cliente cadastrado e salvo no banco de dados.'
+        : 'Conta de ' + perfilRotuloDe(perfilNovo) + ' criada — já pode entrar no painel.',
+      'ok'
+    );
     await carregarTudo();
   }
 
@@ -1819,7 +1949,11 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
       const lista = { produtos: estado.estoque || [], manutencoes: estado.manutencoes || [], despesas: estado.despesas || [] };
       try {
         if (acao === 'ficha') return abrirFicha(botao.dataset.id);
-        if (acao === 'excluir') return excluirUsuario(botao.dataset.id);
+        if (acao === 'excluir') {
+          if (!pode('clientes.excluir')) return toast('O perfil ' + perfilRotulo() + ' não pode excluir clientes.', 'err');
+          return excluirUsuario(botao.dataset.id);
+        }
+        if (acao === 'mudar-perfil') return mudarPerfil(botao.dataset.id, botao.dataset.perfil);
 
         if (acao === 'mov') {
           const produto = lista.produtos[i];
@@ -1844,6 +1978,7 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
           return abrirModal('product-modal');
         }
         if (acao === 'del-produto') {
+          if (!pode('estoque.excluir')) return toast('O perfil ' + perfilRotulo() + ' não pode excluir produtos.', 'err');
           const produto = lista.produtos[i];
           if (!produto) return;
           return confirmar('Excluir produto', 'Remover <strong>' + escapar(produto.nome) + '</strong> do estoque?', 'Excluir', async () => {
@@ -1863,6 +1998,7 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
           return carregarManutencao();
         }
         if (acao === 'del-manutencao') {
+          if (!pode('manutencao.excluir')) return toast('O perfil ' + perfilRotulo() + ' não pode excluir ordens.', 'err');
           const ordem = lista.manutencoes[i];
           if (!ordem) return;
           return confirmar('Excluir ordem', 'Remover a manutenção de <strong>' + escapar(ordem.item) + '</strong>?', 'Excluir', async () => {
@@ -1872,6 +2008,7 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
           });
         }
         if (acao === 'del-despesa') {
+          if (!pode('despesas.excluir')) return toast('O perfil ' + perfilRotulo() + ' não pode excluir despesas.', 'err');
           const despesa = lista.despesas[i];
           if (!despesa) return;
           return confirmar('Excluir despesa', 'Remover <strong>' + escapar(despesa.descricao) + '</strong> (' + moeda(despesa.valor) + ')?', 'Excluir', async () => {
@@ -2001,7 +2138,7 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
       // quem entra pela caixinha de login abre o painel sozinho
       ReloAuth.aoMudar(async (usuario) => {
         if (!usuario) return;
-        if (ReloAuth.ehAdmin(usuario)) {
+        if (ReloAuth.ehEquipe(usuario)) {
           await verificarAcesso();
           await carregarTudo();
           return;
@@ -2010,7 +2147,7 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
         if (layout) layout.style.display = 'none';
         telaBloqueio(
           'Sua conta é de cliente',
-          'A conta <strong>' + escapar(usuario.email) + '</strong> não tem permissão de administrador.',
+          'A conta <strong>' + escapar(usuario.email) + '</strong> não tem acesso ao painel da equipe.',
           false
         );
       });

@@ -36,7 +36,12 @@ Depois abra **http://localhost:8000/index.html**
   (nome, e-mail e senha protegida) **entra na hora no banco de dados da barbearia** e recebe
   uma cópia automática no Supabase (nuvem) — sem importar nada, mesmo se o site for aberto sem
   servidor ou a internet cair (a fila reenvia sozinha).
-* **Admin (premium)** — painel exclusivo para os e-mails de administrador de `admin-accounts.js`:
+* **Hierarquia de acesso (3 níveis)** — **Usuário (cliente)** usa o site; **Supervisor** abre o
+  painel e opera o dia a dia (clientes, estoque, manutenção, despesas); **Administrador** faz
+  tudo, inclusive excluir, configurar a nuvem e definir quem é quem. Cada rota do servidor
+  confere a permissão (403 para quem não pode) e o painel esconde o que o perfil não alcança.
+  Tudo em `permissoes.js` e explicado em **HIERARQUIA_DE_ACESSO.md**.
+* **Admin (premium)** — painel para a equipe (administrador e supervisor):
   dashboard com KPIs e gráficos, banco de clientes com busca/filtro/paginação/ficha/CSV,
   **estoque, manutenção e despesas agora no banco do servidor** (compartilhados entre os admins),
   aba **Banco de Dados** com o status do espelho na nuvem e aba da IA. Faixa **"Hoje na
@@ -49,10 +54,12 @@ Depois abra **http://localhost:8000/index.html**
 
 ```bash
 npm run demo          # dados de vitrine (18 clientes, estoque, despesas) para o painel abrir com número
-npm test              # sobe um servidor descartável e checa o banco, as rotas e a segurança (95 verificações)
+npm test              # sobe um servidor descartável e checa banco, rotas, segurança e hierarquia (159 verificações)
 npm run test:nuvem    # idem, mas exige que a linha do cadastro chegue de fato no seu Supabase
 npm run test:render   # roda o admin.js inteiro num DOM falso: quebrando o painel, quebra o teste
 npm run test:painel   # idem, mas contra o servidor de pé (usa o login da semente em localhost:8000)
+npm run test:acessos  # só a hierarquia de acesso: cliente x supervisor x administrador (65 verificações)
+npm run matriz        # imprime a matriz de permissões atualizada (vem do código, não do documento)
 ```
 
 ## Documentação
@@ -62,7 +69,9 @@ npm run test:painel   # idem, mas contra o servidor de pé (usa o login da semen
 | `LOGIN_E_BANCO_DE_DADOS.md` | Login, banco de clientes, espelho no Supabase, lista de admins, API e como rodar |
 | `ATUALIZACOES.md` | Histórico de atualizações anteriores do projeto |
 | `IMPLEMENTACAO_IA.md` | Recursos de IA (câmera/visagismo) |
+| `HIERARQUIA_DE_ACESSO.md` | Administrador x supervisor x usuário: matriz de permissões, rotas e como promover alguém |
 | `RELATORIO_FINAL.md` | Relatório geral das entregas |
+| `TCC/` | Documento do TCC, diagrama de caso de uso, casos de uso passo a passo e Daily Scrum |
 | `novos_precos.md` | Tabela de preços e planos (inclui o Dia do Noivo) |
 
 ## Estrutura principal
@@ -71,7 +80,8 @@ npm run test:painel   # idem, mas contra o servidor de pé (usa o login da semen
 server.js            servidor do site + API (/api/auth/*, /api/admin/*)
 db.js                banco de dados em data/db.json
 auth-hash.js         SHA-256 com sal (usado no navegador e no servidor)
-admin-accounts.js    lista oficial de administradores (somente hashes)
+admin-accounts.js    lista oficial da equipe (somente hashes) — quem é admin/supervisor
+permissoes.js        hierarquia de acesso: a matriz do que cada perfil pode fazer
 auth-core.js         ReloAuth: login, cadastro, sessão (servidor ou modo local)
                      + perfis de acesso (cliente, supervisor, administrador)
 login-modal.js       caixinha de login injetada em todas as páginas
@@ -82,4 +92,6 @@ chat-ia.js           chat da Relo IA (respostas locais, sem chave de API)
 admin.html / admin.js   painel administrativo
 dashboard.html       área do cliente
 ferramentas/gerar-senha.js   gerador de hash para novos admins
+ferramentas/teste-hierarquia.js   65 verificações da hierarquia de acesso
+TCC/                 documento do TCC, diagrama de caso de uso e Daily Scrum
 ```

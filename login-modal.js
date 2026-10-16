@@ -144,13 +144,14 @@
 
   function mensagemDeBoasVindas(usuario) {
     const primeiroNome = String(usuario.nome || usuario.email).split(' ')[0];
-    return ReloAuth.ehAdmin(usuario)
-      ? 'Olá, ' + primeiroNome + '! Abrindo o painel administrativo...'
-      : 'Olá, ' + primeiroNome + '! Redirecionando para a sua área...';
+    if (ReloAuth.ehAdmin(usuario)) return 'Olá, ' + primeiroNome + '! Abrindo o painel administrativo...';
+    if (ReloAuth.ehSupervisor(usuario)) return 'Olá, ' + primeiroNome + '! Abrindo o painel do supervisor...';
+    return 'Olá, ' + primeiroNome + '! Redirecionando para a sua área...';
   }
 
   function depoisDoLogin(usuario, modo) {
-    const admin = ReloAuth.ehAdmin(usuario);
+    // Equipe (admin e supervisor) entra no painel; cliente vai para a área dele.
+    const equipe = ReloAuth.ehEquipe ? ReloAuth.ehEquipe(usuario) : ReloAuth.ehAdmin(usuario);
     mostrarAlerta(
       mensagemDeBoasVindas(usuario) +
         (modo === 'local' ? ' (banco local do navegador)' : ' (banco do servidor)'),
@@ -158,7 +159,7 @@
     );
     atualizarNavegacao();
     setTimeout(() => {
-      global.location.href = admin ? 'admin.html' : 'dashboard.html';
+      global.location.href = equipe ? 'admin.html' : 'dashboard.html';
     }, 900);
   }
 
@@ -233,6 +234,7 @@
   /* --------------------- navegação (menu do site) --------------------- */
   function atualizarNavegacao() {
     const logado = ReloAuth.usuario;
+    const equipe = logado ? ReloAuth.ehEquipe(logado) : false;
     const admin = ReloAuth.ehAdmin(logado);
 
     // Marca o link de login uma única vez: depois disso ele passa a ter href="#"
@@ -313,12 +315,13 @@
       const linkAdmin = evento.target.closest('a[href="admin.html"]');
       if (linkAdmin && !linkAdmin.dataset.reloAdminOk) {
         await ReloAuth.ready();
-        if (!ReloAuth.ehAdmin(ReloAuth.usuario)) {
+        if (!ReloAuth.ehEquipe(ReloAuth.usuario)) {
           evento.preventDefault();
           abrir({
             aba: 'entrar',
-            mensagem: 'A aba Admin é exclusiva dos administradores da barbearia. Entre com um e-mail autorizado para continuar.',
-            erro: 'Acesso restrito: este e-mail não tem permissão de administrador.'
+            mensagem:
+              'O painel é da equipe da barbearia. Entre com a sua conta de supervisor ou de administrador para continuar.',
+            erro: 'Acesso restrito: esta conta é de cliente.'
           });
         }
       }

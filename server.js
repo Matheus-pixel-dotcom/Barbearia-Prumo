@@ -8,7 +8,10 @@
  * O que ele faz:
  *   1. Entrega as páginas do site (HTML/CSS/imagens).
  *   2. Guarda o cadastro dos clientes no banco de dados JSON (data/db.json).
- *   3. Libera a aba ADMIN só para os e-mails de administrador (admin-accounts.js).
+ *   3. Controla o acesso pelo perfil (cliente, supervisor e administrador):
+ *      o supervisor opera o dia a dia, o administrador manda em tudo.
+ *      A lista de quem é admin está em admin-accounts.js e a matriz de
+ *      permissões em permissoes.js.
  *
  * Sem nenhuma dependência externa: usa apenas os módulos nativos do Node.
  */
@@ -17,6 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const ReloHash = require('./auth-hash');
 const db = require('./db');
+const Permissoes = require('./permissoes');
 const ReloSync = require('./sync-supabase');
 
 const RAIZ = __dirname;
@@ -100,14 +104,47 @@ function autenticar(req, banco) {
   return usuario ? { usuario, token } : null;
 }
 
+/*
+ * Quem pode o quê. O perfil do usuário logado é conferido em permissoes.js —
+ * a mesma tabela que o painel usa para esconder os botões. A ordem da
+ * hierarquia é cliente (1) < supervisor (2) < admin (3).
+ */
 function exigeAdmin(req, banco, res) {
   const sessao = autenticar(req, banco);
   if (!sessao) {
     json(res, 401, { ok: false, erro: 'Faça login para continuar.' });
     return null;
   }
-  if (sessao.usuario.perfil !== 'admin') {
-    json(res, 403, { ok: false, erro: 'Esta área é exclusiva dos administradores.' });
+  if (!Permissoes.pode(sessao.usuario.perfil, 'painel.ver')) {
+    json(res, 403, {
+      ok: false,
+      erro: 'Esta área é da equipe da barbearia. Sua conta é de cliente.',
+      perfil: Permissoes.normalizar(sessao.usuario.perfil)
+    });
+    return null;
+  }
+  return sessao;
+}
+
+// Igual ao exigeAdmin, mas cobrando uma permissão específica da tabela.
+function exigePermissao(req, banco, res, acao) {
+  const sessao = autenticar(req, banco);
+  if (!sessao) {
+    json(res, 401, { ok: false, erro: 'Faça login para continuar.' });
+    return null;
+  }
+  const perfil = sessao.usuario.perfil;
+  if (!Permissoes.pode(perfil, acao)) {
+    const rotulo = Permissoes.rotulo(perfil);
+    json(res, 403, {
+      ok: false,
+      erro:
+        Permissoes.nivel(perfil) === 1
+          ? 'Esta área é da equipe da barbearia. Sua conta é de cliente.'
+          : 'O perfil ' + rotulo + ' não pode ' + Permissoes.descrever(acao) + '. Fale com um administrador.',
+      perfil: Permissoes.normalizar(perfil),
+      acao
+    });
     return null;
   }
   return sessao;
@@ -384,7 +421,7 @@ async function tratarApi(req, res, url) {
       origem: 'servidor'
     });
     db.salvar(banco);
-    if (usuario.perfil !== 'admin' && configSupabase().ativo && precisaEspelhar(usuario)) {
+    if (Permissoes.normalizar(usuario.perfil) === 'cliente' && configSupabase().ativo && precisaEspelhar(usuario)) {
       espelharCliente(usuario); // mantém a nuvem com o último acesso em dia
     }
     return json(res, 200, { ok: true, token, usuario: db.usuarioPublico(usuario) });
@@ -456,9 +493,9 @@ async function tratarApi(req, res, url) {
     return json(res, 200, { ok: true });
   }
 
-  // GET /api/admin/usuarios — banco de clientes e logins (só admin)
+  // GET /api/admin/usuarios — banco de clientes e logins (admin e supervisor)
   if (rota === '/api/admin/usuarios' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'clientes.ver');
     if (!sessao) return undefined;
     const usuarios = banco.usuarios
       .slice()
@@ -469,18 +506,30 @@ async function tratarApi(req, res, url) {
       usuarios,
       logins: (banco.logins || []).slice(0, 60),
       totalClientes: usuarios.filter((u) => u.perfil === 'cliente').length,
-      totalAdmins: usuarios.filter((u) => u.perfil === 'admin').length
+      totalSupervisores: usuarios.filter((u) => u.perfil === 'supervisor').length,
+      totalAdmins: usuarios.filter((u) => u.perfil === 'admin').length,
+      perfis: Permissoes.perfis()
     });
   }
 
-  // POST /api/admin/usuarios — admin cadastra um cliente manualmente
+  // POST /api/admin/usuarios — cadastra um cliente (ou uma conta da equipe,
+  // se quem pediu tem equipe.gerenciar: aí o perfil vem no corpo)
   if (rota === '/api/admin/usuarios' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'clientes.criar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const nome = String(corpo.nome || '').trim();
     const email = db.normalizarEmail(corpo.email);
     const senha = String(corpo.senha || '');
+    const podeEscolherPerfil = Permissoes.pode(sessao.usuario.perfil, 'equipe.gerenciar');
+    const perfilPedido = Permissoes.normalizar(corpo.perfil || 'cliente');
+    if (corpo.perfil !== undefined && !podeEscolherPerfil) {
+      return json(res, 403, {
+        ok: false,
+        erro: 'Cadastrar supervisor ou administrador é só para o administrador.'
+      });
+    }
+    const perfil = podeEscolherPerfil ? perfilPedido : 'cliente';
     if (nome.length < 2) return json(res, 400, { ok: false, erro: 'Digite o nome do cliente.' });
     if (!validarEmail(email)) return json(res, 400, { ok: false, erro: 'E-mail inválido.' });
     if (senha.length < 6) {
@@ -491,12 +540,13 @@ async function tratarApi(req, res, url) {
     }
     const salt = ReloHash.saltParaEmail(email);
     const usuario = {
-      id: 'cli_' + ReloHash.sha256Hex(email).slice(0, 10),
+      id: (perfil === 'cliente' ? 'cli_' : perfil === 'admin' ? 'adm_' : 'sup_') +
+        ReloHash.sha256Hex(email).slice(0, 10),
       nome,
       email,
       aliases: [],
-      perfil: 'cliente',
-      origem: 'admin',
+      perfil,
+      origem: 'painel',
       salt,
       senhaHash: ReloHash.hashPassword(salt, senha),
       criadoEm: new Date().toISOString(),
@@ -505,14 +555,30 @@ async function tratarApi(req, res, url) {
     };
     banco.usuarios.push(usuario);
     db.salvar(banco);
-    espelharCliente(usuario);
+    if (perfil === 'cliente') espelharCliente(usuario);
     return json(res, 201, { ok: true, usuario: db.usuarioPublico(usuario) });
   }
 
-  // GET /api/admin/usuarios/:id — ficha do cliente (dados + acessos dele)
+  // PATCH /api/admin/usuarios/:id/perfil — promove ou rebaixa um usuário
+  // (só administrador; é assim que alguém vira supervisor)
+  const rotaPerfil = rota.match(/^\/api\/admin\/usuarios\/([^/]+)\/perfil$/);
+  if (rotaPerfil && (req.method === 'PATCH' || req.method === 'POST')) {
+    const sessao = exigePermissao(req, banco, res, 'equipe.gerenciar');
+    if (!sessao) return undefined;
+    const corpo = await lerCorpo(req);
+    const alvoId = decodeURIComponent(rotaPerfil[1]);
+    const alvo = banco.usuarios.find((u) => u.id === alvoId);
+    if (!alvo) return json(res, 404, { ok: false, erro: 'Usuário não encontrado.' });
+    const resultado = db.definirPerfil(banco, alvoId, corpo.perfil, sessao.usuario);
+    if (!resultado.ok) return json(res, 400, { ok: false, erro: resultado.erro });
+    db.salvar(banco);
+    return json(res, 200, Object.assign({ ok: true }, resultado));
+  }
+
+  // GET /api/admin/usuarios/:id — ficha do cliente (dados + acessos dele; admin e supervisor)
   const rotaFicha = rota.match(/^\/api\/admin\/usuarios\/([^/]+)$/);
   if (rotaFicha && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'clientes.ver');
     if (!sessao) return undefined;
     const alvo = banco.usuarios.find((u) => u.id === decodeURIComponent(rotaFicha[1]));
     if (!alvo) return json(res, 404, { ok: false, erro: 'Usuário não encontrado.' });
@@ -526,14 +592,17 @@ async function tratarApi(req, res, url) {
     });
   }
 
-  // DELETE /api/admin/usuarios/:id — remove cliente (admins da semente são protegidos)
+  // DELETE /api/admin/usuarios/:id — remove cliente (só admin; contas da semente são protegidas)
   if (rotaFicha && req.method === 'DELETE') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'clientes.excluir');
     if (!sessao) return undefined;
     const alvo = banco.usuarios.find((u) => u.id === decodeURIComponent(rotaFicha[1]));
     if (!alvo) return json(res, 404, { ok: false, erro: 'Usuário não encontrado.' });
     if (alvo.origem === 'semente') {
-      return json(res, 400, { ok: false, erro: 'Contas de administrador não podem ser excluídas.' });
+      return json(res, 400, {
+        ok: false,
+        erro: 'Contas da equipe (semente) não podem ser excluídas — rebaixe o perfil se precisar.'
+      });
     }
     banco.usuarios = banco.usuarios.filter((u) => u.id !== alvo.id);
     banco.sessoes = banco.sessoes.filter((s) => s.usuarioId !== alvo.id);
@@ -546,7 +615,7 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/metricas — KPIs e séries do painel (tudo calculado no servidor)
   if (rota === '/api/admin/metricas' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'painel.ver');
     if (!sessao) return undefined;
     const cfg = configSupabase();
     const metricas = db.calcularMetricas(banco);
@@ -563,7 +632,7 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/estoque
   if (rota === '/api/admin/estoque' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'estoque.ver');
     if (!sessao) return undefined;
     const produtos = (banco.produtos || []).map(db.produtoPublico);
     return json(res, 200, {
@@ -576,7 +645,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/estoque — cria (sem id) ou atualiza (com id) um produto
   if (rota === '/api/admin/estoque' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'estoque.editar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const nome = String(corpo.nome || '').trim();
@@ -621,7 +690,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/estoque/mov — entrada (+) ou saída (-) de itens
   if (rota === '/api/admin/estoque/mov' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'estoque.editar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const delta = Number(corpo.delta);
@@ -642,7 +711,7 @@ async function tratarApi(req, res, url) {
   // DELETE /api/admin/estoque/:id
   const rotaProduto = rota.match(/^\/api\/admin\/estoque\/([^/]+)$/);
   if (rotaProduto && req.method === 'DELETE') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'estoque.excluir');
     if (!sessao) return undefined;
     return db
       .transacionar((atual) => {
@@ -657,14 +726,14 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/manutencao
   if (rota === '/api/admin/manutencao' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'manutencao.ver');
     if (!sessao) return undefined;
     return json(res, 200, { ok: true, manutencoes: (banco.manutencoes || []).slice().reverse() });
   }
 
   // POST /api/admin/manutencao — registra ou muda o status
   if (rota === '/api/admin/manutencao' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'manutencao.editar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     return db
@@ -699,7 +768,7 @@ async function tratarApi(req, res, url) {
   // DELETE /api/admin/manutencao/:id
   const rotaManutencao = rota.match(/^\/api\/admin\/manutencao\/([^/]+)$/);
   if (rotaManutencao && req.method === 'DELETE') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'manutencao.excluir');
     if (!sessao) return undefined;
     return db
       .transacionar((atual) => {
@@ -714,7 +783,7 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/despesas
   if (rota === '/api/admin/despesas' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'despesas.ver');
     if (!sessao) return undefined;
     const despesas = (banco.despesas || []).slice().reverse();
     const mesAtual = new Date().toISOString().slice(0, 7);
@@ -730,7 +799,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/despesas
   if (rota === '/api/admin/despesas' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'despesas.editar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const descricao = String(corpo.descricao || '').trim();
@@ -757,7 +826,7 @@ async function tratarApi(req, res, url) {
   // DELETE /api/admin/despesas/:id
   const rotaDespesa = rota.match(/^\/api\/admin\/despesas\/([^/]+)$/);
   if (rotaDespesa && req.method === 'DELETE') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'despesas.excluir');
     if (!sessao) return undefined;
     return db
       .transacionar((atual) => {
@@ -776,14 +845,14 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/supabase — nunca devolve a chave inteira
   if (rota === '/api/admin/supabase' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'nuvem.ver');
     if (!sessao) return undefined;
     return json(res, 200, statusSupabasePublico(configSupabase()));
   }
 
   // POST /api/admin/supabase — salva chave/url/tabela/liga-desliga
   if (rota === '/api/admin/supabase' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'nuvem.configurar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const cfg = lerConfigSupabase();
@@ -830,7 +899,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/supabase/teste — confere conexão e a tabela
   if (rota === '/api/admin/supabase/teste' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'nuvem.ver');
     if (!sessao) return undefined;
     const atual = configSupabase();
     if (!atual.ativo) {
@@ -842,7 +911,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/supabase/reenviar — tenta de novo os cadastros parados na fila
   if (rota === '/api/admin/supabase/reenviar' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'nuvem.reenviar');
     if (!sessao) return undefined;
     const resultado = await processarFilaSync('painel', true);
     return json(res, 200, Object.assign({ ok: true }, resultado, statusSupabasePublico(configSupabase())));

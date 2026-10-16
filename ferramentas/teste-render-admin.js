@@ -209,7 +209,7 @@ if (MODO === 'servidor') {
 
 require(path.join(RAIZ, 'sync-supabase.js'));
 // carrega o admin.js exatamente como o navegador faria e dispara o DOMContentLoaded
-for (const arquivo of ['auth-hash.js', 'admin-accounts.js', 'auth-core.js', 'sync-supabase.js', 'login-modal.js', 'admin.js']) {
+for (const arquivo of ['auth-hash.js', 'admin-accounts.js', 'permissoes.js', 'auth-core.js', 'sync-supabase.js', 'login-modal.js', 'admin.js']) {
   vm.runInThisContext(fs.readFileSync(path.join(RAIZ, arquivo), 'utf8'), { filename: arquivo });
 }
 
