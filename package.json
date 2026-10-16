@@ -4,7 +4,7 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "serve": "node server.js",
-    "test": "node ferramentas/teste-painel.js",
+    "test": "node ferramentas/teste-painel.js && node ferramentas/teste-hierarquia.js",
     "test:nuvem": "SUPABASE_LIVE=1 node ferramentas/teste-painel.js",
     "test:render": "node ferramentas/teste-render-admin.js",
     "test:painel": "node ferramentas/teste-render-admin.js servidor",
@@ -12,7 +12,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "demo": "node ferramentas/semeia-demo.js"
+    "demo": "node ferramentas/semeia-demo.js",
+    "test:acessos": "node ferramentas/teste-hierarquia.js",
+    "matriz": "node ferramentas/matriz-permissoes.js",
+    "tcc:daily": "node ferramentas/gerar-daily-scrum.js"
   },
   "dependencies": {
     "expo": "~48.0.15",

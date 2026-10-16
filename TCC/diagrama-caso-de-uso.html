@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagrama de Caso de Uso — Style Relo Barber (TCC)</title>
+<style>
+  /*
+   * Página no tamanho do TCC: A4 PAISAGEM (297 × 210 mm), margem de 12 mm.
+   * Para gerar o PDF: Ctrl+P → destino "Salvar como PDF" → papel A4 → paisagem
+   * → margens "Padrão" desligadas (a margem já está no CSS) → marcar
+   * "Gráficos de plano de fundo".
+   */
+  @page { size: A4 landscape; margin: 12mm; }
+
+  :root {
+    --tinta: #101418;
+    --linha: #1f2937;
+    --ouro: #a9741a;
+    --cinza: #5b6672;
+    --papel: #ffffff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #e9ecef;
+    color: var(--tinta);
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .pagina {
+    width: 273mm;                /* A4 paisagem menos as margens de 12 mm */
+    min-height: 186mm;
+    margin: 10mm auto;
+    padding: 8mm 9mm;
+    background: var(--papel);
+    box-shadow: 0 6px 26px rgba(0, 0, 0, 0.18);
+    page-break-after: always;
+  }
+
+  .pagina:last-child { page-break-after: auto; }
+
+  .cabecalho { border-bottom: 2px solid var(--ouro); padding-bottom: 6px; margin-bottom: 6mm; }
+  .cabecalho .instituicao { font-size: 8.5pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cinza); }
+  .cabecalho h1 { font-size: 15pt; margin: 3px 0 0; letter-spacing: -0.01em; }
+  .cabecalho h2 { font-size: 10pt; margin: 2px 0 0; color: var(--cinza); font-weight: 600; }
+
+  .rodape {
+    margin-top: 5mm; padding-top: 4px; border-top: 1px solid #cbd5e1;
+    font-size: 8pt; color: var(--cinza); display: flex; justify-content: space-between; gap: 12px;
+  }
+
+  .legenda-figura { font-size: 8.5pt; color: var(--cinza); text-align: center; margin-top: 4px; }
+  .legenda-figura strong { color: var(--tinta); }
+
+  svg { width: 100%; height: auto; display: block; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  th, td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: left; vertical-align: top; }
+  th { background: #f3f4f6; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.05em; }
+  td.codigo { font-weight: 700; white-space: nowrap; width: 62px; }
+  td.ator { width: 120px; }
+
+  .nota { font-size: 8.5pt; background: #f8fafc; border-left: 3px solid var(--ouro); padding: 6px 9px; margin-top: 5mm; }
+  ul.regras { margin: 4px 0 0 16px; padding: 0; font-size: 8.5pt; }
+  ul.regras li { margin-bottom: 2px; }
+
+  @media print {
+    body { background: #fff; }
+    .pagina { margin: 0; box-shadow: none; width: auto; min-height: 0; padding: 0; }
+    .aviso-tela { display: none; }
+  }
+
+  .aviso-tela {
+    max-width: 273mm; margin: 8mm auto 0; padding: 8px 12px; background: #fff7e6;
+    border: 1px solid #f0c987; border-radius: 8px; font-size: 9pt;
+  }
+</style>
+</head>
+<body>
+
+<div class="aviso-tela">
+  <strong>Como usar:</strong> este arquivo já está no tamanho de página do TCC (<em>A4 paisagem</em>).
+  Para gerar o PDF da figura, use <strong>Ctrl+P</strong> → <em>Salvar como PDF</em> → papel <em>A4</em>,
+  orientação <em>paisagem</em>, margens <em>nenhuma/padrão</em> e marque <em>Gráficos de plano de fundo</em>.
+</div>
+
+<!-- ==================================================================== -->
+<!-- PÁGINA 1 — o diagrama                                                -->
+<!-- ==================================================================== -->
+<section class="pagina">
+  <header class="cabecalho">
+    <div class="instituicao">Trabalho de Conclusão de Curso · Desenvolvimento de Sistemas</div>
+    <h1>Diagrama de Caso de Uso — Sistema Style Relo Barber</h1>
+    <h2>Visagismo digital, agendamento e gestão da barbearia com hierarquia de acesso
+      (Usuário · Supervisor · Administrador)</h2>
+  </header>
+
+  <svg viewBox="0 0 1100 760" role="img"
+       aria-label="Diagrama de caso de uso do sistema Style Relo Barber com os atores Usuário, Supervisor e Administrador e os sistemas externos WhatsApp, câmera/face-api e Supabase">
+    <defs>
+      <!-- ator (boneco palito) -->
+      <g id="boneco" fill="none" stroke="#101418" stroke-width="2">
+        <circle cx="0" cy="-24" r="10" fill="#101418" stroke="none"/>
+        <path d="M0 -14 V 12 M -16 -4 H 16 M 0 12 L -12 34 M 0 12 L 12 34"/>
+      </g>
+      <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#5b6672"/>
+      </marker>
+      <marker id="triangulo" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto-start-reverse">
+        <path d="M0 0 L12 6 L0 12 z" fill="#ffffff" stroke="#101418" stroke-width="1.4"/>
+      </marker>
+      <style>
+        .uc { fill: #fdf6e6; stroke: #a9741a; stroke-width: 1.6; }
+        .uc-nota { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.2; }
+        .nm { font-size: 15px; font-weight: 600; fill: #101418; text-anchor: middle; dominant-baseline: middle; }
+        .nm-sub { font-size: 12px; fill: #5b6672; text-anchor: middle; dominant-baseline: middle; }
+        .ator-nome { font-size: 15px; font-weight: 700; fill: #101418; text-anchor: middle; }
+        .ator-desc { font-size: 11.5px; fill: #5b6672; text-anchor: middle; }
+        .liga { stroke: #1f2937; stroke-width: 1.4; fill: none; }
+        .dependencia { stroke: #5b6672; stroke-width: 1.3; fill: none; stroke-dasharray: 6 4; }
+        .rotulo-rel { font-size: 11px; fill: #5b6672; font-style: italic; }
+        .fronteira { fill: #ffffff; stroke: #1f2937; stroke-width: 1.8; }
+        .titulo-fronteira { font-size: 16px; font-weight: 700; fill: #101418; text-anchor: middle; }
+        .grupo { font-size: 12px; font-weight: 700; fill: #a9741a; text-anchor: middle; letter-spacing: 0.04em; }
+        .nota-texto { font-size: 11.5px; fill: #334155; }
+      </style>
+    </defs>
+
+    <!-- ---------------- Fronteira do sistema ---------------- -->
+    <rect class="fronteira" x="170" y="30" width="700" height="560" rx="10"/>
+    <text class="titulo-fronteira" x="520" y="52">Style Relo Barber — sistema web</text>
+
+    <!-- cabeçalhos de grupo -->
+    <text class="grupo" x="280" y="76">CLIENTE (SITE)</text>
+    <text class="grupo" x="470" y="76">PAINEL — SUPERVISOR</text>
+    <text class="grupo" x="660" y="76">SÓ ADMINISTRADOR</text>
+    <text class="grupo" x="470" y="504">INTEGRAÇÕES (SISTEMAS EXTERNOS)</text>
+
+    <!-- ---------------- Casos de uso: coluna 1 (cliente) ---------------- -->
+    <g>
+      <ellipse class="uc" cx="280" cy="106" rx="70" ry="24"/>
+      <text class="nm" x="280" y="106">UC01 Cadastrar-se</text>
+
+      <ellipse class="uc" cx="280" cy="166" rx="70" ry="24"/>
+      <text class="nm" x="280" y="166">UC02 Entrar (login)</text>
+
+      <ellipse class="uc" cx="280" cy="226" rx="70" ry="24"/>
+      <text class="nm" x="280" y="226">UC04 Simular corte</text>
+
+      <ellipse class="uc" cx="280" cy="286" rx="70" ry="24"/>
+      <text class="nm" x="280" y="286">UC05 Conversar com a Relo IA</text>
+
+      <ellipse class="uc" cx="280" cy="346" rx="70" ry="24"/>
+      <text class="nm" x="280" y="346">UC06 Avaliar atendimento</text>
+
+      <ellipse class="uc" cx="280" cy="406" rx="70" ry="24"/>
+      <text class="nm" x="280" y="406">UC07 Ver minha área</text>
+
+      <ellipse class="uc" cx="280" cy="450" rx="70" ry="22"/>
+      <text class="nm" x="280" y="450">UC17 Sair</text>
+    </g>
+
+    <!-- ---------------- Coluna 2 (supervisor) ---------------- -->
+    <g>
+      <ellipse class="uc" cx="470" cy="106" rx="70" ry="24"/>
+      <text class="nm" x="470" y="106">UC08 Acompanhar o painel</text>
+
+      <ellipse class="uc" cx="470" cy="166" rx="70" ry="24"/>
+      <text class="nm" x="470" y="166">UC09 Consultar clientes</text>
+
+      <ellipse class="uc" cx="470" cy="226" rx="70" ry="24"/>
+      <text class="nm" x="470" y="226">UC10 Exportar CSV</text>
+
+      <ellipse class="uc" cx="470" cy="286" rx="70" ry="24"/>
+      <text class="nm" x="470" y="286">UC11 Gerenciar estoque</text>
+
+      <ellipse class="uc" cx="470" cy="346" rx="70" ry="24"/>
+      <text class="nm" x="470" y="346">UC12 Gerenciar manutenção</text>
+
+      <ellipse class="uc" cx="470" cy="406" rx="70" ry="24"/>
+      <text class="nm" x="470" y="406">UC13 Gerenciar despesas</text>
+    </g>
+
+    <!-- ---------------- Coluna 3 (administrador) ---------------- -->
+    <g>
+      <ellipse class="uc" cx="660" cy="106" rx="70" ry="24"/>
+      <text class="nm" x="660" y="106">UC14 Configurar a nuvem</text>
+
+      <ellipse class="uc" cx="660" cy="166" rx="70" ry="24"/>
+      <text class="nm" x="660" y="166">UC15 Definir perfil</text>
+
+      <ellipse class="uc" cx="660" cy="226" rx="70" ry="24"/>
+      <text class="nm" x="660" y="226">UC16 Criar conta da equipe</text>
+
+      <ellipse class="uc" cx="660" cy="286" rx="70" ry="24"/>
+      <text class="nm" x="660" y="286">UC19 Excluir cadastro</text>
+
+      <ellipse class="uc" cx="660" cy="346" rx="70" ry="24"/>
+      <text class="nm" x="660" y="346">UC18 Reenviar fila</text>
+    </g>
+
+    <!-- ---------------- Linha de integrações ---------------- -->
+    <g>
+      <ellipse class="uc" cx="280" cy="540" rx="70" ry="24"/>
+      <text class="nm" x="280" y="540">UC03 Agendar</text>
+
+      <ellipse class="uc" cx="470" cy="540" rx="70" ry="24"/>
+      <text class="nm" x="470" y="540">UC04a Analisar o rosto</text>
+
+      <ellipse class="uc" cx="660" cy="540" rx="70" ry="24"/>
+      <text class="nm" x="660" y="540">UC14a Testar conexão</text>
+    </g>
+
+    <!-- ---------------- Atores (esquerda) ---------------- -->
+    <g>
+      <use href="#boneco" transform="translate(62,120)"/>
+      <text class="ator-nome" x="62" y="172">Usuário</text>
+      <text class="ator-desc" x="62" y="188">(cliente do site)</text>
+
+      <use href="#boneco" transform="translate(62,430)"/>
+      <text class="ator-nome" x="62" y="482">Supervisor</text>
+      <text class="ator-desc" x="62" y="498">(equipe: barbeiro,</text>
+      <text class="ator-desc" x="62" y="512">recepção, vendas)</text>
+
+      <use href="#boneco" transform="translate(62,660)"/>
+      <text class="ator-nome" x="62" y="712">Administrador</text>
+      <text class="ator-desc" x="62" y="728">(dono / gestor)</text>
+    </g>
+
+    <!-- generalização entre atores (Administrador ▷ Supervisor ▷ Usuário) -->
+    <path class="liga" d="M62 626 V 540" marker-end="url(#triangulo)"/>
+    <path class="liga" d="M62 396 V 200" marker-end="url(#triangulo)"/>
+
+    <!-- ---------------- Atores externos (direita) ---------------- -->
+    <g>
+      <use href="#boneco" transform="translate(1035,120)"/>
+      <text class="ator-nome" x="1035" y="172">WhatsApp</text>
+      <text class="ator-desc" x="1035" y="188">(canal de agendamento)</text>
+
+      <use href="#boneco" transform="translate(1035,430)"/>
+      <text class="ator-nome" x="1035" y="482">Câmera / face-api.js</text>
+      <text class="ator-desc" x="1035" y="498">(roda no navegador)</text>
+
+      <use href="#boneco" transform="translate(1035,660)"/>
+      <text class="ator-nome" x="1035" y="712">Supabase</text>
+      <text class="ator-desc" x="1035" y="728">(banco na nuvem)</text>
+    </g>
+
+    <!-- ---------------- Associações: Usuário ---------------- -->
+    <path class="liga" d="M104 120 H 210"/>
+    <path class="liga" d="M104 128 L 210 160"/>
+    <path class="liga" d="M104 132 L 210 216"/>
+    <path class="liga" d="M104 136 L 210 276"/>
+    <path class="liga" d="M104 140 L 210 336"/>
+    <path class="liga" d="M104 144 L 210 396"/>
+    <path class="liga" d="M104 150 L 210 442"/>
+
+    <!-- Associações: Supervisor (canal em x=375, sem cruzar a coluna do cliente) -->
+    <path class="liga" d="M104 430 H 375"/>
+    <path class="liga" d="M375 430 V 106 H 400"/>
+    <path class="liga" d="M375 430 V 166 H 400"/>
+    <path class="liga" d="M375 430 V 226 H 400"/>
+    <path class="liga" d="M375 430 V 286 H 400"/>
+    <path class="liga" d="M375 430 V 346 H 400"/>
+    <path class="liga" d="M375 430 V 406 H 400"/>
+
+    <!-- Associações: Administrador (canal em x=855) -->
+    <path class="liga" d="M104 660 H 855"/>
+    <path class="liga" d="M855 660 V 106 H 730"/>
+    <path class="liga" d="M855 660 V 166 H 730"/>
+    <path class="liga" d="M855 660 V 226 H 730"/>
+    <path class="liga" d="M855 660 V 286 H 730"/>
+    <path class="liga" d="M855 660 V 346 H 730"/>
+
+    <!-- Associações: atores externos (ligações verticais curtas) -->
+    <path class="liga" d="M1035 626 V 564 H 350"/>
+    <path class="liga" d="M1035 396 L 540 540"/>
+    <path class="liga" d="M1035 626 V 700 H 760" />
+    <path class="liga" d="M760 700 V 564"/>
+
+    <!-- Dependências «include» -->
+    <path class="dependencia" d="M350 226 L 400 520" marker-end="url(#seta)"/>
+    <text class="rotulo-rel" x="330" y="380" transform="rotate(66 330 380)">«include»</text>
+
+    <path class="dependencia" d="M730 106 H 790 V 540 H 730" marker-end="url(#seta)"/>
+    <text class="rotulo-rel" x="797" y="330">«include»</text>
+
+    <path class="dependencia" d="M730 226 H 770 V 166 H 730" marker-end="url(#seta)"/>
+    <text class="rotulo-rel" x="742" y="196">«include»</text>
+
+    <!-- ---------------- Nota (regras de negócio) ---------------- -->
+    <path class="uc-nota" d="M180 560 H 420 L 440 580 V 742 H 180 Z"/>
+    <path class="uc-nota" d="M420 560 V 580 H 440"/>
+    <text class="nota-texto" x="192" y="580" font-weight="700">Regras de negócio (RN)</text>
+    <text class="nota-texto" x="192" y="598">RN01 — cliente não abre nenhuma função do painel.</text>
+    <text class="nota-texto" x="192" y="614">RN02 — supervisor opera (estoque, manutenção, despesas),</text>
+    <text class="nota-texto" x="192" y="630">não exclui cadastros, não mexe na nuvem e não define perfis.</text>
+    <text class="nota-texto" x="192" y="646">RN03 — só o administrador exclui, configura a nuvem e</text>
+    <text class="nota-texto" x="192" y="662">promove/rebaixa alguém na hierarquia.</text>
+    <text class="nota-texto" x="192" y="678">RN04 — após 12 tentativas de login erradas em 10 min,</text>
+    <text class="nota-texto" x="192" y="694">o acesso àquele e-mail é bloqueado por 10 min.</text>
+    <text class="nota-texto" x="192" y="710">RN05 — conta da equipe (semente) não se exclui: a API</text>
+    <text class="nota-texto" x="192" y="726">responde 400 e orienta a rebaixar o perfil.</text>
+  </svg>
+
+  <p class="legenda-figura">
+    <strong>Figura 1</strong> — Diagrama de caso de uso do Style Relo Barber.
+    Associações em linha cheia; dependências <em>«include»</em> em linha tracejada;
+    a seta de triângulo vazado é a <em>generalização de atores</em> (o Administrador herda o
+    Supervisor, que herda o Usuário — por isso os casos do cliente não repetem linhas).
+    Fonte: elaborado pelos autores (2026).
+  </p>
+
+  <div class="rodape">
+    <span>Barbearia Prumo · Style Relo Barber — TCC 2026</span>
+    <span>Apêndice B — Diagrama de caso de uso (A4 paisagem)</span>
+  </div>
+</section>
+
+<!-- ==================================================================== -->
+<!-- PÁGINA 2 — passos de uso (o resumo que vai para a apresentação)      -->
+<!-- ==================================================================== -->
+<section class="pagina">
+  <header class="cabecalho">
+    <div class="instituicao">Trabalho de Conclusão de Curso · Desenvolvimento de Sistemas</div>
+    <h1>Passos de uso do aplicativo — roteiro da demonstração</h1>
+    <h2>Do cadastro do cliente à gestão do administrador, na ordem em que a banca vai ver</h2>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Ator</th>
+        <th>Tela / caminho</th>
+        <th>Passos (o que o usuário faz)</th>
+        <th>O que o sistema faz</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="codigo">1</td>
+        <td class="ator">Usuário</td>
+        <td><code>index.html</code> → Login</td>
+        <td>Clica em <em>Criar conta</em>, preenche nome, e-mail e senha e envia.</td>
+        <td>Valida os campos, gera o <em>hash</em> da senha, grava no banco e abre a cópia na nuvem (com fila de reenvio).</td>
+      </tr>
+      <tr>
+        <td class="codigo">2</td>
+        <td class="ator">Usuário</td>
+        <td><code>ia-tryon.html</code></td>
+        <td>Abre <em>Experimente com IA</em>, permite a câmera (ou envia foto), escolhe estilo e volume.</td>
+        <td>Lê o formato do rosto com o face-api.js, preenche o card <em>“Combinação encontrada”</em> e prepara o WhatsApp com o corte escolhido.</td>
+      </tr>
+      <tr>
+        <td class="codigo">3</td>
+        <td class="ator">Usuário</td>
+        <td><code>ia-tryon.html</code> → chat</td>
+        <td>Pergunta “quanto custa o degradê?” no chat da Relo IA.</td>
+        <td>Responde na hora com a tabela de preços e sugere o agendamento (tudo local, sem chave de API).</td>
+      </tr>
+      <tr>
+        <td class="codigo">4</td>
+        <td class="ator">Usuário</td>
+        <td><code>feedback.html</code></td>
+        <td>Escolhe o barbeiro, dá as estrelas e envia.</td>
+        <td>Grava a avaliação e só confirma o sucesso quando o envio realmente funcionou.</td>
+      </tr>
+      <tr>
+        <td class="codigo">5</td>
+        <td class="ator">Usuário</td>
+        <td><code>dashboard.html</code></td>
+        <td>Confere os dados da conta e o histórico de acessos.</td>
+        <td>Mostra o perfil <strong>Usuário</strong> e mantém o painel bloqueado (área da equipe).</td>
+      </tr>
+      <tr>
+        <td class="codigo">6</td>
+        <td class="ator">Supervisor</td>
+        <td><code>login.html</code> → <code>admin.html</code></td>
+        <td>Entra com a conta de supervisor.</td>
+        <td>Abre o painel com a faixa dourada explicando o perfil e esconde o que ele não pode fazer.</td>
+      </tr>
+      <tr>
+        <td class="codigo">7</td>
+        <td class="ator">Supervisor</td>
+        <td>Painel → Visão Geral</td>
+        <td>Lê os KPIs, a faixa “Hoje na barbearia” e os gráficos de 14 dias.</td>
+        <td>Devolve métricas calculadas no servidor em uma única chamada.</td>
+      </tr>
+      <tr>
+        <td class="codigo">8</td>
+        <td class="ator">Supervisor</td>
+        <td>Painel → Estoque / Manutenção / Despesas</td>
+        <td>Dá baixa em uma pomada, abre uma ordem de manutenção e lança uma despesa.</td>
+        <td>Grava no banco do servidor (todos veem o mesmo número) e atualiza os alertas.</td>
+      </tr>
+      <tr>
+        <td class="codigo">9</td>
+        <td class="ator">Supervisor</td>
+        <td>Painel → Banco de Clientes</td>
+        <td>Tenta excluir um cliente e configurar a nuvem.</td>
+        <td>O botão nem aparece; pela API, responde <strong>403</strong> explicando a permissão que falta.</td>
+      </tr>
+      <tr>
+        <td class="codigo">10</td>
+        <td class="ator">Administrador</td>
+        <td>Painel → Ficha do usuário</td>
+        <td>Promove o cliente a <em>Supervisor</em> e confirma.</td>
+        <td>Grava o novo perfil com autor e data, derruba as sessões da conta e mostra o novo selo na lista.</td>
+      </tr>
+      <tr>
+        <td class="codigo">11</td>
+        <td class="ator">Administrador</td>
+        <td>Painel → Banco de Dados</td>
+        <td>Cola o bloco do Supabase, testa a conexão e reenvia a fila.</td>
+        <td>Separa URL e chave sozinho, guarda só no servidor (máscara no navegador) e atualiza os contadores.</td>
+      </tr>
+      <tr>
+        <td class="codigo">12</td>
+        <td class="ator">Administrador</td>
+        <td>Painel → Exportar CSV</td>
+        <td>Filtra por perfil e exporta.</td>
+        <td>Gera o CSV do que está na tela, com separador <code>;</code> e cabeçalho em português.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="nota">
+    <strong>Roteiro de 5 minutos para a banca:</strong>
+    (1) criar conta e mostrar o cadastro chegando no painel;
+    (2) usar o simulador com a câmera e agendar pelo WhatsApp;
+    (3) entrar como <em>supervisor</em> e mostrar o painel operando;
+    (4) tentar excluir/configurar e mostrar o <strong>403</strong>;
+    (5) entrar como <em>administrador</em>, promover aquele cliente a supervisor e mostrar o selo mudando na lista.
+  </div>
+
+  <ul class="regras">
+    <li>Senha nunca em texto puro: SHA-256 com sal por conta (conferido pelo teste automatizado).</li>
+    <li>Cadastro salvo primeiro no banco do site e depois na nuvem — sem internet, entra na fila.</li>
+    <li>Nenhuma foto sai do navegador: a leitura facial é local (face-api.js).</li>
+  </ul>
+
+  <div class="rodape">
+    <span>Barbearia Prumo · Style Relo Barber — TCC 2026</span>
+    <span>Apêndice B.1 — Passos de uso</span>
+  </div>
+</section>
+
+</body>
+</html>

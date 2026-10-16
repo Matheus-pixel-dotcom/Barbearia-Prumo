@@ -65,16 +65,21 @@
         return;
       }
 
-      const admin = global.ReloAuth.ehAdmin(resultado.usuario);
+      const equipe = global.ReloAuth.ehEquipe
+        ? global.ReloAuth.ehEquipe(resultado.usuario)
+        : global.ReloAuth.ehAdmin(resultado.usuario);
+      const perfil = global.ReloAuth.rotuloPerfil
+        ? global.ReloAuth.rotuloPerfil(resultado.usuario)
+        : '';
       mostrarSucesso(
         'Login realizado com sucesso! Redirecionando para a sua área' +
-          (admin ? ' de administrador' : '') +
+          (equipe ? ' da equipe (' + perfil + ')' : ' de cliente') +
           '...',
         sucessoEl
       );
       if (global.ReloLoginModal) global.ReloLoginModal.atualizarNavegacao();
       setTimeout(() => {
-        global.location.href = admin ? 'admin.html' : 'dashboard.html';
+        global.location.href = equipe ? 'admin.html' : 'dashboard.html';
       }, 1200);
     });
   }

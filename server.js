@@ -8,7 +8,10 @@
  * O que ele faz:
  *   1. Entrega as páginas do site (HTML/CSS/imagens).
  *   2. Guarda o cadastro dos clientes no banco de dados JSON (data/db.json).
- *   3. Libera a aba ADMIN só para os e-mails de administrador (admin-accounts.js).
+ *   3. Controla o acesso pelo perfil (cliente, supervisor e administrador):
+ *      o supervisor opera o dia a dia, o administrador manda em tudo.
+ *      A lista de quem é admin está em admin-accounts.js e a matriz de
+ *      permissões em permissoes.js.
  *
  * Sem nenhuma dependência externa: usa apenas os módulos nativos do Node.
  */
@@ -17,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const ReloHash = require('./auth-hash');
 const db = require('./db');
-const nanoBanana = require('./nano-banana');
+const Permissoes = require('./permissoes');
 const ReloSync = require('./sync-supabase');
 
 const RAIZ = __dirname;
@@ -57,9 +60,7 @@ function json(res, status, corpo) {
   res.end(texto);
 }
 
-// As rotas de IA recebem fotos em base64, então precisam de um limite maior.
 const LIMITE_CORPO_PADRAO = 1e6; // ~1 MB (login, cadastro, admin)
-const LIMITE_CORPO_IA = 16e6; // ~16 MB (imagem codificada)
 
 function lerCorpo(req, limite = LIMITE_CORPO_PADRAO) {
   return new Promise((resolve, reject) => {
@@ -103,14 +104,47 @@ function autenticar(req, banco) {
   return usuario ? { usuario, token } : null;
 }
 
+/*
+ * Quem pode o quê. O perfil do usuário logado é conferido em permissoes.js —
+ * a mesma tabela que o painel usa para esconder os botões. A ordem da
+ * hierarquia é cliente (1) < supervisor (2) < admin (3).
+ */
 function exigeAdmin(req, banco, res) {
   const sessao = autenticar(req, banco);
   if (!sessao) {
     json(res, 401, { ok: false, erro: 'Faça login para continuar.' });
     return null;
   }
-  if (sessao.usuario.perfil !== 'admin') {
-    json(res, 403, { ok: false, erro: 'Esta área é exclusiva dos administradores.' });
+  if (!Permissoes.pode(sessao.usuario.perfil, 'painel.ver')) {
+    json(res, 403, {
+      ok: false,
+      erro: 'Esta área é da equipe da barbearia. Sua conta é de cliente.',
+      perfil: Permissoes.normalizar(sessao.usuario.perfil)
+    });
+    return null;
+  }
+  return sessao;
+}
+
+// Igual ao exigeAdmin, mas cobrando uma permissão específica da tabela.
+function exigePermissao(req, banco, res, acao) {
+  const sessao = autenticar(req, banco);
+  if (!sessao) {
+    json(res, 401, { ok: false, erro: 'Faça login para continuar.' });
+    return null;
+  }
+  const perfil = sessao.usuario.perfil;
+  if (!Permissoes.pode(perfil, acao)) {
+    const rotulo = Permissoes.rotulo(perfil);
+    json(res, 403, {
+      ok: false,
+      erro:
+        Permissoes.nivel(perfil) === 1
+          ? 'Esta área é da equipe da barbearia. Sua conta é de cliente.'
+          : 'O perfil ' + rotulo + ' não pode ' + Permissoes.descrever(acao) + '. Fale com um administrador.',
+      perfil: Permissoes.normalizar(perfil),
+      acao
+    });
     return null;
   }
   return sessao;
@@ -138,103 +172,6 @@ function contarTentativa(email, sucesso) {
   const registro = tentativas.get(email) || { total: 0, desde: Date.now() };
   registro.total += 1;
   tentativas.set(email, registro);
-}
-
-/* ------------------------------------------------------------------ */
-/* Proteção de cota da IA (Nano Banana)                                */
-/*                                                                     */
-/* A API do Google é paga por imagem gerada. Este limite simples evita  */
-/* que alguém (ou um loop no navegador) queime o crédito da chave.      */
-/* O limite pode ser ajustado ao vivo pelo painel admin.                */
-/* ------------------------------------------------------------------ */
-const IA_JANELA_MS = 60 * 60 * 1000;
-const IA_CONFIG_FILE = path.join(RAIZ, 'data', 'ia-config.json');
-const usoIA = new Map(); // ip -> [timestamps]
-
-// Configuração da IA salva pelo painel admin (fica em data/, fora do git).
-function lerConfigIa() {
-  try {
-    return JSON.parse(fs.readFileSync(IA_CONFIG_FILE, 'utf8'));
-  } catch (erro) {
-    return {};
-  }
-}
-function salvarConfigIa(cfg) {
-  try {
-    fs.mkdirSync(path.dirname(IA_CONFIG_FILE), { recursive: true });
-    fs.writeFileSync(IA_CONFIG_FILE, JSON.stringify(cfg, null, 2));
-  } catch (erro) {
-    console.warn('[ia] Não consegui salvar a config da IA:', erro.message);
-  }
-}
-
-// Se a chave/limite foi salva pelo painel (e não existe .env real), aplica.
-(function aplicarConfigIa() {
-  const cfg = lerConfigIa();
-  if (!process.env.GEMINI_API_KEY && cfg.chave) process.env.GEMINI_API_KEY = cfg.chave;
-  if (!process.env.IA_LIMITE_POR_HORA && cfg.limitePorHora) {
-    process.env.IA_LIMITE_POR_HORA = String(cfg.limitePorHora);
-  }
-})();
-
-function limiteIaPorHora() {
-  const n = Number(process.env.IA_LIMITE_POR_HORA || lerConfigIa().limitePorHora || 30);
-  return Number.isFinite(n) && n > 0 ? n : 30;
-}
-
-// Nunca devolve a chave inteira para o navegador.
-function mascaraChave(chave) {
-  if (!chave) return null;
-  if (chave.length <= 10) return chave.slice(0, 2) + '••••';
-  return chave.slice(0, 6) + '••••••••' + chave.slice(-4);
-}
-
-// Total de chamadas de IA na última hora (para o painel admin).
-function usoIaUltimaHora() {
-  const agora = Date.now();
-  let total = 0;
-  usoIA.forEach((marcas) => {
-    total += marcas.filter((m) => agora - m < IA_JANELA_MS).length;
-  });
-  return total;
-}
-
-function ipDaRequisicao(req) {
-  const encaminhado = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-  return encaminhado || req.socket?.remoteAddress || 'desconhecido';
-}
-
-function conferirCotaIA(req, res, custo = 1) {
-  const agora = Date.now();
-  const limite = limiteIaPorHora();
-  const ip = ipDaRequisicao(req);
-  const historico = (usoIA.get(ip) || []).filter((marca) => agora - marca < IA_JANELA_MS);
-
-  if (historico.length + custo > limite) {
-    usoIA.set(ip, historico);
-    json(res, 429, {
-      ok: false,
-      erro: `Limite de ${limite} gerações por hora atingido. Aguarde um pouco e tente de novo.`
-    });
-    return false;
-  }
-
-  historico.push(agora);
-  usoIA.set(ip, historico);
-  return true;
-}
-
-function exigirIaAtiva(req, res) {
-  if (!nanoBanana.ativo()) {
-    json(res, 503, {
-      ok: false,
-      ativo: false,
-      erro:
-        'IA ainda não configurada neste servidor. Crie uma chave em https://aistudio.google.com/apikey e coloque GEMINI_API_KEY no arquivo .env (instruções em NANO_BANANA.md).'
-    });
-    return false;
-  }
-  return true;
 }
 
 /* ------------------------------------------------------------------ */
@@ -427,8 +364,8 @@ const FILA_SYNC_INTERVALO_MS = 3 * 60 * 1000;
 /* ------------------------------------------------------------------ */
 async function tratarApi(req, res, url) {
   const banco = db.carregar();
-  const criados = db.semearAdmins(banco);
-  if (criados > 0) db.salvar(banco);
+  const semeados = db.semearAdmins(banco);
+  if (semeados.criados > 0 || semeados.perfisAtualizados > 0) db.salvar(banco);
 
   const rota = url.pathname.replace(/\/+$/, '') || '/api';
 
@@ -443,6 +380,7 @@ async function tratarApi(req, res, url) {
       banco: path.relative(RAIZ, db.DB_FILE),
       usuarios: banco.usuarios.length,
       administradores: banco.usuarios.filter((u) => u.perfil === 'admin').length,
+      supervisores: banco.usuarios.filter((u) => u.perfil === 'supervisor').length,
       espelho: { ativo: cfg.ativo, tabela: cfg.tabela, pendentes: db.resumoSync(banco).pendentes },
       hora: new Date().toISOString()
     });
@@ -484,7 +422,7 @@ async function tratarApi(req, res, url) {
       origem: 'servidor'
     });
     db.salvar(banco);
-    if (usuario.perfil !== 'admin' && configSupabase().ativo && precisaEspelhar(usuario)) {
+    if (Permissoes.normalizar(usuario.perfil) === 'cliente' && configSupabase().ativo && precisaEspelhar(usuario)) {
       espelharCliente(usuario); // mantém a nuvem com o último acesso em dia
     }
     return json(res, 200, { ok: true, token, usuario: db.usuarioPublico(usuario) });
@@ -556,9 +494,9 @@ async function tratarApi(req, res, url) {
     return json(res, 200, { ok: true });
   }
 
-  // GET /api/admin/usuarios — banco de clientes e logins (só admin)
+  // GET /api/admin/usuarios — banco de clientes e logins (admin e supervisor)
   if (rota === '/api/admin/usuarios' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'clientes.ver');
     if (!sessao) return undefined;
     const usuarios = banco.usuarios
       .slice()
@@ -569,18 +507,30 @@ async function tratarApi(req, res, url) {
       usuarios,
       logins: (banco.logins || []).slice(0, 60),
       totalClientes: usuarios.filter((u) => u.perfil === 'cliente').length,
-      totalAdmins: usuarios.filter((u) => u.perfil === 'admin').length
+      totalSupervisores: usuarios.filter((u) => u.perfil === 'supervisor').length,
+      totalAdmins: usuarios.filter((u) => u.perfil === 'admin').length,
+      perfis: Permissoes.perfis()
     });
   }
 
-  // POST /api/admin/usuarios — admin cadastra um cliente manualmente
+  // POST /api/admin/usuarios — cadastra um cliente (ou uma conta da equipe,
+  // se quem pediu tem equipe.gerenciar: aí o perfil vem no corpo)
   if (rota === '/api/admin/usuarios' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'clientes.criar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const nome = String(corpo.nome || '').trim();
     const email = db.normalizarEmail(corpo.email);
     const senha = String(corpo.senha || '');
+    const podeEscolherPerfil = Permissoes.pode(sessao.usuario.perfil, 'equipe.gerenciar');
+    const perfilPedido = Permissoes.normalizar(corpo.perfil || 'cliente');
+    if (corpo.perfil !== undefined && !podeEscolherPerfil) {
+      return json(res, 403, {
+        ok: false,
+        erro: 'Cadastrar supervisor ou administrador é só para o administrador.'
+      });
+    }
+    const perfil = podeEscolherPerfil ? perfilPedido : 'cliente';
     if (nome.length < 2) return json(res, 400, { ok: false, erro: 'Digite o nome do cliente.' });
     if (!validarEmail(email)) return json(res, 400, { ok: false, erro: 'E-mail inválido.' });
     if (senha.length < 6) {
@@ -591,12 +541,13 @@ async function tratarApi(req, res, url) {
     }
     const salt = ReloHash.saltParaEmail(email);
     const usuario = {
-      id: 'cli_' + ReloHash.sha256Hex(email).slice(0, 10),
+      id: (perfil === 'cliente' ? 'cli_' : perfil === 'admin' ? 'adm_' : 'sup_') +
+        ReloHash.sha256Hex(email).slice(0, 10),
       nome,
       email,
       aliases: [],
-      perfil: 'cliente',
-      origem: 'admin',
+      perfil,
+      origem: 'painel',
       salt,
       senhaHash: ReloHash.hashPassword(salt, senha),
       criadoEm: new Date().toISOString(),
@@ -605,14 +556,30 @@ async function tratarApi(req, res, url) {
     };
     banco.usuarios.push(usuario);
     db.salvar(banco);
-    espelharCliente(usuario);
+    if (perfil === 'cliente') espelharCliente(usuario);
     return json(res, 201, { ok: true, usuario: db.usuarioPublico(usuario) });
   }
 
-  // GET /api/admin/usuarios/:id — ficha do cliente (dados + acessos dele)
+  // PATCH /api/admin/usuarios/:id/perfil — promove ou rebaixa um usuário
+  // (só administrador; é assim que alguém vira supervisor)
+  const rotaPerfil = rota.match(/^\/api\/admin\/usuarios\/([^/]+)\/perfil$/);
+  if (rotaPerfil && (req.method === 'PATCH' || req.method === 'POST')) {
+    const sessao = exigePermissao(req, banco, res, 'equipe.gerenciar');
+    if (!sessao) return undefined;
+    const corpo = await lerCorpo(req);
+    const alvoId = decodeURIComponent(rotaPerfil[1]);
+    const alvo = banco.usuarios.find((u) => u.id === alvoId);
+    if (!alvo) return json(res, 404, { ok: false, erro: 'Usuário não encontrado.' });
+    const resultado = db.definirPerfil(banco, alvoId, corpo.perfil, sessao.usuario);
+    if (!resultado.ok) return json(res, 400, { ok: false, erro: resultado.erro });
+    db.salvar(banco);
+    return json(res, 200, Object.assign({ ok: true }, resultado));
+  }
+
+  // GET /api/admin/usuarios/:id — ficha do cliente (dados + acessos dele; admin e supervisor)
   const rotaFicha = rota.match(/^\/api\/admin\/usuarios\/([^/]+)$/);
   if (rotaFicha && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'clientes.ver');
     if (!sessao) return undefined;
     const alvo = banco.usuarios.find((u) => u.id === decodeURIComponent(rotaFicha[1]));
     if (!alvo) return json(res, 404, { ok: false, erro: 'Usuário não encontrado.' });
@@ -626,14 +593,17 @@ async function tratarApi(req, res, url) {
     });
   }
 
-  // DELETE /api/admin/usuarios/:id — remove cliente (admins da semente são protegidos)
+  // DELETE /api/admin/usuarios/:id — remove cliente (só admin; contas da semente são protegidas)
   if (rotaFicha && req.method === 'DELETE') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'clientes.excluir');
     if (!sessao) return undefined;
     const alvo = banco.usuarios.find((u) => u.id === decodeURIComponent(rotaFicha[1]));
     if (!alvo) return json(res, 404, { ok: false, erro: 'Usuário não encontrado.' });
     if (alvo.origem === 'semente') {
-      return json(res, 400, { ok: false, erro: 'Contas de administrador não podem ser excluídas.' });
+      return json(res, 400, {
+        ok: false,
+        erro: 'Contas da equipe (semente) não podem ser excluídas — rebaixe o perfil se precisar.'
+      });
     }
     banco.usuarios = banco.usuarios.filter((u) => u.id !== alvo.id);
     banco.sessoes = banco.sessoes.filter((s) => s.usuarioId !== alvo.id);
@@ -646,7 +616,7 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/metricas — KPIs e séries do painel (tudo calculado no servidor)
   if (rota === '/api/admin/metricas' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'painel.ver');
     if (!sessao) return undefined;
     const cfg = configSupabase();
     const metricas = db.calcularMetricas(banco);
@@ -663,7 +633,7 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/estoque
   if (rota === '/api/admin/estoque' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'estoque.ver');
     if (!sessao) return undefined;
     const produtos = (banco.produtos || []).map(db.produtoPublico);
     return json(res, 200, {
@@ -676,7 +646,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/estoque — cria (sem id) ou atualiza (com id) um produto
   if (rota === '/api/admin/estoque' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'estoque.editar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const nome = String(corpo.nome || '').trim();
@@ -721,7 +691,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/estoque/mov — entrada (+) ou saída (-) de itens
   if (rota === '/api/admin/estoque/mov' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'estoque.editar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const delta = Number(corpo.delta);
@@ -742,7 +712,7 @@ async function tratarApi(req, res, url) {
   // DELETE /api/admin/estoque/:id
   const rotaProduto = rota.match(/^\/api\/admin\/estoque\/([^/]+)$/);
   if (rotaProduto && req.method === 'DELETE') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'estoque.excluir');
     if (!sessao) return undefined;
     return db
       .transacionar((atual) => {
@@ -757,14 +727,14 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/manutencao
   if (rota === '/api/admin/manutencao' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'manutencao.ver');
     if (!sessao) return undefined;
     return json(res, 200, { ok: true, manutencoes: (banco.manutencoes || []).slice().reverse() });
   }
 
   // POST /api/admin/manutencao — registra ou muda o status
   if (rota === '/api/admin/manutencao' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'manutencao.editar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     return db
@@ -799,7 +769,7 @@ async function tratarApi(req, res, url) {
   // DELETE /api/admin/manutencao/:id
   const rotaManutencao = rota.match(/^\/api\/admin\/manutencao\/([^/]+)$/);
   if (rotaManutencao && req.method === 'DELETE') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'manutencao.excluir');
     if (!sessao) return undefined;
     return db
       .transacionar((atual) => {
@@ -814,7 +784,7 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/despesas
   if (rota === '/api/admin/despesas' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'despesas.ver');
     if (!sessao) return undefined;
     const despesas = (banco.despesas || []).slice().reverse();
     const mesAtual = new Date().toISOString().slice(0, 7);
@@ -830,7 +800,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/despesas
   if (rota === '/api/admin/despesas' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'despesas.editar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const descricao = String(corpo.descricao || '').trim();
@@ -857,7 +827,7 @@ async function tratarApi(req, res, url) {
   // DELETE /api/admin/despesas/:id
   const rotaDespesa = rota.match(/^\/api\/admin\/despesas\/([^/]+)$/);
   if (rotaDespesa && req.method === 'DELETE') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'despesas.excluir');
     if (!sessao) return undefined;
     return db
       .transacionar((atual) => {
@@ -876,14 +846,14 @@ async function tratarApi(req, res, url) {
 
   // GET /api/admin/supabase — nunca devolve a chave inteira
   if (rota === '/api/admin/supabase' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'nuvem.ver');
     if (!sessao) return undefined;
     return json(res, 200, statusSupabasePublico(configSupabase()));
   }
 
   // POST /api/admin/supabase — salva chave/url/tabela/liga-desliga
   if (rota === '/api/admin/supabase' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'nuvem.configurar');
     if (!sessao) return undefined;
     const corpo = await lerCorpo(req);
     const cfg = lerConfigSupabase();
@@ -930,7 +900,7 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/supabase/teste — confere conexão e a tabela
   if (rota === '/api/admin/supabase/teste' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'nuvem.ver');
     if (!sessao) return undefined;
     const atual = configSupabase();
     if (!atual.ativo) {
@@ -942,143 +912,10 @@ async function tratarApi(req, res, url) {
 
   // POST /api/admin/supabase/reenviar — tenta de novo os cadastros parados na fila
   if (rota === '/api/admin/supabase/reenviar' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
+    const sessao = exigePermissao(req, banco, res, 'nuvem.reenviar');
     if (!sessao) return undefined;
     const resultado = await processarFilaSync('painel', true);
     return json(res, 200, Object.assign({ ok: true }, resultado, statusSupabasePublico(configSupabase())));
-  }
-
-  /* ---------------------------------------------------------------- */
-  /* Admin da IA — o painel configura o Nano Banana sem tocar em arquivo */
-  /* ---------------------------------------------------------------- */
-
-  // GET /api/admin/ia — status, limite e uso (só admin; nunca devolve a chave)
-  if (rota === '/api/admin/ia' && req.method === 'GET') {
-    const sessao = exigeAdmin(req, banco, res);
-    if (!sessao) return undefined;
-    const status = nanoBanana.statusPublico();
-    return json(res, 200, {
-      ok: true,
-      ativo: status.ativo,
-      modelo: status.modelo,
-      modeloChat: status.modeloChat,
-      chaveConfigurada: Boolean(process.env.GEMINI_API_KEY),
-      chaveMascara: mascaraChave(process.env.GEMINI_API_KEY),
-      limitePorHora: limiteIaPorHora(),
-      usoUltimaHora: usoIaUltimaHora()
-    });
-  }
-
-  // POST /api/admin/ia — salva chave e/ou limite (só admin; grava em data/)
-  if (rota === '/api/admin/ia' && req.method === 'POST') {
-    const sessao = exigeAdmin(req, banco, res);
-    if (!sessao) return undefined;
-    const corpo = await lerCorpo(req);
-    const cfg = lerConfigIa();
-
-    if (corpo.chave !== undefined) {
-      const chave = String(corpo.chave || '').trim();
-      if (chave) {
-        process.env.GEMINI_API_KEY = chave;
-        cfg.chave = chave;
-      }
-    }
-    if (corpo.limitePorHora !== undefined) {
-      const n = Number(corpo.limitePorHora);
-      if (Number.isFinite(n) && n > 0 && n <= 500) {
-        process.env.IA_LIMITE_POR_HORA = String(n);
-        cfg.limitePorHora = n;
-      }
-    }
-    salvarConfigIa(cfg);
-
-    const status = nanoBanana.statusPublico();
-    return json(res, 200, {
-      ok: true,
-      ativo: status.ativo,
-      modelo: status.modelo,
-      chaveConfigurada: Boolean(process.env.GEMINI_API_KEY),
-      chaveMascara: mascaraChave(process.env.GEMINI_API_KEY),
-      limitePorHora: limiteIaPorHora(),
-      usoUltimaHora: usoIaUltimaHora()
-    });
-  }
-
-  /* ---------------------------------------------------------------- */
-  /* Rotas da IA — Nano Banana (Gemini Image)                          */
-  /* A chave fica só aqui no servidor; o navegador nunca vê.           */
-  /* ---------------------------------------------------------------- */
-
-  // GET /api/ia/status — o front usa isso para saber se a IA está ligada
-  if (rota === '/api/ia/status' && req.method === 'GET') {
-    return json(res, 200, nanoBanana.statusPublico());
-  }
-
-  // POST /api/ia/simular — gera a foto do cliente com o corte escolhido
-  if (rota === '/api/ia/simular' && req.method === 'POST') {
-    if (!exigirIaAtiva(req, res)) return undefined;
-
-    const corpo = await lerCorpo(req, LIMITE_CORPO_IA);
-    // Valida ANTES de gastar cota: pedido inválido não pode queimar crédito.
-    if (!corpo.fotoBase64) {
-      return json(res, 400, { ok: false, erro: 'Envie uma foto para simular o corte.' });
-    }
-    if (!nanoBanana.fotoValida(corpo.fotoBase64)) {
-      return json(res, 400, {
-        ok: false,
-        erro: 'Envie uma foto válida (JPEG, PNG, WEBP, GIF ou HEIC) de até ~10 MB.'
-      });
-    }
-    if (!conferirCotaIA(req, res, 1)) return undefined;
-
-    const resultado = await nanoBanana.gerarSimulacaoDeCorte({
-      fotoBase64: corpo.fotoBase64,
-      estilo: corpo.estilo,
-      tipo: corpo.tipo,
-      volume: corpo.volume,
-      rosto: corpo.rosto,
-      observacao: corpo.observacao,
-      proporcao: corpo.proporcao
-    });
-
-    db.salvar(banco);
-    return json(res, 200, resultado);  }
-
-  // POST /api/ia/analisar — leitura do rosto (formato, simetria, tipo de cabelo)
-  if (rota === '/api/ia/analisar' && req.method === 'POST') {
-    if (!exigirIaAtiva(req, res)) return undefined;
-
-    const corpo = await lerCorpo(req, LIMITE_CORPO_IA);
-    if (!corpo.fotoBase64) {
-      return json(res, 400, { ok: false, erro: 'Envie uma foto para análise facial.' });
-    }
-    if (!nanoBanana.fotoValida(corpo.fotoBase64)) {
-      return json(res, 400, {
-        ok: false,
-        erro: 'Envie uma foto válida (JPEG, PNG, WEBP, GIF ou HEIC) de até ~10 MB.'
-      });
-    }
-    if (!conferirCotaIA(req, res, 1)) return undefined;
-
-    return json(res, 200, await nanoBanana.analisarRosto({ fotoBase64: corpo.fotoBase64 }));
-  }
-
-  // POST /api/ia/chat — Relo IA conversando com um modelo real
-  if (rota === '/api/ia/chat' && req.method === 'POST') {
-    if (!exigirIaAtiva(req, res)) return undefined;
-
-    const corpo = await lerCorpo(req);
-    const mensagem = String(corpo.mensagem || '').trim();
-    if (!mensagem) {
-      return json(res, 400, { ok: false, erro: 'Escreva uma mensagem para a Relo IA.' });
-    }
-    if (!conferirCotaIA(req, res, 1)) return undefined;
-
-    return json(res, 200, await nanoBanana.conversar({
-      mensagem,
-      historico: Array.isArray(corpo.historico) ? corpo.historico : [],
-      contexto: corpo.contexto
-    }));
   }
 
   return json(res, 404, { ok: false, erro: 'Rota da API não encontrada.' });
@@ -1098,8 +935,9 @@ function servirArquivo(req, res, url) {
   const protegidos = [path.join(RAIZ, 'data'), path.join(RAIZ, '.git')];
   const ehProtegido = protegidos.some((p) => alvo === p || alvo.startsWith(p + path.sep));
 
-  // Arquivos de ambiente guardam a chave da IA (GEMINI_API_KEY): ninguém pode
-  // baixá-los pelo navegador. O .env.example é permitido (não tem segredo).
+  // Arquivos de ambiente guardam segredos (chave do Supabase, por exemplo):
+  // ninguém pode baixá-los pelo navegador. O .env.example é permitido
+  // justamente porque não tem segredo nenhum dentro.
   const nome = path.basename(alvo);
   const ehArquivoDeAmbiente =
     nome === '.env' ||
@@ -1142,19 +980,10 @@ const servidor = http.createServer((req, res) => {
       return res.end();
     }
     return tratarApi(req, res, url).catch((erro) => {
-      // Erros da IA já vêm com código e mensagem próprios (chave inválida, cota, bloqueio...).
-      if (erro instanceof nanoBanana.ErroNanoBanana) {
-        console.warn(`[ia] ${erro.codigo}: ${erro.message}`);
-        return json(res, erro.codigo, {
-          ok: false,
-          erro: erro.message,
-          detalhes: erro.detalhes || undefined
-        });
-      }
       if (erro.message === 'Corpo muito grande') {
         return json(res, 413, {
           ok: false,
-          erro: 'Arquivo muito grande. Envie uma foto de até ~10 MB.'
+          erro: 'Envio muito grande. Reduza o conteúdo e tente de novo.'
         });
       }
       console.error('[api] Erro:', erro.message);
@@ -1167,7 +996,7 @@ const servidor = http.createServer((req, res) => {
 
 servidor.listen(PORTA, HOST, () => {
   const banco = db.carregar();
-  const criados = db.semearAdmins(banco);
+  const semeados = db.semearAdmins(banco);
   db.salvar(banco);
   const cfg = configSupabase();
   const fila = db.resumoSync(banco);
@@ -1178,6 +1007,11 @@ servidor.listen(PORTA, HOST, () => {
   console.log(`  API:     http://localhost:${PORTA}/api/health`);
   console.log(`  Banco:   ${db.DB_FILE}`);
   console.log(`  Usuários cadastrados: ${banco.usuarios.length}`);
+  const admins = banco.usuarios.filter((u) => u.perfil === 'admin').length;
+  const supervisores = banco.usuarios.filter((u) => u.perfil === 'supervisor').length;
+  console.log(`  Hierarquia: ${admins} administrador(es), ${supervisores} supervisor(es) — papéis em HIERARQUIA_DE_ACESSO.md`);
+  if (semeados.criados) console.log(`  Semente:  ${semeados.criados} conta(s) da equipe criada(s) agora`);
+  if (semeados.perfisAtualizados) console.log(`  Semente:  ${semeados.perfisAtualizados} perfil(is) da equipe alinhado(s) ao admin-accounts.js`);
   if (banco.produtos.length || banco.manutencoes.length || banco.despesas.length) {
     console.log(
       `  Operação: ${banco.produtos.length} produto(s), ${banco.manutencoes.length} manutenção(ões), ${banco.despesas.length} despesa(s) no banco do servidor`
@@ -1189,14 +1023,6 @@ servidor.listen(PORTA, HOST, () => {
   } else {
     console.log('  Nuvem:   espelhamento no Supabase DESLIGADO (cadastro fica só no data/db.json)');
     console.log('           Para ligar: SUPABASE_URL / SUPABASE_ANON_KEY no .env ou no painel admin.');
-  }
-  if (criados > 0) console.log(`  ${criados} conta(s) de administrador criada(s) agora.`);
-  if (nanoBanana.ativo()) {
-    console.log(`  IA:      Nano Banana ATIVO (${nanoBanana.statusPublico().modelo})`);
-    console.log(`           Limite: ${limiteIaPorHora()} gerações/hora por visitante`);
-  } else {
-    console.log('  IA:      Nano Banana em modo demonstrativo (sem GEMINI_API_KEY)');
-    console.log('           Para ligar: copie .env.example para .env e cole sua chave.');
   }
   console.log('======================================================');
 

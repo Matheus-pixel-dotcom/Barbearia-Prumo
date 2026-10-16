@@ -10,6 +10,10 @@
  * as contas de administrador de admin-accounts.js.
  *
  * Os e-mails usam @exemplo.com de propósito: nada aqui é contato real.
+ *
+ * Também cria UMA conta de supervisor (supervisor@exemplo.com), para dar para
+ * mostrar a hierarquia de acesso na apresentação: o supervisor abre o painel e
+ * opera estoque/manutenção/despesas, mas não exclui e não mexe na nuvem.
  */
 'use strict';
 const db = require('../db.js');
@@ -112,6 +116,30 @@ db.transacionar((atual) => {
     saida.novos += 1;
   });
 
+  // conta de supervisor da vitrine: mostra a hierarquia na prática
+  const emailSupervisor = 'supervisor@exemplo.com';
+  if (!db.acharUsuario(atual, emailSupervisor)) {
+    const supervisor = db.novoUsuario(atual, {
+      nome: 'Diego Supervisão',
+      email: emailSupervisor,
+      senha: 'Senha123!',
+      origem: 'painel',
+      perfil: 'supervisor'
+    });
+    supervisor.criadoEm = iso(20, 9);
+    supervisor.totalLogins = 3;
+    supervisor.ultimoLogin = iso(1, 10);
+    atual.logins.unshift({
+      email: emailSupervisor,
+      nome: 'Diego Supervisão',
+      perfil: 'supervisor',
+      quando: iso(1, 10),
+      sucesso: true,
+      origem: 'painel'
+    });
+    saida.supervisores = (saida.supervisores || 0) + 1;
+  }
+
   atual.produtos = atual.produtos || [];
   PRODUTOS.forEach((produto) => {
     if (atual.produtos.some((x) => x.id === produto.id || x.nome === produto.nome)) return;
@@ -155,11 +183,14 @@ db.transacionar((atual) => {
 }).then((r) => {
   console.log(
     `vitrine pronta → +${r.novos} cliente(s), +${r.produtos} produto(s), ` +
-    `+${r.manutencoes} manutenção(ões), +${r.despesas} despesa(s) · ` +
+    `+${r.manutencoes} manutenção(ões), +${r.despesas} despesa(s)` +
+    (r.supervisores ? `, +${r.supervisores} supervisor` : '') + ' · ' +
     `${r.contas} conta(s) e ${r.acessos} acesso(s) no total`
   );
   if (!r.novos && !r.produtos && !r.despesas) console.log('(já estava semeada — nada foi duplicado)');
-  console.log('senha dos clientes de exemplo: Senha123! · para o painel, use um e-mail de admin de admin-accounts.js');
+  console.log('senha dos exemplos: Senha123!');
+  console.log('  · supervisor do painel: supervisor@exemplo.com');
+  console.log('  · administrador: use um e-mail de admin-accounts.js');
 }).catch((erro) => {
   console.error('não consegui semear:', erro.message);
   process.exit(1);

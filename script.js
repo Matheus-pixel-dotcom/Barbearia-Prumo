@@ -77,9 +77,9 @@ function initTryOn() {
     // Garantir que o modo câmera esteja fechado
     if (typeof stopCamera === 'function') stopCamera();
 
-    // Avisa o fluxo da IA (ia-gemini.js) que chegou uma foto nova,
-    // para ela analisar e sugerir o corte na hora.
-    window.dispatchEvent(new CustomEvent('relo:foto', { detail: { foto: src } }));
+    // Avisa a página (ia-tryon.js) que chegou uma foto nova, para limpar o
+    // resultado anterior antes de recomendar o corte.
+    window.dispatchEvent(new CustomEvent('relo:nova-foto', { detail: { foto: src } }));
   };
 
   dropArea.addEventListener('click', (e) => {

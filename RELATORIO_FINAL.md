@@ -4,24 +4,38 @@
 
 O projeto foi revisado, corrigido e modernizado como um site estático compatível com **GitHub Pages**. A refatoração teve foco em resolver páginas sem conexão, remover código órfão, corrigir links quebrados e deixar a experiência visual mais fluida, responsiva e profissional.
 
-## 🍌 Destaque — Simulação de corte com Nano Banana (IA de imagem do Google)
+## 🧠 Destaque — Visagismo digital com IA (versão final)
 
-A evolução mais recente do projeto é a integração com o **Nano Banana**, o modelo de
-geração/edição de imagem da família Gemini (Google). Com ela, o simulador deixa de ser
-apenas uma recomendação de texto e passa a **gerar uma prévia visual realista do corte
-na própria foto do cliente**.
+O **"Experimente com IA"** é o diferencial do projeto e roda **inteiro no navegador**, sem
+chave de API e sem custo por uso:
 
 | Aspecto | Solução |
 |---|---|
-| O que faz | Cliente sobe uma foto (ou usa a câmera), escolhe um estilo e a IA gera a prévia do corte nele, mantendo rosto, pele, fundo e iluminação |
-| Onde aparece | `ia-tryon.html` (simulador), `face-recognition.html` (câmera IA) e `chat-ia.js` (Relo IA por texto) |
-| Arquitetura | `nano-banana.js` no **servidor** (guarda a chave e chama a API) + `ia-gemini.js` no **navegador** (exibe o resultado) |
-| Segurança | A `GEMINI_API_KEY` fica apenas no `.env` do servidor; o navegador nunca a vê e o servidor bloqueia o download do `.env` |
-| Robustez | Fallback entre versões do modelo, cota por visitante, validação antes de gastar geração e mensagens de erro amigáveis |
-| Modo demonstrativo | Sem chave o site funciona normalmente, sem quebrar nada (requisito para a demonstração em banca) |
+| O que faz | O cliente sobe uma foto (ou usa a câmera), recebe a leitura do formato do rosto e vê o card **"Combinação encontrada"** com o corte, o volume e o botão de agendar já preenchido |
+| Análise facial | `face-api.js` (landmarks) → `ia-camera.js` calcula formato, simetria e proporção da testa e publica o resultado na tela (não só no console) |
+| Recomendação | `ia-tryon.js` cruza formato do rosto + estilo escolhido + volume e monta o resultado e a mensagem do WhatsApp |
+| Chat | `chat-ia.js` — a **Relo IA** responde sobre preços, barba, cachos, entradas, manutenção e agendamento com regras locais (nunca fica mudo) |
+| Privacidade | nenhuma foto sai do computador do visitante: não há upload para servidor de terceiros |
 
-O passo a passo de ativação, as rotas da API, as proteções de custo e os testes estão
-documentados em **`NANO_BANANA.md`**.
+### Tentativa que foi removida (e por quê)
+
+Entre setembro e outubro de 2026 o projeto chegou a usar o **Nano Banana** (modelo de
+edição de imagem da família Gemini, do Google) para gerar uma prévia realista do corte na
+foto do cliente (`nano-banana.js` + `ia-gemini.js` + rotas `/api/ia/*`).
+
+| Motivo da remoção | Detalhe |
+|---|---|
+| Dependência externa paga | a API cobra por imagem gerada e exige chave do Google; sem a chave o recurso simplesmente não existe para a banca |
+| Não funcionou na prática | a chamada real não pôde ser validada no ambiente do projeto (sem saída de rede para `generativelanguage.googleapis.com`) e o resultado não saía como esperado |
+| Risco de segurança | uma chave em site estático é cota gasta por qualquer visitante |
+| Complexidade para o escopo | o simulador precisava ser **demonstrativo e confiável** na apresentação |
+
+Tudo foi removido de forma limpa: páginas (`nano-banana.html`), módulos
+(`nano-banana.js`, `ia-gemini.js`), rotas do servidor, aba do painel admin, estilos, a
+documentação `NANO_BANANA.md` e o `.env.example` da IA. O simulador voltou ao modo antigo
+**com os bugs corrigidos** — os botões de estilo, que não faziam nada, agora montam o
+resultado; a análise da câmera aparece na tela; e o card "Combinação encontrada" passou a
+existir de verdade. O histórico completo está em **`ATUALIZACOES.md`**.
 
 ## Principais problemas encontrados
 
@@ -49,10 +63,9 @@ documentados em **`NANO_BANANA.md`**.
 | `tryon.js` | Removido | Arquivo antigo estava órfão e incompatível com a página atual |
 | `auditoria_tecnica.md` | Criado | Registro técnico da auditoria e revisão visual |
 | `check_links.py` | Criado | Validador simples de links locais para manutenção futura |
-| `nano-banana.js` | Criado | Integração da IA de imagem (Nano Banana/Gemini) no servidor |
-| `ia-gemini.js` | Criado | Cliente no navegador que gera e exibe a prévia do corte |
-| `chat-ia.js` | Atualizado | Relo IA com modelo real + fallback para as regras locais |
-| `.env.example` / `NANO_BANANA.md` | Criados | Ativação segura da IA e documentação completa |
+| `ia-tryon.js` | Criado | Simulador: estilo escolhido → card de resultado → WhatsApp (conserta os botões mortos) |
+| `chat-ia.js` | Atualizado | Relo IA com respostas locais variadas, sem depender de chave de API |
+| `nano-banana.html`, `nano-banana.js`, `ia-gemini.js`, `NANO_BANANA.md` | Removidos | IA de imagem do Google retirada do projeto (ver "Tentativa que foi removida") |
 
 ## Validações realizadas
 
@@ -62,19 +75,18 @@ A versão local foi aberta em navegador e revisada visualmente nas páginas `ind
 
 Também foi executado `git diff --check`, sem apontamento de problemas de whitespace.
 
-### Validações da integração com o Nano Banana
+### Validações do simulador (versão final)
 
-A integração de IA foi validada de ponta a ponta com um Gemini simulado local (sem custo
-e sem tocar na API real), somando mais de uma centena de verificações:
-
-- **Unidade** (`nano-banana.js`): montagem de prompts, fallback entre modelos, bloqueio
-  de segurança, chave inválida, foto inválida, chat e análise facial.
-- **HTTP**: todas as rotas `/api/ia/*`, cota por visitante (incluindo que pedidos
-  inválidos **não** gastam cota) e bloqueio do download de arquivos `.env`.
-- **Fluxo no navegador** (DOM simulado): subir foto → clicar num estilo → imagem gerada,
-  comparação antes/depois, card final preenchido e WhatsApp com o corte.
-- **Regressão**: nenhuma rota antiga (`/api/auth/*`, `/api/admin/*`, `/api/health`) ou
-  página foi quebrada; 206 links locais das 12 páginas conferidos sem erro.
+- **DOM real (jsdom)**: fluxo completo do simulador — estilo clicado → card preenchido →
+  link do WhatsApp com o corte e o volume; troca de foto limpando o resultado anterior;
+  análise da câmera aparecendo na tela; chat respondendo; e as **12 páginas** rodando sem
+  erro de script.
+- **Links**: todos os links locais das páginas conferidos, nenhum quebrado.
+- **Servidor**: `/api/health` OK; `/nano-banana.html`, `/ia-gemini.js`, `/api/ia/status` e
+  `/.env` respondendo **404**, como esperado.
+- **Sintaxe**: `node --check` em todos os arquivos JavaScript.
+- **Hierarquia de acesso**: administrador, supervisor e cliente testados rota por rota
+  (quem pode e quem não pode) — veja `HIERARQUIA_DE_ACESSO.md`.
 
 ## Como publicar no GitHub Pages
 

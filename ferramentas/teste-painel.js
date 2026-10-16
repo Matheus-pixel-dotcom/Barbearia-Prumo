@@ -110,7 +110,8 @@ async function esperarServidor(noServidor) {
     const saude = await esperarServidor(logServidor);
     console.log('\n=== servidor de teste (banco descartável: ' + path.relative(os.tmpdir(), DIR_TESTE) + ') ===');
     conferir('GET /api/health responde com o banco vazio', saude.ok === true && saude.usuarios === 8, JSON.stringify(saude));
-    conferir('semente criou os 8 administradores', saude.administradores === 8);
+    conferir('semente criou 6 administradores e 2 supervisores', saude.administradores === 6 && saude.supervisores === 2,
+      `admins=${saude.administradores} supervisores=${saude.supervisores}`);
     conferir('health informa o estado do espelho na nuvem', Boolean(saude.espelho), JSON.stringify(saude.espelho));
 
     console.log('\n=== 1. cadastro do cliente entra no banco automaticamente ===');

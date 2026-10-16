@@ -5,7 +5,8 @@
  * instalação extra — funciona offline e é fácil de abrir/inspecionar.
  *
  * Estrutura:
- *   usuarios    : cadastro de clientes e administradores (senha só como hash)
+ *   usuarios    : cadastro de clientes, supervisores e administradores
+ *                 (senha só como hash; o perfil define o que a pessoa pode)
  *   sessoes     : tokens de login ativos (o token puro nunca é gravado)
  *   logins      : histórico de acessos (quem entrou, quando e de onde)
  *   produtos    : estoque (entrada/saída) — compartilhado entre os admins
@@ -21,6 +22,7 @@ const fs = require('fs');
 const path = require('path');
 const ReloHash = require('./auth-hash');
 const sementeAdmins = require('./admin-accounts');
+const Permissoes = require('./permissoes');
 
 const DATA_DIR = process.env.RELO_DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -123,17 +125,40 @@ function acharUsuario(db, email) {
   );
 }
 
-// Cria as contas de administrador na primeira execução (ou se forem apagadas)
+// Cria as contas da equipe na primeira execução (ou se forem apagadas) e mantém
+// o perfil delas em dia com a semente (admin-accounts.js), que é a fonte da verdade
+// de quem é Administrador (nível 3) e quem é Supervisor (nível 2).
 function semearAdmins(db) {
   let criados = 0;
+  let perfisAtualizados = 0;
   sementeAdmins.contas.forEach((conta) => {
-    if (acharUsuario(db, conta.email)) return;
+    const perfil = Permissoes.normalizar(conta.perfil || 'admin');
+    const existente = acharUsuario(db, conta.email);
+
+    if (existente) {
+      // Reconciliação da equipe: se o perfil mudou no arquivo da semente (ex.: um
+      // barbeiro que passou de administrador para supervisor), o banco acompanha na
+      // próxima vez que o servidor sobe. Quem foi promovido/rebaixado PELO PAINEL
+      // ganha a marca `perfilManual` e passa a mandar no lugar da semente.
+      if (
+        existente.origem === 'semente' &&
+        !existente.perfilManual &&
+        Permissoes.normalizar(existente.perfil) !== perfil
+      ) {
+        existente.perfil = perfil;
+        existente.perfilAtualizadoEm = new Date().toISOString();
+        db.sessoes = (db.sessoes || []).filter((s) => s.usuarioId !== existente.id);
+        perfisAtualizados += 1;
+      }
+      return;
+    }
+
     db.usuarios.push({
-      id: 'adm_' + ReloHash.sha256Hex(conta.email).slice(0, 10),
+      id: (perfil === 'admin' ? 'adm_' : 'sup_') + ReloHash.sha256Hex(conta.email).slice(0, 10),
       nome: conta.nome,
       email: normalizarEmail(conta.email),
       aliases: conta.aliases || [],
-      perfil: 'admin',
+      perfil,
       origem: 'semente',
       salt: conta.salt,
       senhaHash: conta.senhaHash,
@@ -144,7 +169,7 @@ function semearAdmins(db) {
     });
     criados += 1;
   });
-  return criados;
+  return { criados, perfisAtualizados };
 }
 
 function usuarioPublico(usuario) {
@@ -155,7 +180,11 @@ function usuarioPublico(usuario) {
     nome: usuario.nome,
     email: usuario.email,
     aliases: usuario.aliases || [],
-    perfil: usuario.perfil === 'admin' ? 'admin' : 'cliente',
+    perfil: Permissoes.normalizar(usuario.perfil),
+    perfilRotulo: Permissoes.rotulo(usuario.perfil),
+    perfilNivel: Permissoes.nivel(usuario.perfil),
+    podePainel: Permissoes.podePainel(usuario.perfil),
+    permissoes: Permissoes.mapa(usuario.perfil),
     origem: usuario.origem || 'cadastro',
     criadoEm: usuario.criadoEm || null,
     ultimoLogin: usuario.ultimoLogin || null,
@@ -229,7 +258,7 @@ function novoUsuario(db, dados) {
     nome: String(dados.nome || '').trim(),
     email,
     aliases: [],
-    perfil: dados.perfil === 'admin' ? 'admin' : 'cliente',
+    perfil: Permissoes.normalizar(dados.perfil),
     origem: dados.origem || 'cadastro',
     salt,
     senhaHash: dados.senhaHash || ReloHash.hashPassword(salt, dados.senha || ''),
@@ -240,6 +269,47 @@ function novoUsuario(db, dados) {
   };
   db.usuarios.push(usuario);
   return usuario;
+}
+
+/* ------------------------------------------------------------------ */
+/* Perfis de acesso (hierarquia: cliente < supervisor < admin)         */
+/* ------------------------------------------------------------------ */
+// Troca o perfil de um usuário. As regras de hierarquia ficam aqui para o
+// servidor e o modo local do navegador usarem exatamente a mesma lógica.
+function definirPerfil(db, id, perfil, autor) {
+  const alvo = (db.usuarios || []).find((u) => u.id === id);
+  if (!alvo) return { ok: false, erro: 'Usuário não encontrado.' };
+
+  if (!Permissoes.existe(perfil)) {
+    return { ok: false, erro: 'Perfil inválido. Use cliente, supervisor ou admin.' };
+  }
+
+  const novo = Permissoes.normalizar(perfil);
+  const atual = Permissoes.normalizar(alvo.perfil);
+  const quemPede = autor ? Permissoes.normalizar(autor.perfil) : 'admin';
+
+  if (!Permissoes.pode(quemPede, 'equipe.gerenciar')) {
+    return { ok: false, erro: 'Só o administrador pode mudar o perfil de alguém.' };
+  }
+  if (autor && autor.id === alvo.id) {
+    return { ok: false, erro: 'Você não pode mudar o seu próprio perfil.' };
+  }
+  if (atual === novo) {
+    return { ok: false, erro: 'Esta conta já é ' + Permissoes.rotulo(novo) + '.' };
+  }
+  // As contas da semente (equipe oficial do projeto) só podem subir, nunca cair.
+  if (alvo.origem === 'semente' && Permissoes.nivel(novo) < Permissoes.nivel(atual)) {
+    return { ok: false, erro: 'Contas da equipe (semente) não podem ser rebaixadas.' };
+  }
+
+  alvo.perfil = novo;
+  alvo.perfilAlteradoEm = new Date().toISOString();
+  alvo.perfilAlteradoPor = autor && autor.email ? autor.email : null;
+  // A troca feita pelo painel vence a semente na próxima reconciliação do boot.
+  alvo.perfilManual = true;
+  // Quem troca de perfil perde as sessões abertas: entra de novo com o novo poder.
+  db.sessoes = (db.sessoes || []).filter((s) => s.usuarioId !== alvo.id);
+  return { ok: true, usuario: usuarioPublico(alvo), perfilAnterior: atual };
 }
 
 /* ------------------------------------------------------------------ */
@@ -415,7 +485,9 @@ function calcularMetricas(banco) {
   let acessosHoje = 0;
 
   (banco.usuarios || []).forEach((u) => {
-    const ehCliente = u.perfil !== 'admin';
+    // Cliente é quem usa o site; supervisor e administrador são a equipe e não
+    // entram nos gráficos de cadastro (senão a conta da semente distorce tudo).
+    const ehCliente = Permissoes.normalizar(u.perfil) === 'cliente';
     const criado = u.criadoEm ? new Date(u.criadoEm).getTime() : 0;
     if (criado) {
       // Só os clientes contam nos gráficos de cadastro — as contas de admin da
@@ -450,7 +522,9 @@ function calcularMetricas(banco) {
     }
   });
 
-  const clientes = (banco.usuarios || []).filter((u) => u.perfil !== 'admin');
+  const clientes = (banco.usuarios || []).filter((u) => Permissoes.normalizar(u.perfil) === 'cliente');
+  const supervisores = (banco.usuarios || []).filter((u) => Permissoes.normalizar(u.perfil) === 'supervisor');
+  const administradores = (banco.usuarios || []).filter((u) => Permissoes.normalizar(u.perfil) === 'admin');
   const sincronizados = clientes.filter((u) => u.sync && u.sync.estado === 'ok').length;
 
   const mesAtual = new Date().toISOString().slice(0, 7);
@@ -469,7 +543,9 @@ function calcularMetricas(banco) {
     ok: true,
     geradaEm: new Date().toISOString(),
     clientes: clientes.length,
-    administradores: (banco.usuarios || []).length - clientes.length,
+    supervisores: supervisores.length,
+    administradores: administradores.length,
+    equipe: supervisores.length + administradores.length,
     novos7,
     novos30,
     ativos30,
@@ -544,6 +620,7 @@ module.exports = {
   novoUsuario,
   semearAdmins,
   usuarioPublico,
+  definirPerfil,
   criarSessao,
   acharSessao,
   removerSessao,

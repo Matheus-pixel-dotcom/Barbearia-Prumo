@@ -1,8 +1,13 @@
 /*
- * Contas de administrador do Style Relo Barber (semente do banco de dados).
+ * Contas da equipe do Style Relo Barber (semente do banco de dados).
  *
- * Estes são os e-mails que podem entrar na aba ADMIN do site.
- * Qualquer outro e-mail é tratado como CLIENTE comum.
+ * Cada conta traz o seu `perfil`: 'admin' (Administrador, nível 3) ou
+ * 'supervisor' (nível 2). Qualquer outro e-mail é tratado como CLIENTE comum (nível 1).
+ * A hierarquia completa está em permissoes.js e documentada em HIERARQUIA_DE_ACESSO.md.
+ *
+ * Wevergton Sousa e Michel Lima são barbeiros da equipe: entram no painel como
+ * SUPERVISORES (operam estoque, manutenção, despesas e o cadastro de clientes), sem
+ * poderes de administrador (excluir cadastro, configurar a nuvem e definir perfis).
  *
  * As senhas NÃO ficam escritas aqui: guardamos apenas o "sal" + o hash SHA-256
  * de cada senha. O hash é conferido no login (auth-core.js / server.js).
@@ -19,8 +24,8 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
   return {
-    versao: 2,
-    atualizadoEm: '2026-09-14',
+    versao: 3,
+    atualizadoEm: '2026-10-16',
     contas: [
       {
         nome: 'R. Gabriel',
@@ -66,7 +71,7 @@
         nome: 'Wevergton Sousa',
         email: 'wevergton.sousa@escola.pr.gov.br',
         aliases: [],
-        perfil: 'admin',
+        perfil: 'supervisor',
         salt: '3977f6b210d0e32d',
         senhaHash: '22e7fc6360c92bc127fd96b011e6cde725d3c95615776e6a6ebd28336300c28a'
       },
@@ -74,7 +79,7 @@
         nome: 'Michel Lima',
         email: 'michel.lima30@escola.pr.gov.br',
         aliases: [],
-        perfil: 'admin',
+        perfil: 'supervisor',
         salt: '02bf5f0428407353',
         senhaHash: '297d11b88f62aeb98d60ff1f7a055fe94a779a088b8b0c0bc729d1e238ad0eca'
       },

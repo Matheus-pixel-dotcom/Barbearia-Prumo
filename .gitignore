@@ -17,8 +17,7 @@ web-build/
 # Banco de dados local gerado pelo servidor (npm run serve)
 data/
 
-# Chave da IA (Nano Banana / Gemini) — NUNCA subir para o GitHub
+# Arquivos de ambiente (segredos locais) — NUNCA subir para o GitHub
 .env
 .env.local
 *.env
-!.env.example

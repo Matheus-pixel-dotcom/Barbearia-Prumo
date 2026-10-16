@@ -6,7 +6,7 @@
   <meta name="description" content="Painel administrativo premium do Style Relo Barber: banco de clientes, cadastros em tempo real, espelho na nuvem, estoque, manutenção e despesas.">
   <meta name="robots" content="noindex, nofollow">
   <title>Painel Administrativo · Style Relo Barber</title>
-  <link rel="stylesheet" href="style.css?v=20261010">
+  <link rel="stylesheet" href="style.css?v=20261016">
   <style>
     /* =====================================================================
        STYLE RELO · PAINEL PREMIUM
@@ -345,6 +345,7 @@
     .cell-pessoa { display: flex; align-items: center; gap: 10px; min-width: 180px; }
     .cell-pessoa .avatar { width: 32px; height: 32px; border-radius: 10px; font-size: 12px; }
     .cell-pessoa .avatar.cliente { background: linear-gradient(140deg, #9fb4d4, #5a708f); color: #0b1017; }
+    .cell-pessoa .avatar.supervisor { background: linear-gradient(140deg, #a5b4fc, #4f46e5); color: #0b1017; }
     .cell-pessoa strong { display: block; font-size: 13.5px; font-weight: 700; }
     .cell-pessoa small { display: block; font-size: 11.5px; color: var(--muted); }
     .badge {
@@ -514,6 +515,8 @@
       font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
     }
     .relo-pill.admin { background: rgba(212, 175, 55, 0.16); color: var(--gold-2); border: 1px solid rgba(212, 175, 55, 0.4); }
+    /* Supervisor: meio-termo visual — não é ouro do admin nem o verde do cliente */
+    .relo-pill.supervisor { background: rgba(129, 140, 248, 0.16); color: #c7d2fe; border: 1px solid rgba(129, 140, 248, 0.4); }
     .relo-pill.cliente { background: rgba(52, 211, 153, 0.14); color: #86efac; border: 1px solid rgba(52, 211, 153, 0.34); }
 
     /* ------------------------------ responsivo ------------------------------ */
@@ -589,14 +592,10 @@
 
         <div class="nav-label" style="margin-top:20px">Sistema</div>
         <nav class="nav-links" aria-label="Menu de sistema">
-          <a class="nav-link" data-tab="banco" href="#banco">
+          <a class="nav-link" data-tab="banco" data-perm="nuvem.ver" href="#banco">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
             Banco de Dados
             <span class="nav-badge warn" id="nav-badge-sync" hidden>0</span>
-          </a>
-          <a class="nav-link" data-tab="ia" href="#ia">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v3m0 12v3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M3 12h3m12 0h3M4.9 19.1 7 17m10-10 2.1-2.1"/><circle cx="12" cy="12" r="3.4"/></svg>
-            Nano Banana (IA)
           </a>
         </nav>
       </div>
@@ -607,6 +606,7 @@
           <span class="who">
             <strong id="nome-usuario">carregando…</strong>
             <span id="email-usuario">—</span>
+            <span class="badge gold" id="perfil-usuario" style="margin-top:6px">—</span>
           </span>
         </div>
         <div class="side-links">
@@ -652,6 +652,17 @@
           <button class="btn btn-secondary btn-sm" id="btn-atualizar" type="button">Atualizar</button>
         </div>
       </header>
+
+      <!-- aviso para quem não é administrador: explica o alcance do perfil -->
+      <div id="faixa-perfil" class="card" hidden style="margin-bottom:16px;border-color:rgba(245,158,11,0.35);background:linear-gradient(135deg,rgba(245,158,11,0.10),rgba(255,255,255,0.02))">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="font-size:20px" aria-hidden="true">🛡️</span>
+          <div>
+            <strong id="faixa-perfil-titulo">Você está no perfil Supervisor</strong>
+            <p class="muted" style="margin:6px 0 0;font-size:13px" id="faixa-perfil-texto"></p>
+          </div>
+        </div>
+      </div>
 
       <!-- ============================ DASHBOARD ============================ -->
       <div id="tab-dashboard" class="section-panel active">
@@ -744,9 +755,9 @@
         <div class="panel-header">
           <h2>Banco de Clientes &amp; Logins</h2>
           <div class="acoes">
-            <button class="btn btn-secondary btn-sm" id="btn-exportar-csv" type="button">⇩ Exportar CSV</button>
+            <button class="btn btn-secondary btn-sm" id="btn-exportar-csv" data-perm="clientes.exportar" type="button">⇩ Exportar CSV</button>
             <button class="btn btn-secondary btn-sm" id="btn-recarregar-clientes" type="button">Atualizar</button>
-            <button class="btn" id="btn-novo-cliente" type="button">+ Novo Cliente</button>
+            <button class="btn" id="btn-novo-cliente" data-perm="clientes.criar" type="button">+ Novo Cliente</button>
           </div>
         </div>
 
@@ -812,7 +823,7 @@
           <h2>Controle de Estoque (Entrada e Saída)</h2>
           <div class="acoes">
             <button class="btn btn-secondary btn-sm" id="btn-recarregar-estoque" type="button">Atualizar</button>
-            <button class="btn" id="btn-novo-produto" type="button">+ Novo Produto</button>
+            <button class="btn" id="btn-novo-produto" data-perm="estoque.editar" type="button">+ Novo Produto</button>
           </div>
         </div>
         <div id="produtos-alerta"></div>
@@ -847,7 +858,7 @@
           <h2>Gestão de Manutenção</h2>
           <div class="acoes">
             <button class="btn btn-secondary btn-sm" id="btn-recarregar-manutencao" type="button">Atualizar</button>
-            <button class="btn" id="btn-nova-manutencao" type="button">+ Registrar Manutenção</button>
+            <button class="btn" id="btn-nova-manutencao" data-perm="manutencao.editar" type="button">+ Registrar Manutenção</button>
           </div>
         </div>
         <p class="help-note" id="manutencao-resumo">Clique no status para alternar entre Pendente → Em Andamento → Concluído.</p>
@@ -877,7 +888,7 @@
           <h2>Controle de Despesas</h2>
           <div class="acoes">
             <button class="btn btn-secondary btn-sm" id="btn-recarregar-despesas" type="button">Atualizar</button>
-            <button class="btn" id="btn-nova-despesa" type="button">+ Adicionar Despesa</button>
+            <button class="btn" id="btn-nova-despesa" data-perm="despesas.editar" type="button">+ Adicionar Despesa</button>
           </div>
         </div>
         <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
@@ -909,7 +920,7 @@
           <h2>Banco de Dados da Barbearia</h2>
           <div class="acoes">
             <button class="btn btn-secondary btn-sm" id="btn-testar-sync" type="button">Testar conexão</button>
-            <button class="btn btn-secondary btn-sm" id="btn-reenviar" type="button">Reenviar fila</button>
+            <button class="btn btn-secondary btn-sm" id="btn-reenviar" data-perm="nuvem.reenviar" type="button">Reenviar fila</button>
             <button class="btn btn-secondary btn-sm" id="btn-recarregar-sync" type="button">Atualizar</button>
           </div>
         </div>
@@ -931,8 +942,11 @@
               4️⃣ Se a internet cair, o cadastro fica na fila e o servidor tenta de novo sozinho a cada 3 minutos.
             </p>
             <div id="sync-ultimo-erro"></div>
+            <p class="muted" id="sync-nota-perfil" data-perm-so-sem="nuvem.configurar" hidden style="font-size:12.5px;margin:12px 0 0">
+              Você acompanha o status e a fila, mas <strong>configurar a nuvem é só do administrador</strong>.
+            </p>
           </div>
-          <div class="card">
+          <div class="card" data-perm="nuvem.configurar">
             <div class="card-title">Configuração do espelho (Supabase)</div>
             <form id="form-sync">
               <div class="form-group">
@@ -976,48 +990,6 @@
         </div>
       </div>
 
-      <!-- ================================ IA ================================ -->
-      <div id="tab-ia" class="section-panel">
-        <div class="panel-header">
-          <h2>Nano Banana — Central de IA</h2>
-          <div class="acoes">
-            <span id="ia-pill" class="pill">verificando…</span>
-            <a class="btn btn-secondary btn-sm" href="nano-banana.html" target="_blank" rel="noopener">Abrir Estúdio</a>
-            <button class="btn btn-secondary btn-sm" id="btn-recarregar-ia" type="button">Atualizar</button>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:18px">
-          <div class="card" style="padding:14px 16px"><div class="eyebrow">Status</div><div style="font-size:18px;font-weight:800;margin-top:6px" id="ia-status">—</div></div>
-          <div class="card" style="padding:14px 16px"><div class="eyebrow">Modelo</div><div style="font-size:13.5px;font-weight:700;margin-top:8px;word-break:break-word" id="ia-modelo">—</div></div>
-          <div class="card" style="padding:14px 16px"><div class="eyebrow">Chave</div><div style="font-size:13.5px;font-weight:700;margin-top:8px;word-break:break-word" id="ia-chave-mascara">—</div></div>
-          <div class="card" style="padding:14px 16px"><div class="eyebrow">Uso na última hora</div><div style="font-size:18px;font-weight:800;margin-top:6px"><span id="ia-uso">0</span> / <span id="ia-limite-atual">30</span></div></div>
-        </div>
-
-        <div class="sub-panel">
-          <h3>Chave da API</h3>
-          <p class="help-note">A chave fica guardada <strong>somente no servidor</strong> — nenhum navegador consegue vê-la ou baixá-la. Ao salvar, a IA funciona na hora no Estúdio e no Simulador, sem reiniciar nada.</p>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-            <div class="form-group" style="flex:1 1 280px; margin-bottom:0;">
-              <label for="ia-chave-input">Nova chave (AIza… ou AQ…)</label>
-              <input type="password" id="ia-chave-input" autocomplete="off" placeholder="Cole a chave do Google AI Studio">
-            </div>
-            <button class="btn" id="btn-salvar-chave-ia" type="button">Salvar chave</button>
-          </div>
-        </div>
-
-        <div class="sub-panel">
-          <h3>Limite de gerações</h3>
-          <p class="help-note">Máximo de imagens por hora, por visitante — protege o crédito da API contra abusos e loops.</p>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-            <div class="form-group" style="width:150px; margin-bottom:0;">
-              <label for="ia-limite-input">Limite / hora</label>
-              <input type="number" id="ia-limite-input" min="1" max="500" value="30">
-            </div>
-            <button class="btn" id="btn-salvar-limite-ia" type="button">Salvar limite</button>
-          </div>
-        </div>
-      </div>
     </main>
   </div>
 
@@ -1025,13 +997,25 @@
   <div id="cliente-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="cliente-modal-titulo">
     <div class="modal-content">
       <button class="modal-close" type="button" data-fechar-modal aria-label="Fechar">×</button>
-      <h3 id="cliente-modal-titulo">Cadastrar cliente no banco</h3>
-      <p class="help-note">O cliente entra na lista imediatamente e é espelhado no Supabase com o mesmo fluxo de um cadastro pelo site.</p>
+      <h3 id="cliente-modal-titulo">Cadastrar no banco</h3>
+      <p class="help-note" id="cliente-modal-nota">O cliente entra na lista imediatamente e é espelhado no Supabase com o mesmo fluxo de um cadastro pelo site.</p>
       <div id="cliente-modal-aviso" class="badge danger" hidden style="margin-bottom: 12px;"></div>
       <form id="cliente-form">
         <div class="form-group"><label for="cli-name">Nome completo</label><input type="text" id="cli-name" required placeholder="Ex: João da Silva"></div>
         <div class="form-group"><label for="cli-email">E-mail (será o login)</label><input type="email" id="cli-email" required placeholder="cliente@email.com"></div>
         <div class="form-group"><label for="cli-senha">Senha inicial (mín. 6 caracteres)</label><input type="text" id="cli-senha" required minlength="6" placeholder="Combina com o cliente"></div>
+        <div class="form-group" id="cli-perfil-campo" data-perm="equipe.gerenciar" hidden>
+          <label for="cli-perfil">Perfil de acesso</label>
+          <select id="cli-perfil">
+            <option value="cliente">Usuário (cliente do site)</option>
+            <option value="supervisor">Supervisor (equipe — opera o dia a dia)</option>
+            <option value="admin">Administrador (acesso total)</option>
+          </select>
+          <div class="muted" style="font-size:11.5px;margin-top:6px">
+            Supervisor abre o painel, vê os clientes e cuida de estoque, manutenção e despesas.
+            Administrador também exclui cadastros, configura a nuvem e define perfis.
+          </div>
+        </div>
         <div class="modal-foot">
           <button type="button" class="btn btn-secondary" data-fechar-modal>Cancelar</button>
           <button type="submit" class="btn">Salvar cliente</button>
@@ -1173,11 +1157,12 @@
   <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 
   <!-- Login e banco de dados -->
-  <script src="auth-hash.js?v=20261010" defer></script>
-  <script src="admin-accounts.js?v=20261010" defer></script>
-  <script src="auth-core.js?v=20261010" defer></script>
-  <script src="sync-supabase.js?v=20261010" defer></script>
-  <script src="login-modal.js?v=20261010" defer></script>
-  <script src="admin.js?v=20261010" defer></script>
+  <script src="auth-hash.js?v=20261016" defer></script>
+  <script src="admin-accounts.js?v=20261016" defer></script>
+  <script src="permissoes.js?v=20261016" defer></script>
+  <script src="auth-core.js?v=20261016" defer></script>
+  <script src="sync-supabase.js?v=20261016" defer></script>
+  <script src="login-modal.js?v=20261016" defer></script>
+  <script src="admin.js?v=20261016" defer></script>
 </body>
 </html>

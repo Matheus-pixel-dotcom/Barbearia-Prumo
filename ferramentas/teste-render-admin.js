@@ -130,14 +130,14 @@ for (const id of ['layout', 'sidebar', 'btn-menu', 'btn-menu-fechar', 'main', 'r
   'clients-table-body', 'products-table-body', 'maintenance-table-body', 'expenses-table-body',
   'clientes-contagem', 'sync-estado', 'sync-fila', 'sync-fila-total', 'nav-badge-sync', 'nav-badge-alertas',
   'ficha-corpo', 'resumo-dia', 'resumo-itens', 'chip-nome', 'chip-email', 'chip-perfil',
-  'chip-avatar', 'chip-pop', 'chip-usuario', 'chip-sair', 'chip-banco', 'toast-stack', 'aba-ia-resposta', 'busca-clientes', 'filtro-status', 'filtro-origem',
+  'chip-avatar', 'chip-pop', 'chip-usuario', 'chip-sair', 'chip-banco', 'toast-stack', 'perfil-usuario', 'faixa-perfil-titulo', 'busca-clientes', 'filtro-status', 'filtro-origem',
   'filtro-cidade', 'filtro-campo', 'filtro-valor', 'btn-exportar-csv', 'btn-reenviar-fila']) {
   criar('div', id);
 }
 ['prod-name', 'prod-category', 'prod-qty', 'prod-min', 'prod-price', 'prod-desc', 'prod-id',
  'exp-desc', 'exp-cat', 'exp-value', 'exp-pago', 'exp-date', 'maint-item', 'maint-desc', 'maint-valor',
  'sup-url', 'sup-key', 'sup-table', 'sup-ativo', 'sync-token', 'login-email', 'login-password',
- 'aba-ia-prompt', 'page-title', 'page-sub'].forEach((i) => criar('input', i));
+ 'faixa-perfil-texto', 'page-title', 'page-sub'].forEach((i) => criar('input', i));
 ['product-form', 'expense-form', 'maintenance-form', 'manut-form', 'cliente-form', 'sup-form'].forEach((f) => criar('form', f));
 ['mov-tipo', 'mov-qtd', 'mov-obs', 'mov-id', 'maint-resp', 'cliente-nome', 'cliente-email', 'cliente-senha'].forEach((i) => criar('input', i));
 ['btn-novo-produto', 'btn-nova-despesa', 'btn-nova-manut', 'btn-salvar-sup', 'btn-testar-sync'].forEach((b) => criar('button', b));
@@ -209,7 +209,7 @@ if (MODO === 'servidor') {
 
 require(path.join(RAIZ, 'sync-supabase.js'));
 // carrega o admin.js exatamente como o navegador faria e dispara o DOMContentLoaded
-for (const arquivo of ['auth-hash.js', 'admin-accounts.js', 'auth-core.js', 'sync-supabase.js', 'login-modal.js', 'admin.js']) {
+for (const arquivo of ['auth-hash.js', 'admin-accounts.js', 'permissoes.js', 'auth-core.js', 'sync-supabase.js', 'login-modal.js', 'admin.js']) {
   vm.runInThisContext(fs.readFileSync(path.join(RAIZ, arquivo), 'utf8'), { filename: arquivo });
 }
 
@@ -296,12 +296,23 @@ const espera = (ms) => new Promise((r) => setTimeoutNativo(r, ms));
 
     // cada aba precisa trocar o título sem exceção
     const titulos = [];
-    for (const aba of ['clients', 'products', 'maintenance', 'expenses', 'banco', 'ia', 'dashboard']) {
+    for (const aba of ['clients', 'products', 'maintenance', 'expenses', 'banco', 'dashboard']) {
       Admin.mudarAba(aba);
       await espera(120);
       titulos.push(most('page-title'));
     }
-    conferir('as 7 abas trocam sem exceção', titulos.filter((t) => t && t !== '(vazio)').length === 7, JSON.stringify(titulos));
+    conferir(
+      'as 6 abas do painel trocam sem exceção',
+      titulos.filter((t) => t && t !== '(vazio)').length === 6,
+      JSON.stringify(titulos)
+    );
+    // a conta de admin precisa continuar com os botões de administrar liberados
+    conferir(
+      'o admin mantém todas as permissões no painel',
+      Object.values((window.ReloPermissoes || {}).ACOES ? ReloPermissoes.ACOES : {}).length === 0 ||
+        ['clientes.excluir', 'equipe.gerenciar', 'nuvem.configurar'].every((a) => ReloPermissoes.pode('admin', a))
+    );
+    conferir('a hierarquia tem 3 níveis', ReloPermissoes.perfis().length === 3);
 
     // busca filtra a lista
     document.getElementById('busca-clientes').value = 'a';
