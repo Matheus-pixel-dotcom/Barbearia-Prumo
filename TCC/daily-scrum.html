@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Scrum — quem é quem no projeto (TCC Style Relo Barber)</title>
+<style>
+  /* Página A4 retrato, margem 12 mm — o mesmo tamanho das páginas do TCC.
+     Ctrl+P → Salvar como PDF → A4 → retrato → margens padrão desligadas
+     → marcar "Gráficos de plano de fundo". */
+  @page { size: A4 portrait; margin: 12mm; }
+
+  :root {
+    --tinta: #101418;
+    --ouro: #a9741a;
+    --ouro-claro: #f7edd8;
+    --cinza: #5b6672;
+    --linha: #cbd5e1;
+    --azul: #4f46e5;
+    --verde: #15803d;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; background: #e9ecef; color: var(--tinta);
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 9.4pt; line-height: 1.45;
+  }
+
+  .pagina {
+    width: 186mm; min-height: 273mm; margin: 10mm auto; padding: 8mm 9mm;
+    background: #fff; box-shadow: 0 6px 26px rgba(0,0,0,.18); page-break-after: always;
+  }
+  .pagina:last-child { page-break-after: auto; }
+
+  .cabecalho { border-bottom: 2px solid var(--ouro); padding-bottom: 6px; margin-bottom: 6mm; }
+  .cabecalho .instituicao { font-size: 8pt; letter-spacing: .14em; text-transform: uppercase; color: var(--cinza); }
+  .cabecalho h1 { font-size: 14.5pt; margin: 3px 0 0; }
+  .cabecalho h2 { font-size: 9.5pt; margin: 2px 0 0; color: var(--cinza); font-weight: 600; }
+  h3 { font-size: 11pt; margin: 6mm 0 2mm; color: var(--ouro); }
+  h3:first-of-type { margin-top: 0; }
+
+  .rodape {
+    margin-top: 5mm; padding-top: 4px; border-top: 1px solid var(--linha);
+    font-size: 8pt; color: var(--cinza); display: flex; justify-content: space-between; gap: 10px;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 8.6pt; }
+  th, td { border: 1px solid var(--linha); padding: 4px 6px; text-align: left; vertical-align: top; }
+  th { background: #f3f4f6; font-size: 8pt; text-transform: uppercase; letter-spacing: .04em; }
+
+  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4mm; }
+  .trio .papel { border: 1px solid var(--linha); border-radius: 10px; padding: 8px 10px; background: #fbfdff; }
+  .trio .papel b { display: block; font-size: 9.5pt; margin-bottom: 2px; }
+  .trio .papel span { font-size: 8.4pt; color: var(--cinza); }
+
+  .equipe { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+  .membro {
+    display: grid; grid-template-columns: 62px 1fr; gap: 9px;
+    border: 1px solid var(--linha); border-radius: 10px; padding: 8px; background: #fff;
+    page-break-inside: avoid;
+  }
+  .membro img.foto { width: 68px; height: 68px; object-fit: cover; border-radius: 10px; border: 1px solid var(--linha); }
+  /* Avatar de papel: pictograma + inicial, no lugar da foto de quem não teve foto no projeto. */
+  .avatar {
+    position: relative; width: 68px; height: 68px; border-radius: 10px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(150deg, #fdf6e7, #f0dcb4); border: 1px solid #e3c58a;
+  }
+  .avatar svg { width: 40px; height: 40px; }
+  .avatar .inicial {
+    position: absolute; right: 4px; bottom: 2px; font-size: 8.4pt; font-weight: 800; color: #6b4708;
+  }
+  .avatar.foto-real { background: none; border: 1px solid var(--linha); padding: 0; }
+  .avatar.foto-real img { width: 68px; height: 68px; object-fit: cover; }
+  .membro h4 { margin: 0 0 2px; font-size: 10pt; }
+  .membro .tags { margin: 0 0 4px; }
+  .tag {
+    display: inline-block; font-size: 7.4pt; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+    background: var(--ouro-claro); color: #6b4708; border: 1px solid #e3c58a; margin-right: 4px;
+  }
+  .tag.scrum { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
+  .tag.proj { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+  .membro p { margin: 0; font-size: 8.4pt; color: #334155; }
+
+  .quadro-daily { border: 1px solid var(--linha); border-radius: 10px; padding: 8px 10px; background: #fbfdff; }
+  .quadro-daily ol { margin: 4px 0 0 16px; padding: 0; font-size: 8.6pt; }
+
+  .burndown { border: 1px solid var(--linha); border-radius: 10px; padding: 6px; }
+  .legenda-figura { font-size: 8.2pt; color: var(--cinza); text-align: center; margin: 4px 0 4mm; }
+  .legenda-figura strong { color: var(--tinta); }
+
+  ul { margin: 3px 0 0 16px; padding: 0; }
+  li { margin-bottom: 2px; }
+
+  .aviso-tela {
+    max-width: 186mm; margin: 8mm auto 0; padding: 8px 12px; background: #fff7e6;
+    border: 1px solid #f0c987; border-radius: 8px; font-size: 9pt;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .pagina { margin: 0; box-shadow: none; width: auto; min-height: 0; padding: 0; }
+    .aviso-tela { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="aviso-tela">
+  <strong>Como usar:</strong> material de <em>Daily Scrum</em> no tamanho de página do TCC (A4 retrato).
+  <strong>Ctrl+P</strong> → <em>Salvar como PDF</em> → papel <em>A4</em>, orientação <em>retrato</em>,
+  margens <em>padrão/nenhuma</em> e marque <em>Gráficos de plano de fundo</em>.
+</div>
+
+<!-- ===================== PÁGINA 1 — QUEM É QUEM ===================== -->
+<section class="pagina">
+  <header class="cabecalho">
+    <div class="instituicao">Trabalho de Conclusão de Curso · Desenvolvimento de Sistemas</div>
+    <h1>Daily Scrum — quem é quem no projeto Barbearia Prumo</h1>
+    <h2>Papéis do framework Scrum e o papel de cada integrante no sistema Style Relo Barber</h2>
+  </header>
+
+  <h3>O que é a Daily Scrum (e por que ela está neste projeto)</h3>
+  <p>
+    A <strong>Daily Scrum</strong> é a reunião diária de 15 minutos do framework Scrum em que o time
+    inspeciona o progresso rumo ao objetivo da <em>Sprint</em> e ajusta o plano do dia. Cada pessoa
+    responde, em pé e olhando para o quadro: <em>o que fiz ontem</em>, <em>o que farei hoje</em> e
+    <em>o que está travando o meu trabalho</em>. No nosso projeto ela aconteceu no formato
+    <strong>assíncrono</strong>: como a equipe se encontrou fora do horário comum, cada integrante
+    publicou a sua daily no grupo do time (e o resultado do dia virou <em>commit</em> no GitHub) —
+    o que deixou rastro verificável de quem fez o quê, quando e por quê.
+  </p>
+
+  <div class="trio">
+    <div class="papel">
+      <b>Product Owner</b>
+      <span>Cuida do <em>Product Backlog</em>: o que entra, o que sai e por que. No projeto é quem
+      fala pela barbearia (visão do cliente, prioridades e o que vai para a banca).</span>
+    </div>
+    <div class="papel">
+      <b>Scrum Master</b>
+      <span>Cuida do processo: organiza as sprints, puxa a daily, tira impedimento do caminho e
+      protege o time de mudança de escopo no meio da sprint.</span>
+    </div>
+    <div class="papel">
+      <b>Time de Desenvolvimento</b>
+      <span>Quem constrói o incremento: front-end, back-end, banco de dados, testes e conteúdo
+      (visagismo, preços, fotos e textos de venda).</span>
+    </div>
+  </div>
+
+  <h3>Quadro da daily — as três perguntas de cada dia</h3>
+  <div class="quadro-daily">
+    <ol>
+      <li><strong>O que eu entreguei desde a última daily?</strong> (o cartão que saiu de “Fazendo” para “Feito”)</li>
+      <li><strong>O que eu vou pegar hoje?</strong> (o próximo cartão do Sprint Backlog)</li>
+      <li><strong>Tem algum impedimento?</strong> (falta de foto, dúvida de preço, acesso, teste que falha…)</li>
+    </ol>
+  </div>
+
+  <h3>A equipe do projeto e o papel de cada um</h3>
+  <p style="margin-top:0">
+    A mesma equipe que aparece na página <em>Equipe</em> do site (lá cada um tem o seu cartão com a
+    função). Aqui o <strong>avatar de cada cartão é o pictograma do papel</strong>: a tesoura do barbeiro,
+    a grade de proporção do visagista, a paleta de quem cuida do design, a caixa de quem cuida do
+    estoque e assim por diante — mais o <em>Scrum</em> (Product Owner, Scrum Master) no topo de cada cartão.
+  </p>
+  <!-- Para usar a foto real de um integrante, troque o bloco <div class="avatar">...</div>
+       por:  <div class="avatar foto-real"><img src="../assets/equipe/nome.jpg" alt="Foto de Nome"></div>
+       (veja o exemplo já comentado no fim deste arquivo — fotos de Wevergton Sousa e Michel Lima). -->
+
+
+  <div class="equipe">
+    <article class="membro">
+      <div class="avatar" title="megafone — marketing e visão do produto">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#a9741a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20v8h5l13 7V13L14 20H9z"/><path d="M31 18a8 8 0 0 1 0 12"/><path d="M14 28v6"/></svg>
+        <span class="inicial">M</span>
+      </div>
+      <div>
+        <h4>Matheus Moura</h4>
+        <p class="tags"><span class="tag scrum">Product Owner</span><span class="tag proj">Dev · integração</span></p>
+        <p>Visão do produto e da barbearia: decidiu o que entrava em cada sprint (preços, pacote
+        Dia do Noivo, hierarquia de acesso) e cuidou do repositório, dos <em>merges</em> e da
+        arquitetura (servidor Node, banco JSON e espelho no Supabase).</p>
+      </div>
+    </article>
+
+    <article class="membro">
+      <div class="avatar" title="prancheta com check — daily, testes e segurança">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#a9741a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="12" y="9" width="24" height="31" rx="3"/><path d="M18 9h12v6H18z"/><path d="M18 24l3 3 6-6"/><path d="M18 34h12"/></svg>
+        <span class="inicial">G</span>
+      </div>
+      <div>
+        <h4>R. Gabriel</h4>
+        <p class="tags"><span class="tag scrum">Scrum Master</span><span class="tag proj">Dev · segurança e testes</span></p>
+        <p>Conduziu a daily e o quadro: quebrou o trabalho em cartões, cobrou o “pronto” de cada
+        entrega e ficou com segurança e qualidade — hash de senha com sal, bloqueio de força
+        bruta, rotas 403 e a suíte de testes que roda no <code>npm test</code>.</p>
+      </div>
+    </article>
+
+    <article class="membro">
+      <div class="avatar" title="grade de proporção do rosto — visagismo">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#a9741a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="13" y="8" width="22" height="32" rx="9"/><path d="M13 19h22M13 29h22M24 8v32"/></svg>
+        <span class="inicial">V</span>
+      </div>
+      <div>
+        <h4>Vitor Camargo Pereira</h4>
+        <p class="tags"><span class="tag scrum">Time de Desenvolvimento</span><span class="tag proj">Visagista · regras de IA</span></p>
+        <p>Trouxe o conhecimento de visagismo para o código: formato de rosto, simetria e volume
+        viraram as regras que o simulador usa para recomendar o corte — a mesma lógica que o
+        barbeiro aplica na cadeira.</p>
+      </div>
+    </article>
+
+    <article class="membro">
+      <div class="avatar" title="tesoura — cortes clássicos e degradês">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#a9741a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="14" cy="15" r="4.2"/><circle cx="14" cy="33" r="4.2"/><path d="M17.4 17.4L38 32M17.4 30.6L38 16"/></svg>
+        <span class="inicial">M</span>
+      </div>
+      <div>
+        <h4>Michel Lima</h4>
+        <p class="tags"><span class="tag scrum">Time de Desenvolvimento</span><span class="tag proj">Barbeiro · especialista do domínio</span></p>
+        <p>Validou o catálogo de cortes (degradê, social, tesoura) e os preços, e definiu o que é
+        um corte “bem acabado” — virou critério de aceite do card do simulador e das fotos do site.</p>
+      </div>
+    </article>
+
+    <article class="membro">
+      <div class="avatar" title="cliente e balão de conversa — testes no balcão">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#a9741a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="15" r="6"/><path d="M8 40c0-7 4-11 10-11s10 4 10 11"/><path d="M32 13h10v10h-6l-4 4z"/></svg>
+        <span class="inicial">W</span>
+      </div>
+      <div>
+        <h4>Wevergton Sousa</h4>
+        <p class="tags"><span class="tag scrum">Time de Desenvolvimento</span><span class="tag proj">Barbeiro · testes com clientes</span></p>
+        <p>Levou o sistema para o balcão: testou o cadastro e o simulador com clientes reais,
+        apontou os atritos de uso (botão que não respondia, texto confuso) e ajudou a escrever as
+        respostas do chat da Relo IA.</p>
+      </div>
+    </article>
+
+    <article class="membro">
+      <div class="avatar" title="caixa — estoque, produtos e vendas">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#a9741a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l14-6 14 6v15l-14 6-14-6z"/><path d="M10 17l14 6 14-6M24 23v15"/></svg>
+        <span class="inicial">M</span>
+      </div>
+      <div>
+        <h4>Marcos Rossa</h4>
+        <p class="tags"><span class="tag scrum">Time de Desenvolvimento</span><span class="tag proj">Gerente de vendas · estoque</span></p>
+        <p>Dono do módulo de produtos: definiu categorias, estoque mínimo e as movimentações de
+        entrada/saída do painel; também cuidou do pacote <em>Dia do Noivo</em> e das ofertas.</p>
+      </div>
+    </article>
+
+    <article class="membro">
+      <div class="avatar" title="paleta — designer de corte e interface">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#a9741a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 8c9 0 16 6 16 14 0 6-5 8-9 8h-3c-2 0-3 1-3 3 0 3-2 5-5 5-7 0-12-7-12-16S15 8 24 8z"/><circle cx="18" cy="18" r="2.2"/><circle cx="27" cy="14" r="2.2"/><circle cx="33" cy="22" r="2.2"/></svg>
+        <span class="inicial">E</span>
+      </div>
+      <div>
+        <h4>Evelyn Coller</h4>
+        <p class="tags"><span class="tag scrum">Time de Desenvolvimento</span><span class="tag proj">Designer de corte · interface</span></p>
+        <p>Olhar de design sobre a interface: paleta preto e ouro, hierarquia da tipografia, os
+        cartões de KPI e o painel administrativo — garantindo que a tela fosse bonita <em>e</em>
+        legível para quem trabalha correndo.</p>
+      </div>
+    </article>
+
+    <article class="membro">
+      <div class="avatar" title="chapéu de formatura — acompanhamento e aceite">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#a9741a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 20l18-8 18 8-18 8z"/><path d="M14 24v8c0 3 20 3 20 0v-8"/><path d="M38 22v10"/></svg>
+        <span class="inicial">PR</span>
+      </div>
+      <div>
+        <h4>Professor orientador</h4>
+        <p class="tags"><span class="tag scrum">Stakeholder</span><span class="tag proj">Acompanhamento</span></p>
+        <p>Fora do time Scrum: revisou o escopo do TCC, cobrou os artefatos (casos de uso,
+        diagrama e cronograma) e participou da <em>Sprint Review</em> dando o aceite de cada etapa.</p>
+      </div>
+    </article>
+  </div>
+
+  <div class="rodape">
+    <span>Barbearia Prumo · Style Relo Barber — TCC 2026</span>
+    <span>Apêndice C — Daily Scrum e papéis (A4 retrato)</span>
+  </div>
+</section>
+
+<!-- ===================== PÁGINA 2 — SPRINTS E BURNDOWN ===================== -->
+<section class="pagina">
+  <header class="cabecalho">
+    <div class="instituicao">Trabalho de Conclusão de Curso · Desenvolvimento de Sistemas</div>
+    <h1>As sprints do projeto — o que a daily registrou</h1>
+    <h2>Cada sprint abaixo corresponde a entregas reais publicadas no repositório do projeto</h2>
+  </header>
+
+  <h3>Product Backlog priorizado (resumo)</h3>
+  <table>
+    <thead>
+      <tr><th>Sprint</th><th>Período</th><th>Objetivo da sprint</th><th>Incremento entregue</th><th>Itens</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Sprint 0</strong></td>
+        <td>28/04 a 22/06</td>
+        <td>Fundação do produto</td>
+        <td>Site institucional, preços premium, clube de assinatura, login, feedback e a primeira versão do simulador com reconhecimento facial.</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint 1</strong></td>
+        <td>11/08 a 20/08</td>
+        <td>Marca e identidade do sistema</td>
+        <td>Renomeação para <em>Style Relo Barber</em>, chat da Relo IA, painel administrativo inicial, área do cliente e página da equipe.</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint 2</strong></td>
+        <td>08/09 a 14/09</td>
+        <td>Banco de clientes e vitrine</td>
+        <td>Foto do <em>Corte Style Relo</em>, banco de clientes, área de administrador, aba Equipe e pacote <em>Dia do Noivo (R$ 250)</em>.</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint 3</strong></td>
+        <td>15/09 a 17/09</td>
+        <td>Consertar o que a banca veria primeiro</td>
+        <td>Contadores da página inicial (45 min / R$ 45), tipografia dos números e limite de linhas do chat.</td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint 4</strong></td>
+        <td>18/09 a 28/09</td>
+        <td>Testar IA generativa de imagem <em>(cancelada depois)</em></td>
+        <td>Nano Banana/Gemini no simulador, estúdio de imagem e gestão de chave no painel. Cancelada na Sprint 7 por depender de serviço pago e não ter sido validada.</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint 5</strong></td>
+        <td>29/09 a 06/10</td>
+        <td>Painel profissional e banco de verdade</td>
+        <td>Painel premium com KPIs e gráficos SVG, estoque/manutenção/despesas no banco do servidor, cadastro do cliente gravando direto no banco e suíte de testes (95 verificações).</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint 6</strong></td>
+        <td>07/10 a 15/10</td>
+        <td>Acabamento de experiência</td>
+        <td>Menu igual em todas as páginas, pílula do Admin, faixa “Hoje na barbearia”, cartões de KPI clicáveis, chip do admin e configuração do Supabase em “colar e salvar”.</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint 7</strong></td>
+        <td>16/10 (atual)</td>
+        <td>Fechar o escopo do TCC</td>
+        <td>Retirada da IA de imagem (com o simulador corrigido), <strong>hierarquia de acesso</strong> Usuário/Supervisor/Administrador (65 verificações novas) e os artefatos do TCC: casos de uso, diagrama e este material de Scrum.</td>
+        <td>4</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Burndown do Product Backlog (itens entregues por sprint)</h3>
+  <div class="burndown">
+    <svg viewBox="0 0 620 230" role="img" aria-label="Gráfico de burndown do backlog do projeto, de 38 itens restantes na Sprint 0 até 0 na Sprint 7">
+      <!-- eixos -->
+      <line x1="46" y1="170" x2="600" y2="170" stroke="#94a3b8" stroke-width="1"/>
+      <line x1="46" y1="20" x2="46" y2="170" stroke="#94a3b8" stroke-width="1"/>
+      <!-- grades -->
+      <g stroke="#e2e8f0" stroke-width="1">
+        <line x1="46" y1="137.5" x2="600" y2="137.5"/>
+        <line x1="46" y1="105" x2="600" y2="105"/>
+        <line x1="46" y1="72.5" x2="600" y2="72.5"/>
+        <line x1="46" y1="40" x2="600" y2="40"/>
+      </g>
+      <g font-size="10" fill="#5b6672" text-anchor="end">
+        <text x="40" y="174">0</text>
+        <text x="40" y="141">10</text>
+        <text x="40" y="108">20</text>
+        <text x="40" y="75">30</text>
+        <text x="40" y="43">40</text>
+      </g>
+      <!-- linha ideal (tracejada) -->
+      <polyline points="46,44.6 126,27 206,17.5 286,10 366,0 446,0 526,0 600,0"
+                fill="none" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="6 4"/>
+      <!-- linha real -->
+      <polyline points="46,44.6 126,27 206,17.5 286,10 366,10 446,0 526,0 600,0"
+                fill="none" stroke="#a9741a" stroke-width="2.4"/>
+      <g fill="#a9741a">
+        <circle cx="46" cy="44.6" r="3.6"/><circle cx="126" cy="27" r="3.6"/><circle cx="206" cy="17.5" r="3.6"/>
+        <circle cx="286" cy="10" r="3.6"/><circle cx="366" cy="10" r="3.6"/><circle cx="446" cy="0" r="3.6"/>
+        <circle cx="526" cy="0" r="3.6"/><circle cx="600" cy="0" r="3.6"/>
+      </g>
+      <!-- rótulos das sprints -->
+      <g font-size="9.5" fill="#334155" text-anchor="middle">
+        <text x="46" y="188">S0</text><text x="126" y="188">S1</text><text x="206" y="188">S2</text>
+        <text x="286" y="188">S3</text><text x="366" y="188">S4</text><text x="446" y="188">S5</text>
+        <text x="526" y="188">S6</text><text x="600" y="188">S7</text>
+      </g>
+      <text x="320" y="206" font-size="10" fill="#5b6672" text-anchor="middle">
+        linhas: “itens do backlog ainda em aberto” ao fim de cada sprint
+      </text>
+      <!-- anotação -->
+      <text x="366" y="24" font-size="10" fill="#b42318">S4 travou (IA de imagem cancelada)</text>
+      <text x="600" y="16" font-size="10" fill="#15803d" text-anchor="end">backlog do TCC zerado</text>
+    </svg>
+  </div>
+  <p class="legenda-figura">
+    <strong>Figura 2</strong> — Burndown do projeto: 38 itens priorizados no Product Backlog, 8 sprints e
+    as 34 entregas publicadas no repositório (contagem feita a partir de <code>git log</code> e do
+    histórico em <code>ATUALIZACOES.md</code>). Fonte: elaborado pelos autores (2026).
+  </p>
+
+  <h3>Definition of Done (o que cada cartão precisa para entrar em “Feito”)</h3>
+  <ul>
+    <li>Funciona nas duas situações: <strong>com servidor</strong> (<code>npm run serve</code>) e <strong>sem servidor</strong> (site aberto pelo arquivo).</li>
+    <li>Passou pelo <code>npm test</code> (banco, rotas, segurança e hierarquia) sem falhar.</li>
+    <li>Respeita a hierarquia: cada rota nova tem a permissão declarada em <code>permissoes.js</code> e testada.</li>
+    <li>Funciona no celular e no computador, com texto em português e erro que explica o motivo.</li>
+    <li>Está documentado (<code>README.md</code> ou <code>ATUALIZACOES.md</code>) e publicado no GitHub.</li>
+  </ul>
+
+  <h3>Cerimônias como aconteceram no projeto</h3>
+  <table>
+    <thead><tr><th>Cerimônia</th><th>Como foi no projeto</th><th>Resultado prático</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Sprint Planning</strong></td>
+        <td>Escolha dos cartões da sprint na segunda-feira, com o Product Owner priorizando o que a barbearia precisava.</td>
+        <td>Sprint Backlog com objetivo claro (ex.: “Sprint 5 — painel premium e cadastro no banco”).</td>
+      </tr>
+      <tr>
+        <td><strong>Daily Scrum</strong></td>
+        <td>15 minutos por dia no grupo do time (assíncrono), com as três perguntas e atualização do quadro.</td>
+        <td>Impedimentos resolvidos no mesmo dia (foto que faltava, chave de API que não funcionou).</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint Review</strong></td>
+        <td>Demonstração da versão funcionando — pelo navegador e com o servidor de pé — para o professor e a equipe da barbearia.</td>
+        <td>Aceite (ou pedido de ajuste) registrado no <code>ATUALIZACOES.md</code> e nas <em>pull requests</em>.</td>
+      </tr>
+      <tr>
+        <td><strong>Retrospectiva</strong></td>
+        <td>No fim de cada sprint: o que funcionou, o que atrapalhou e o que muda na próxima.</td>
+        <td>Decisões reais: parar de depender de API paga, criar a suíte de testes e padronizar o menu.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="rodape">
+    <span>Barbearia Prumo · Style Relo Barber — TCC 2026</span>
+    <span>Apêndice C.1 — Sprints e burndown</span>
+  </div>
+</section>
+
+</body>
+</html>

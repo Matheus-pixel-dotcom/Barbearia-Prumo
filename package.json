@@ -14,7 +14,8 @@
     "web": "expo start --web",
     "demo": "node ferramentas/semeia-demo.js",
     "test:acessos": "node ferramentas/teste-hierarquia.js",
-    "matriz": "node ferramentas/matriz-permissoes.js"
+    "matriz": "node ferramentas/matriz-permissoes.js",
+    "tcc:daily": "node ferramentas/gerar-daily-scrum.js"
   },
   "dependencies": {
     "expo": "~48.0.15",
