@@ -5,7 +5,7 @@
  * 'supervisor' (nível 2). Qualquer outro e-mail é tratado como CLIENTE comum (nível 1).
  * A hierarquia completa está em permissoes.js e documentada em HIERARQUIA_DE_ACESSO.md.
  *
- * Wevergton Sousa e Michel Lima são barbeiros da equipe: entram no painel como
+ * Weverton Sousa e Michel Lima são barbeiros da equipe: entram no painel como
  * SUPERVISORES (operam estoque, manutenção, despesas e o cadastro de clientes), sem
  * poderes de administrador (excluir cadastro, configurar a nuvem e definir perfis).
  *
@@ -68,7 +68,7 @@
         senhaHash: '5882274e6523fc915456ffee2745c2fa91890b244224192cf4232fec129edd8f'
       },
       {
-        nome: 'Wevergton Sousa',
+        nome: 'Weverton Sousa',
         email: 'wevergton.sousa@escola.pr.gov.br',
         aliases: [],
         perfil: 'supervisor',
