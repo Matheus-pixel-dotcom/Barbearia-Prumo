@@ -1881,6 +1881,15 @@ create policy "painel consulta cadastros" on public.clientes for select to anon,
       if (evento.target.closest && evento.target.closest('.chip-wrap')) return;
       alternarChipPop(false);
     });
+    // Esc também fecha o menu do usuário e devolve o foco para o botão
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key !== 'Escape' && evento.key !== 'Esc') return;
+      const pop = id('chip-pop');
+      if (!pop || pop.hidden) return;
+      alternarChipPop(false);
+      const botao = id('chip-usuario');
+      if (botao && typeof botao.focus === 'function') botao.focus();
+    });
     const sairChip = id('chip-sair');
     if (sairChip) {
       sairChip.addEventListener('click', async () => {

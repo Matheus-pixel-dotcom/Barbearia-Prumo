@@ -21,6 +21,16 @@
   box-sizing: border-box;
 }
 
+/*
+ * O atributo hidden sozinho perde para qualquer "display: ..." escrito nas
+ * classes (modais, formulários, avisos). Sem esta regra o elemento continua
+ * visível mesmo com hidden, que é o que deixava o menu do usuário aberto
+ * em cima do painel.
+ */
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
   font-size: 15px;
@@ -807,10 +817,6 @@ body.relo-modal-aberto {
   animation: reloFade 0.25s ease;
 }
 
-.relo-modal-backdrop[hidden] {
-  display: none;
-}
-
 @keyframes reloFade {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -942,10 +948,6 @@ body.relo-modal-aberto {
   background: rgba(34, 197, 94, 0.12);
   border: 1px solid rgba(34, 197, 94, 0.4);
   color: #86efac;
-}
-
-.relo-form[hidden] {
-  display: none;
 }
 
 .relo-field {
