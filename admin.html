@@ -6,7 +6,7 @@
   <meta name="description" content="Painel administrativo premium do Style Relo Barber: banco de clientes, cadastros em tempo real, espelho na nuvem, estoque, manutenção e despesas.">
   <meta name="robots" content="noindex, nofollow">
   <title>Painel Administrativo · Style Relo Barber</title>
-  <link rel="stylesheet" href="style.css?v=20261016">
+  <link rel="stylesheet" href="style.css?v=20261106">
   <style>
     /* =====================================================================
        STYLE RELO · PAINEL PREMIUM
@@ -52,6 +52,10 @@
         radial-gradient(40rem 26rem at 108% 8%, rgba(125, 211, 252, 0.07), transparent 60%);
     }
     * { box-sizing: border-box; }
+    /* O atributo hidden tem que vencer os "display: ..." declarados nas classes
+       abaixo (.chip-pop, .nav-badge, .badge, .form-group...). Sem isso o menu do
+       usuário nasce aberto em cima da tabela e os selos "0" aparecem no menu. */
+    [hidden] { display: none !important; }
     ::selection { background: rgba(212, 175, 55, 0.35); color: #fff; }
 
     /* ------------------------------ estrutura ------------------------------ */
@@ -494,7 +498,6 @@
 
     /* --------------------------- tela de bloqueio --------------------------- */
     #acesso-painel { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; position: relative; z-index: 1; }
-    #acesso-painel[hidden] { display: none; }
     .acesso-card {
       max-width: 540px; text-align: center; padding: 42px 36px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
@@ -1163,6 +1166,6 @@
   <script src="auth-core.js?v=20261016" defer></script>
   <script src="sync-supabase.js?v=20261016" defer></script>
   <script src="login-modal.js?v=20261016" defer></script>
-  <script src="admin.js?v=20261016" defer></script>
+  <script src="admin.js?v=20261106" defer></script>
 </body>
 </html>
